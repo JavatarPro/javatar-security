@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>pro.javatar.security</groupId>
+    <artifactId>javatar-security</artifactId>
+    <version>0.0.1</version>
+    <packaging>pom</packaging>
+
+    <name>javatar-security</name>
+    <description>Javatar oidc integration with Identity Provider</description>
+    <url>https://github.com/JavatarPro/pipeline-utils</url>
+
+    <organization>
+        <name>Javatar LLC</name>
+        <url>https://javatar.pro</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Andrii Murashkin</name>
+            <email>andrii.murashkin@javatar.pro</email>
+            <organization>Javatar LLC</organization>
+            <organizationUrl>https://javatar.pro</organizationUrl>
+        </developer>
+
+        <developer>
+            <name>Serhii Petrychenko</name>
+            <email>serhii.petrychenko@javatar.pro</email>
+            <organization>Javatar LLC</organization>
+            <organizationUrl>https://javatar.pro</organizationUrl>
+        </developer>
+
+        <developer>
+            <name>Borys Zora</name>
+            <email>borys.zora@javatar.pro</email>
+            <organization>Javatar LLC</organization>
+            <organizationUrl>https://javatar.pro</organizationUrl>
+        </developer>
+    </developers>
+
+    <contributors>
+        <contributor>
+            <name>Andrii Kuzovchikov</name>
+        </contributor>
+    </contributors>
+
+    <scm>
+        <connection>scm:git:git@github.com:JavatarPro/javatar-security.git</connection>
+        <developerConnection>scm:git:ssh://github.com:JavatarPro/javatar-security.git</developerConnection>
+        <url>https://github.com/JavatarPro/pipeline-utils/tree/master</url>
+    </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype Nexus Snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <issueManagement>
+        <system>GitHub Issue Management</system>
+        <url>https://github.com/JavatarPro/javatar-security/issues</url>
+    </issueManagement>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <mockito.version>2.0.2-beta</mockito.version>
+        <sonar.exclusions>file:**/generated-sources/**</sonar.exclusions>
+
+        <spring.version>3.1.2.RELEASE</spring.version>
+        <commons-io.version>2.1</commons-io.version>
+        <spring-cloud-netflix.version>Brixton.SR4</spring-cloud-netflix.version>
+        <spring-boot.version>1.4.1.RELEASE</spring-boot.version>
+        <spring.version>4.3.8.RELEASE</spring.version>
+        <spring.security.version>3.2.10.RELEASE</spring.security.version>
+
+        <cas.client.version>3.2.1</cas.client.version>
+        <opensaml.version>1.1</opensaml.version>
+
+        <org.mapstruct.version>1.0.0.Final</org.mapstruct.version>
+
+        <!-- Jackson -->
+        <jackson.version>2.8.8</jackson.version>
+
+        <!-- logging dependencies -->
+        <slf4j.version>1.7.12</slf4j.version>
+
+        <!-- Tests dependencies -->
+        <junit.version>4.12</junit.version>
+        <mockito.version>2.0.2-beta</mockito.version>
+        <powermock.version>1.6.4</powermock.version>
+
+        <sonar.coverage.exclusions>
+            **/security/jwt/utils/Base64.java,
+            **/security/jwt/bean/representation/IDToken.java
+        </sonar.coverage.exclusions>
+    </properties>
+
+    <modules>
+        <module>jwt-lib</module>
+        <module>security-filter</module>
+        <module>public-key-cache-api</module>
+        <module>public-key-cache-redis-impl</module>
+        <module>secret-storage-api</module>
+        <module>secret-storage-redis-impl</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.1</version>
+            </dependency>
+
+            <!-- logging dependencies -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- logging dependencies -->
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+
+        <!-- TEST DEPENDENCIES START -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring-boot.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>${powermock.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-core</artifactId>
+            <version>${powermock.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>3.0.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.5.201505241946</version>
+                <configuration>
+                    <destFile>${basedir}/target/coverage-reports/jacoco-unit.exec</destFile>
+                    <dataFile>${basedir}/target/coverage-reports/jacoco-unit.exec</dataFile>
+                    <excludes>
+                        <exclude>**/generated-sources/**</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>jacoco-initialize</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-site</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>ossrh</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.0.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                                <configuration>
+                                    <archive>
+                                        <manifest>
+                                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                        </manifest>
+                                        <manifestEntries>
+                                            <Implementation-Build-Date>${maven.build.timestamp}</Implementation-Build-Date>
+                                            <X-Compile-Source-JDK>${java.version}</X-Compile-Source-JDK>
+                                            <X-Compile-Target-JDK>${java.version}</X-Compile-Target-JDK>
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.0.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <quiet>true</quiet>
+                                    <archive>
+                                        <manifest>
+                                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                        </manifest>
+                                        <manifestEntries>
+                                            <Implementation-Build-Date>${maven.build.timestamp}</Implementation-Build-Date>
+                                            <X-Compile-Source-JDK>${java.version}</X-Compile-Source-JDK>
+                                            <X-Compile-Target-JDK>${java.version}</X-Compile-Target-JDK>
+                                        </manifestEntries>
+                                    </archive>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+</project>
