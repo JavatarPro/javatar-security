@@ -1,0 +1,2089 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>Base64.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jwt-lib</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.jwt.utils</a> &gt; <span class="el_source">Base64.java</span></div><h1>Base64.java</h1><pre class="source lang-java linenums">package pro.javatar.security.jwt.utils;
+
+import pro.javatar.security.jwt.exception.Base64UtilException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+/**
+ * &lt;p&gt;Encodes and decodes to and from Base64 notation.&lt;/p&gt;
+ * &lt;p&gt;Homepage: &lt;a href=&quot;http://iharder.net/base64&quot;&gt;http://iharder.net/base64&lt;/a&gt;.&lt;/p&gt;
+ *
+ * &lt;p&gt;Example:&lt;/p&gt;
+ *
+ * &lt;code&gt;String encoded = Base64.encode( myByteArray );&lt;/code&gt;
+ * &lt;code&gt;byte[] myByteArray = Base64.decode( encoded );&lt;/code&gt;
+ *
+ * &lt;p&gt;The &lt;tt&gt;options&lt;/tt&gt; parameter, which appears in a few places, is used to pass 
+ * several pieces of information to the encoder. In the &quot;higher level&quot; methods such as 
+ * encodeBytes( bytes, options ) the options parameter can be used to indicate such 
+ * things as first gzipping the bytes before encoding them, not inserting linefeeds,
+ * and encoding using the URL-safe and Ordered dialects.&lt;/p&gt;
+ *
+ * &lt;p&gt;Note, according to &lt;a href=&quot;http://www.faqs.org/rfcs/rfc3548.html&quot;&gt;RFC3548&lt;/a&gt;,
+ * Section 2.1, implementations should not add line feeds unless explicitly told
+ * to do so. I've got Base64 set to this behavior now, although earlier versions
+ * broke lines by default.&lt;/p&gt;
+ *
+ * &lt;p&gt;The constants defined in Base64 can be OR-ed together to combine options, so you 
+ * might make a call like this:&lt;/p&gt;
+ *
+ * &lt;code&gt;String encoded = Base64.encodeBytes( mybytes, Base64.GZIP | Base64.DO_BREAK_LINES );&lt;/code&gt;
+ * &lt;p&gt;to compress the data before encoding it and then making the output have newline characters.&lt;/p&gt;
+ * &lt;p&gt;Also...&lt;/p&gt;
+ * &lt;code&gt;String encoded = Base64.encodeBytes( crazyString.getBytes() );&lt;/code&gt;
+ *
+ *
+ *
+ * &lt;p&gt;
+ * Change Log:
+ * &lt;/p&gt;
+ * &lt;ul&gt;
+ *  &lt;li&gt;v2.3.7 - Fixed subtle bug when base 64 input stream contained the
+ *   value 01111111, which is an invalid base 64 character but should not
+ *   throw an ArrayIndexOutOfBoundsException either. Led to discovery of
+ *   mishandling (or potential for better handling) of other bad input
+ *   characters. You should now get an IOException if you try decoding
+ *   something that has bad characters in it.&lt;/li&gt;
+ *  &lt;li&gt;v2.3.6 - Fixed bug when breaking lines and the final byte of the encoded
+ *   string ended in the last column; the buffer was not properly shrunk and
+ *   contained an extra (null) byte that made it into the string.&lt;/li&gt;
+ *  &lt;li&gt;v2.3.5 - Fixed bug in {@link #encodeFromFile} where estimated buffer size
+ *   was wrong for files of size 31, 34, and 37 bytes.&lt;/li&gt;
+ *  &lt;li&gt;v2.3.4 - Fixed bug when working with gzipped streams whereby flushing
+ *   the Base64.OutputStream closed the Base64 encoding (by padding with equals
+ *   signs) too soon. Also added an option to suppress the automatic decoding
+ *   of gzipped streams. Also added experimental support for specifying a
+ *   class loader when using the
+ *   {@link #decodeToObject(String, int, ClassLoader)}
+ *   method.&lt;/li&gt;
+ *  &lt;li&gt;v2.3.3 - Changed default char encoding to US-ASCII which reduces the internal Java
+ *   footprint with its CharEncoders and so forth. Fixed some javadocs that were
+ *   inconsistent. Removed imports and specified things like java.io.IOException
+ *   explicitly inline.&lt;/li&gt;
+ *  &lt;li&gt;v2.3.2 - Reduced memory footprint! Finally refined the &quot;guessing&quot; of how big the
+ *   final encoded data will be so that the code doesn't have to create two output
+ *   arrays: an oversized initial one and then a final, exact-sized one. Big win
+ *   when using the {@link #encodeBytesToBytes(byte[])} family of methods (and not
+ *   using the gzip options which uses a different mechanism with streams and stuff).&lt;/li&gt;
+ *  &lt;li&gt;v2.3.1 - Added {@link #encodeBytesToBytes(byte[], int, int, int)} and some
+ *   similar helper methods to be more efficient with memory by not returning a
+ *   String but just a byte array.&lt;/li&gt;
+ *  &lt;li&gt;v2.3 - &lt;strong&gt;This is not a drop-in replacement!&lt;/strong&gt; This is two years of comments
+ *   and bug fixes queued up and finally executed. Thanks to everyone who sent
+ *   me stuff, and I'm sorry I wasn't able to distribute your fixes to everyone else.
+ *   Much bad coding was cleaned up including throwing exceptions where necessary
+ *   instead of returning null values or something similar. Here are some changes
+ *   that may affect you:
+ *   &lt;ul&gt;
+ *    &lt;li&gt;&lt;em&gt;Does not break lines, by default.&lt;/em&gt; This is to keep in compliance with
+ *      &lt;a href=&quot;http://www.faqs.org/rfcs/rfc3548.html&quot;&gt;RFC3548&lt;/a&gt;.&lt;/li&gt;
+ *    &lt;li&gt;&lt;em&gt;Throws exceptions instead of returning null values.&lt;/em&gt; Because some operations
+ *      (especially those that may permit the GZIP option) use IO streams, there
+ *      is a possiblity of an java.io.IOException being thrown. After some discussion and
+ *      thought, I've changed the behavior of the methods to throw java.io.IOExceptions
+ *      rather than return null if ever there's an error. I think this is more
+ *      appropriate, though it will require some changes to your code. Sorry,
+ *      it should have been done this way to begin with.&lt;/li&gt;
+ *    &lt;li&gt;&lt;em&gt;Removed all references to System.out, System.err, and the like.&lt;/em&gt;
+ *      Shame on me. All I can say is sorry they were ever there.&lt;/li&gt;
+ *    &lt;li&gt;&lt;em&gt;Throws NullPointerExceptions and IllegalArgumentExceptions&lt;/em&gt; as needed
+ *      such as when passed arrays are null or offsets are invalid.&lt;/li&gt;
+ *    &lt;li&gt;Cleaned up as much javadoc as I could to avoid any javadoc warnings.
+ *      This was especially annoying before for people who were thorough in their
+ *      own projects and then had gobs of javadoc warnings on this file.&lt;/li&gt;
+ *   &lt;/ul&gt;
+ *  &lt;li&gt;v2.2.1 - Fixed bug using URL_SAFE and ORDERED encodings. Fixed bug
+ *   when using very small files (~&amp;lt; 40 bytes).&lt;/li&gt;
+ *  &lt;li&gt;v2.2 - Added some helper methods for encoding/decoding directly from
+ *   one file to the next. Also added a main() method to support command line
+ *   encoding/decoding from one file to the next. Also added these Base64 dialects:
+ *   &lt;ol&gt;
+ *   &lt;li&gt;The default is RFC3548 format.&lt;/li&gt;
+ *   &lt;li&gt;Calling Base64.setFormat(Base64.BASE64_FORMAT.URLSAFE_FORMAT) generates
+ *   URL and file name friendly format as described in Section 4 of RFC3548.
+ *   http://www.faqs.org/rfcs/rfc3548.html&lt;/li&gt;
+ *   &lt;li&gt;Calling Base64.setFormat(Base64.BASE64_FORMAT.ORDERED_FORMAT) generates
+ *   URL and file name friendly format that preserves lexical ordering as described
+ *   in http://www.faqs.org/qa/rfcc-1940.html&lt;/li&gt;
+ *   &lt;/ol&gt;
+ *   Special thanks to Jim Kellerman at &lt;a href=&quot;http://www.powerset.com/&quot;&gt;http://www.powerset.com/&lt;/a&gt;
+ *   for contributing the new Base64 dialects.
+ *  &lt;/li&gt;
+ *
+ *  &lt;li&gt;v2.1 - Cleaned up javadoc comments and unused variables and methods. Added
+ *   some convenience methods for reading and writing to and from files.&lt;/li&gt;
+ *  &lt;li&gt;v2.0.2 - Now specifies UTF-8 encoding in places where the code fails on systems
+ *   with other encodings (like EBCDIC).&lt;/li&gt;
+ *  &lt;li&gt;v2.0.1 - Fixed an error when decoding a single byte, that is, when the
+ *   encoded data was a single byte.&lt;/li&gt;
+ *  &lt;li&gt;v2.0 - I got rid of methods that used booleans to set options.
+ *   Now everything is more consolidated and cleaner. The code now detects
+ *   when data that's being decoded is gzip-compressed and will decompress it
+ *   automatically. Generally things are cleaner. You'll probably have to
+ *   change some method calls that you were making to support the new
+ *   options format (&lt;tt&gt;int&lt;/tt&gt;s that you &quot;OR&quot; together).&lt;/li&gt;
+ *  &lt;li&gt;v1.5.1 - Fixed bug when decompressing and decoding to a
+ *   byte[] using &lt;tt&gt;decode( String s, boolean gzipCompressed )&lt;/tt&gt;.
+ *   Added the ability to &quot;suspend&quot; encoding in the Output Stream so
+ *   you can turn on and off the encoding if you need to embed base64
+ *   data in an otherwise &quot;normal&quot; stream (like an XML file).&lt;/li&gt;
+ *  &lt;li&gt;v1.5 - Output stream pases on flush() command but doesn't do anything itself.
+ *      This helps when using GZIP streams.
+ *      Added the ability to GZip-compress objects before encoding them.&lt;/li&gt;
+ *  &lt;li&gt;v1.4 - Added helper methods to read/write files.&lt;/li&gt;
+ *  &lt;li&gt;v1.3.6 - Fixed OutputStream.flush() so that 'position' is reset.&lt;/li&gt;
+ *  &lt;li&gt;v1.3.5 - Added flag to turn on and off line breaks. Fixed bug in input stream
+ *      where last buffer being read, if not completely full, was not returned.&lt;/li&gt;
+ *  &lt;li&gt;v1.3.4 - Fixed when &quot;improperly padded stream&quot; error was thrown at the wrong time.&lt;/li&gt;
+ *  &lt;li&gt;v1.3.3 - Fixed I/O streams which were totally messed up.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * &lt;p&gt;
+ * I am placing this code in the Public Domain. Do with it as you will.
+ * This software comes with no guarantees or warranties but with
+ * plenty of well-wishing instead!
+ * Please visit &lt;a href=&quot;http://iharder.net/base64&quot;&gt;http://iharder.net/base64&lt;/a&gt;
+ * periodically to check for updates or to contribute improvements.
+ * &lt;/p&gt;
+ *
+ * @author Robert Harder
+ * @author rob@iharder.net
+ * @version 2.3.7
+ */
+// NOSONAR
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">public class Base64</span>
+{
+<span class="fc" id="L160">    private static final Logger logger = LoggerFactory.getLogger(Base64.class.getName());</span>
+/* ********  P U B L I C   F I E L D S  ******** */
+
+
+    /** No options specified. Value is zero. */
+    public final static int NO_OPTIONS = 0;
+
+    /** Specify encoding in first bit. Value is one. */
+    public final static int ENCODE = 1;
+
+
+    /** Specify decoding in first bit. Value is zero. */
+    public final static int DECODE = 0;
+
+
+    /** Specify that data should be gzip-compressed in second bit. Value is two. */
+    public final static int GZIP = 2;
+
+    /** Specify that gzipped data should &lt;em&gt;not&lt;/em&gt; be automatically gunzipped. */
+    public final static int DONT_GUNZIP = 4;
+
+
+    /** Do break lines when encoding. Value is 8. */
+    public final static int DO_BREAK_LINES = 8;
+
+    /**
+     * Encode using Base64-like encoding that is URL- and Filename-safe as described
+     * in Section 4 of RFC3548:
+     * &lt;a href=&quot;http://www.faqs.org/rfcs/rfc3548.html&quot;&gt;http://www.faqs.org/rfcs/rfc3548.html&lt;/a&gt;.
+     * It is important to note that data encoded this way is &lt;em&gt;not&lt;/em&gt; officially valid Base64,
+     * or at the very least should not be called Base64 without also specifying that is
+     * was encoded using the URL- and Filename-safe dialect.
+     */
+    public final static int URL_SAFE = 16;
+
+
+    /**
+     * Encode using the special &quot;ordered&quot; dialect of Base64 described here:
+     * &lt;a href=&quot;http://www.faqs.org/qa/rfcc-1940.html&quot;&gt;http://www.faqs.org/qa/rfcc-1940.html&lt;/a&gt;.
+     */
+    public final static int ORDERED = 32;
+
+
+/* ********  P R I V A T E   F I E L D S  ******** */
+
+
+    /** Maximum line length (76) of Base64 output. */
+    private final static int MAX_LINE_LENGTH = 76;
+
+
+    /** The equals sign (=) as a byte. */
+    private final static byte EQUALS_SIGN = (byte)'=';
+
+
+    /** The new line character (\n) as a byte. */
+    private final static byte NEW_LINE = (byte)'\n';
+
+
+    /** Preferred encoding. */
+    private final static String PREFERRED_ENCODING = &quot;US-ASCII&quot;;
+
+
+    private final static byte WHITE_SPACE_ENC = -5; // Indicates white space in encoding
+    private final static byte EQUALS_SIGN_ENC = -1; // Indicates equals sign in encoding
+
+
+/* ********  S T A N D A R D   B A S E 6 4   A L P H A B E T  ******** */
+
+    /** The 64 valid Base64 values. */
+    /* Host platform me be something funny like EBCDIC, so we hardcode these values. */
+<span class="fc" id="L230">    private final static byte[] _STANDARD_ALPHABET = {</span>
+            (byte)'A', (byte)'B', (byte)'C', (byte)'D', (byte)'E', (byte)'F', (byte)'G',
+            (byte)'H', (byte)'I', (byte)'J', (byte)'K', (byte)'L', (byte)'M', (byte)'N',
+            (byte)'O', (byte)'P', (byte)'Q', (byte)'R', (byte)'S', (byte)'T', (byte)'U',
+            (byte)'V', (byte)'W', (byte)'X', (byte)'Y', (byte)'Z',
+            (byte)'a', (byte)'b', (byte)'c', (byte)'d', (byte)'e', (byte)'f', (byte)'g',
+            (byte)'h', (byte)'i', (byte)'j', (byte)'k', (byte)'l', (byte)'m', (byte)'n',
+            (byte)'o', (byte)'p', (byte)'q', (byte)'r', (byte)'s', (byte)'t', (byte)'u',
+            (byte)'v', (byte)'w', (byte)'x', (byte)'y', (byte)'z',
+            (byte)'0', (byte)'1', (byte)'2', (byte)'3', (byte)'4', (byte)'5',
+            (byte)'6', (byte)'7', (byte)'8', (byte)'9', (byte)'+', (byte)'/'
+    };
+
+
+    /**
+     * Translates a Base64 value to either its 6-bit reconstruction value
+     * or a negative number indicating some other meaning.
+     **/
+<span class="fc" id="L248">    private final static byte[] _STANDARD_DECODABET = {</span>
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,                 // Decimal  0 -  8
+            -5,-5,                                      // Whitespace: Tab and Linefeed
+            -9,-9,                                      // Decimal 11 - 12
+            -5,                                         // Whitespace: Carriage Return
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 14 - 26
+            -9,-9,-9,-9,-9,                             // Decimal 27 - 31
+            -5,                                         // Whitespace: Space
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,              // Decimal 33 - 42
+            62,                                         // Plus sign at decimal 43
+            -9,-9,-9,                                   // Decimal 44 - 46
+            63,                                         // Slash at decimal 47
+            52,53,54,55,56,57,58,59,60,61,              // Numbers zero through nine
+            -9,-9,-9,                                   // Decimal 58 - 60
+            -1,                                         // Equals sign at decimal 61
+            -9,-9,-9,                                      // Decimal 62 - 64
+            0,1,2,3,4,5,6,7,8,9,10,11,12,13,            // Letters 'A' through 'N'
+            14,15,16,17,18,19,20,21,22,23,24,25,        // Letters 'O' through 'Z'
+            -9,-9,-9,-9,-9,-9,                          // Decimal 91 - 96
+            26,27,28,29,30,31,32,33,34,35,36,37,38,     // Letters 'a' through 'm'
+            39,40,41,42,43,44,45,46,47,48,49,50,51,     // Letters 'n' through 'z'
+            -9,-9,-9,-9,-9                              // Decimal 123 - 127
+            ,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,       // Decimal 128 - 139
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 140 - 152
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 153 - 165
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 166 - 178
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 179 - 191
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 192 - 204
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 205 - 217
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 218 - 230
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 231 - 243
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9         // Decimal 244 - 255
+    };
+
+
+/* ********  U R L   S A F E   B A S E 6 4   A L P H A B E T  ******** */
+
+    /**
+     * Used in the URL- and Filename-safe dialect described in Section 4 of RFC3548:
+     * &lt;a href=&quot;http://www.faqs.org/rfcs/rfc3548.html&quot;&gt;http://www.faqs.org/rfcs/rfc3548.html&lt;/a&gt;.
+     * Notice that the last two bytes become &quot;hyphen&quot; and &quot;underscore&quot; instead of &quot;plus&quot; and &quot;slash.&quot;
+     */
+<span class="fc" id="L290">    private final static byte[] _URL_SAFE_ALPHABET = {</span>
+            (byte)'A', (byte)'B', (byte)'C', (byte)'D', (byte)'E', (byte)'F', (byte)'G',
+            (byte)'H', (byte)'I', (byte)'J', (byte)'K', (byte)'L', (byte)'M', (byte)'N',
+            (byte)'O', (byte)'P', (byte)'Q', (byte)'R', (byte)'S', (byte)'T', (byte)'U',
+            (byte)'V', (byte)'W', (byte)'X', (byte)'Y', (byte)'Z',
+            (byte)'a', (byte)'b', (byte)'c', (byte)'d', (byte)'e', (byte)'f', (byte)'g',
+            (byte)'h', (byte)'i', (byte)'j', (byte)'k', (byte)'l', (byte)'m', (byte)'n',
+            (byte)'o', (byte)'p', (byte)'q', (byte)'r', (byte)'s', (byte)'t', (byte)'u',
+            (byte)'v', (byte)'w', (byte)'x', (byte)'y', (byte)'z',
+            (byte)'0', (byte)'1', (byte)'2', (byte)'3', (byte)'4', (byte)'5',
+            (byte)'6', (byte)'7', (byte)'8', (byte)'9', (byte)'-', (byte)'_'
+    };
+
+    /**
+     * Used in decoding URL- and Filename-safe dialects of Base64.
+     */
+<span class="fc" id="L306">    private final static byte[] _URL_SAFE_DECODABET = {</span>
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,                 // Decimal  0 -  8
+            -5,-5,                                      // Whitespace: Tab and Linefeed
+            -9,-9,                                      // Decimal 11 - 12
+            -5,                                         // Whitespace: Carriage Return
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 14 - 26
+            -9,-9,-9,-9,-9,                             // Decimal 27 - 31
+            -5,                                         // Whitespace: Space
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,              // Decimal 33 - 42
+            -9,                                         // Plus sign at decimal 43
+            -9,                                         // Decimal 44
+            62,                                         // Minus sign at decimal 45
+            -9,                                         // Decimal 46
+            -9,                                         // Slash at decimal 47
+            52,53,54,55,56,57,58,59,60,61,              // Numbers zero through nine
+            -9,-9,-9,                                   // Decimal 58 - 60
+            -1,                                         // Equals sign at decimal 61
+            -9,-9,-9,                                   // Decimal 62 - 64
+            0,1,2,3,4,5,6,7,8,9,10,11,12,13,            // Letters 'A' through 'N'
+            14,15,16,17,18,19,20,21,22,23,24,25,        // Letters 'O' through 'Z'
+            -9,-9,-9,-9,                                // Decimal 91 - 94
+            63,                                         // Underscore at decimal 95
+            -9,                                         // Decimal 96
+            26,27,28,29,30,31,32,33,34,35,36,37,38,     // Letters 'a' through 'm'
+            39,40,41,42,43,44,45,46,47,48,49,50,51,     // Letters 'n' through 'z'
+            -9,-9,-9,-9,-9                              // Decimal 123 - 127
+            ,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 128 - 139
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 140 - 152
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 153 - 165
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 166 - 178
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 179 - 191
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 192 - 204
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 205 - 217
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 218 - 230
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 231 - 243
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9         // Decimal 244 - 255
+    };
+
+
+
+/* ********  O R D E R E D   B A S E 6 4   A L P H A B E T  ******** */
+
+    /**
+     * I don't get the point of this technique, but someone requested it,
+     * and it is described here:
+     * &lt;a href=&quot;http://www.faqs.org/qa/rfcc-1940.html&quot;&gt;http://www.faqs.org/qa/rfcc-1940.html&lt;/a&gt;.
+     */
+<span class="fc" id="L353">    private final static byte[] _ORDERED_ALPHABET = {</span>
+            (byte)'-',
+            (byte)'0', (byte)'1', (byte)'2', (byte)'3', (byte)'4',
+            (byte)'5', (byte)'6', (byte)'7', (byte)'8', (byte)'9',
+            (byte)'A', (byte)'B', (byte)'C', (byte)'D', (byte)'E', (byte)'F', (byte)'G',
+            (byte)'H', (byte)'I', (byte)'J', (byte)'K', (byte)'L', (byte)'M', (byte)'N',
+            (byte)'O', (byte)'P', (byte)'Q', (byte)'R', (byte)'S', (byte)'T', (byte)'U',
+            (byte)'V', (byte)'W', (byte)'X', (byte)'Y', (byte)'Z',
+            (byte)'_',
+            (byte)'a', (byte)'b', (byte)'c', (byte)'d', (byte)'e', (byte)'f', (byte)'g',
+            (byte)'h', (byte)'i', (byte)'j', (byte)'k', (byte)'l', (byte)'m', (byte)'n',
+            (byte)'o', (byte)'p', (byte)'q', (byte)'r', (byte)'s', (byte)'t', (byte)'u',
+            (byte)'v', (byte)'w', (byte)'x', (byte)'y', (byte)'z'
+    };
+
+    /**
+     * Used in decoding the &quot;ordered&quot; dialect of Base64.
+     */
+<span class="fc" id="L371">    private final static byte[] _ORDERED_DECODABET = {</span>
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,                 // Decimal  0 -  8
+            -5,-5,                                      // Whitespace: Tab and Linefeed
+            -9,-9,                                      // Decimal 11 - 12
+            -5,                                         // Whitespace: Carriage Return
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 14 - 26
+            -9,-9,-9,-9,-9,                             // Decimal 27 - 31
+            -5,                                         // Whitespace: Space
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,              // Decimal 33 - 42
+            -9,                                         // Plus sign at decimal 43
+            -9,                                         // Decimal 44
+            0,                                          // Minus sign at decimal 45
+            -9,                                         // Decimal 46
+            -9,                                         // Slash at decimal 47
+            1,2,3,4,5,6,7,8,9,10,                       // Numbers zero through nine
+            -9,-9,-9,                                   // Decimal 58 - 60
+            -1,                                         // Equals sign at decimal 61
+            -9,-9,-9,                                   // Decimal 62 - 64
+            11,12,13,14,15,16,17,18,19,20,21,22,23,     // Letters 'A' through 'M'
+            24,25,26,27,28,29,30,31,32,33,34,35,36,     // Letters 'N' through 'Z'
+            -9,-9,-9,-9,                                // Decimal 91 - 94
+            37,                                         // Underscore at decimal 95
+            -9,                                         // Decimal 96
+            38,39,40,41,42,43,44,45,46,47,48,49,50,     // Letters 'a' through 'm'
+            51,52,53,54,55,56,57,58,59,60,61,62,63,     // Letters 'n' through 'z'
+            -9,-9,-9,-9,-9                                 // Decimal 123 - 127
+            ,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 128 - 139
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 140 - 152
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 153 - 165
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 166 - 178
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 179 - 191
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 192 - 204
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 205 - 217
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 218 - 230
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 231 - 243
+            -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9         // Decimal 244 - 255
+    };
+
+
+/* ********  D E T E R M I N E   W H I C H   A L H A B E T  ******** */
+
+
+    /**
+     * Returns one of the _SOMETHING_ALPHABET byte arrays depending on
+     * the options specified.
+     * It's possible, though silly, to specify ORDERED &lt;b&gt;and&lt;/b&gt; URLSAFE
+     * in which case one of them will be picked, though there is
+     * no guarantee as to which one will be picked.
+     */
+    private final static byte[] getAlphabet( int options ) {
+<span class="pc bpc" id="L421" title="1 of 2 branches missed.">        if ((options &amp; URL_SAFE) == URL_SAFE) {</span>
+<span class="nc" id="L422">            return _URL_SAFE_ALPHABET;</span>
+<span class="pc bpc" id="L423" title="1 of 2 branches missed.">        } else if ((options &amp; ORDERED) == ORDERED) {</span>
+<span class="nc" id="L424">            return _ORDERED_ALPHABET;</span>
+        } else {
+<span class="fc" id="L426">            return _STANDARD_ALPHABET;</span>
+        }
+    }	// end getAlphabet
+
+
+    /**
+     * Returns one of the _SOMETHING_DECODABET byte arrays depending on
+     * the options specified.
+     * It's possible, though silly, to specify ORDERED and URL_SAFE
+     * in which case one of them will be picked, though there is
+     * no guarantee as to which one will be picked.
+     */
+    private final static byte[] getDecodabet( int options ) {
+<span class="pc bpc" id="L439" title="1 of 2 branches missed.">        if( (options &amp; URL_SAFE) == URL_SAFE) {</span>
+<span class="nc" id="L440">            return _URL_SAFE_DECODABET;</span>
+<span class="pc bpc" id="L441" title="1 of 2 branches missed.">        } else if ((options &amp; ORDERED) == ORDERED) {</span>
+<span class="nc" id="L442">            return _ORDERED_DECODABET;</span>
+        } else {
+<span class="fc" id="L444">            return _STANDARD_DECODABET;</span>
+        }
+    }	// end getAlphabet
+
+
+
+    /** Defeats instantiation. */
+<span class="nc" id="L451">    private Base64(){}</span>
+
+
+
+
+/* ********  E N C O D I N G   M E T H O D S  ******** */
+
+
+    /**
+     * Encodes up to the first three bytes of array &lt;var&gt;threeBytes&lt;/var&gt;
+     * and returns a four-byte array in Base64 notation.
+     * The actual number of significant bytes in your array is
+     * given by &lt;var&gt;numSigBytes&lt;/var&gt;.
+     * The array &lt;var&gt;threeBytes&lt;/var&gt; needs only be as big as
+     * &lt;var&gt;numSigBytes&lt;/var&gt;.
+     * Code can reuse a byte array by passing a four-byte array as &lt;var&gt;b4&lt;/var&gt;.
+     *
+     * @param b4 A reusable byte array to reduce array instantiation
+     * @param threeBytes the array to convert
+     * @param numSigBytes the number of significant bytes in your array
+     * @return four byte array in Base64 notation.
+     * @since 1.5.1
+     */
+    private static byte[] encode3to4( byte[] b4, byte[] threeBytes, int numSigBytes, int options ) {
+<span class="nc" id="L475">        encode3to4( threeBytes, 0, numSigBytes, b4, 0, options );</span>
+<span class="nc" id="L476">        return b4;</span>
+    }   // end encode3to4
+
+
+    /**
+     * &lt;p&gt;Encodes up to three bytes of the array &lt;var&gt;source&lt;/var&gt;
+     * and writes the resulting four Base64 bytes to &lt;var&gt;destination&lt;/var&gt;.
+     * The source and destination arrays can be manipulated
+     * anywhere along their length by specifying
+     * &lt;var&gt;srcOffset&lt;/var&gt; and &lt;var&gt;destOffset&lt;/var&gt;.
+     * This method does not check to make sure your arrays
+     * are large enough to accomodate &lt;var&gt;srcOffset&lt;/var&gt; + 3 for
+     * the &lt;var&gt;source&lt;/var&gt; array or &lt;var&gt;destOffset&lt;/var&gt; + 4 for
+     * the &lt;var&gt;destination&lt;/var&gt; array.
+     * The actual number of significant bytes in your array is
+     * given by &lt;var&gt;numSigBytes&lt;/var&gt;.&lt;/p&gt;
+     * &lt;p&gt;This is the lowest level of the encoding methods with
+     * all possible parameters.&lt;/p&gt;
+     *
+     * @param source the array to convert
+     * @param srcOffset the index where conversion begins
+     * @param numSigBytes the number of significant bytes in your array
+     * @param destination the array to hold the conversion
+     * @param destOffset the index where output will be put
+     * @return the &lt;var&gt;destination&lt;/var&gt; array
+     * @since 1.3
+     */
+    private static byte[] encode3to4(
+            byte[] source, int srcOffset, int numSigBytes,
+            byte[] destination, int destOffset, int options ) {
+
+<span class="fc" id="L507">        byte[] ALPHABET = getAlphabet( options );</span>
+
+<span class="pc bpc" id="L509" title="1 of 6 branches missed.">        int inBuff =   ( numSigBytes &gt; 0 ? ((source[ srcOffset     ] &lt;&lt; 24) &gt;&gt;&gt;  8) : 0 )</span>
+                | ( numSigBytes &gt; 1 ? ((source[ srcOffset + 1 ] &lt;&lt; 24) &gt;&gt;&gt; 16) : 0 )
+                | ( numSigBytes &gt; 2 ? ((source[ srcOffset + 2 ] &lt;&lt; 24) &gt;&gt;&gt; 24) : 0 );
+
+<span class="pc bpc" id="L513" title="1 of 4 branches missed.">        switch( numSigBytes )</span>
+        {
+            case 3:
+<span class="fc" id="L516">                destination[ destOffset     ] = ALPHABET[ inBuff &gt;&gt;&gt; 18        ];</span>
+<span class="fc" id="L517">                destination[ destOffset + 1 ] = ALPHABET[ (inBuff &gt;&gt;&gt; 12) &amp; 0x3f ];</span>
+<span class="fc" id="L518">                destination[ destOffset + 2 ] = ALPHABET[ (inBuff &gt;&gt;&gt;  6) &amp; 0x3f ];</span>
+<span class="fc" id="L519">                destination[ destOffset + 3 ] = ALPHABET[ (inBuff       ) &amp; 0x3f ];</span>
+<span class="fc" id="L520">                return destination;</span>
+
+            case 2:
+<span class="fc" id="L523">                destination[ destOffset     ] = ALPHABET[ inBuff &gt;&gt;&gt; 18        ];</span>
+<span class="fc" id="L524">                destination[ destOffset + 1 ] = ALPHABET[ (inBuff &gt;&gt;&gt; 12) &amp; 0x3f ];</span>
+<span class="fc" id="L525">                destination[ destOffset + 2 ] = ALPHABET[ (inBuff &gt;&gt;&gt;  6) &amp; 0x3f ];</span>
+<span class="fc" id="L526">                destination[ destOffset + 3 ] = EQUALS_SIGN;</span>
+<span class="fc" id="L527">                return destination;</span>
+
+            case 1:
+<span class="fc" id="L530">                destination[ destOffset     ] = ALPHABET[ inBuff &gt;&gt;&gt; 18        ];</span>
+<span class="fc" id="L531">                destination[ destOffset + 1 ] = ALPHABET[ (inBuff &gt;&gt;&gt; 12) &amp; 0x3f ];</span>
+<span class="fc" id="L532">                destination[ destOffset + 2 ] = EQUALS_SIGN;</span>
+<span class="fc" id="L533">                destination[ destOffset + 3 ] = EQUALS_SIGN;</span>
+<span class="fc" id="L534">                return destination;</span>
+
+            default:
+<span class="nc" id="L537">                return destination;</span>
+        }   // end switch
+    }   // end encode3to4
+
+
+
+    /**
+     * Performs Base64 encoding on the &lt;code&gt;raw&lt;/code&gt; ByteBuffer,
+     * writing it to the &lt;code&gt;encoded&lt;/code&gt; ByteBuffer.
+     * This is an experimental feature. Currently it does not
+     * pass along any options (such as {@link #DO_BREAK_LINES}
+     * or {@link #GZIP}.
+     *
+     * @param raw input buffer
+     * @param encoded output buffer
+     * @since 2.3
+     */
+    public static void encode( java.nio.ByteBuffer raw, java.nio.ByteBuffer encoded ){
+<span class="nc" id="L555">        byte[] raw3 = new byte[3];</span>
+<span class="nc" id="L556">        byte[] enc4 = new byte[4];</span>
+
+<span class="nc bnc" id="L558" title="All 2 branches missed.">        while( raw.hasRemaining() ){</span>
+<span class="nc" id="L559">            int rem = Math.min(3,raw.remaining());</span>
+<span class="nc" id="L560">            raw.get(raw3,0,rem);</span>
+<span class="nc" id="L561">            Base64.encode3to4(enc4, raw3, rem, Base64.NO_OPTIONS);</span>
+<span class="nc" id="L562">            encoded.put(enc4);</span>
+<span class="nc" id="L563">        }   // end input remaining</span>
+<span class="nc" id="L564">    }</span>
+
+
+    /**
+     * Performs Base64 encoding on the &lt;code&gt;raw&lt;/code&gt; ByteBuffer,
+     * writing it to the &lt;code&gt;encoded&lt;/code&gt; CharBuffer.
+     * This is an experimental feature. Currently it does not
+     * pass along any options (such as {@link #DO_BREAK_LINES}
+     * or {@link #GZIP}.
+     *
+     * @param raw input buffer
+     * @param encoded output buffer
+     * @since 2.3
+     */
+    public static void encode( java.nio.ByteBuffer raw, java.nio.CharBuffer encoded ){
+<span class="nc" id="L579">        byte[] raw3 = new byte[3];</span>
+<span class="nc" id="L580">        byte[] enc4 = new byte[4];</span>
+
+<span class="nc bnc" id="L582" title="All 2 branches missed.">        while( raw.hasRemaining() ){</span>
+<span class="nc" id="L583">            int rem = Math.min(3,raw.remaining());</span>
+<span class="nc" id="L584">            raw.get(raw3,0,rem);</span>
+<span class="nc" id="L585">            Base64.encode3to4(enc4, raw3, rem, Base64.NO_OPTIONS );</span>
+<span class="nc bnc" id="L586" title="All 2 branches missed.">            for( int i = 0; i &lt; 4; i++ ){</span>
+<span class="nc" id="L587">                encoded.put( (char)(enc4[i] &amp; 0xFF) );</span>
+            }
+<span class="nc" id="L589">        }   // end input remaining</span>
+<span class="nc" id="L590">    }</span>
+
+
+
+
+    /**
+     * Serializes an object and returns the Base64-encoded
+     * version of that serialized object.
+     *
+     * &lt;p&gt;As of v 2.3, if the object
+     * cannot be serialized or there is another error,
+     * the method will throw an java.io.IOException. &lt;b&gt;This is new to v2.3!&lt;/b&gt;
+     * In earlier versions, it just returned a null value, but
+     * in retrospect that's a pretty poor way to handle it.&lt;/p&gt;
+     *
+     * The object is not GZip-compressed before being encoded.
+     *
+     * @param serializableObject The object to encode
+     * @return The Base64-encoded object
+     * @throws java.io.IOException if there is an error
+     * @throws NullPointerException if serializedObject is null
+     * @since 1.4
+     */
+    public static String encodeObject( java.io.Serializable serializableObject )
+            throws java.io.IOException {
+<span class="nc" id="L615">        return encodeObject( serializableObject, NO_OPTIONS );</span>
+    }   // end encodeObject
+
+
+
+    /**
+     * Serializes an object and returns the Base64-encoded
+     * version of that serialized object.
+     *
+     * &lt;p&gt;As of v 2.3, if the object
+     * cannot be serialized or there is another error,
+     * the method will throw an java.io.IOException. &lt;b&gt;This is new to v2.3!&lt;/b&gt;
+     * In earlier versions, it just returned a null value, but
+     * in retrospect that's a pretty poor way to handle it.&lt;/p&gt;
+     *
+     * The object is not GZip-compressed before being encoded.
+     * &lt;p&gt;
+     * Example options:&lt;pre&gt;
+     *   GZIP: gzip-compresses object before encoding it.
+     *   DO_BREAK_LINES: break lines at 76 characters
+     * &lt;/pre&gt;
+     * &lt;p&gt;
+     * Example: &lt;code&gt;encodeObject( myObj, Base64.GZIP )&lt;/code&gt; or
+     * &lt;p&gt;
+     * Example: &lt;code&gt;encodeObject( myObj, Base64.GZIP | Base64.DO_BREAK_LINES )&lt;/code&gt;
+     *
+     * @param serializableObject The object to encode
+     * @param options Specified options
+     * @return The Base64-encoded object
+     * @see Base64#GZIP
+     * @see Base64#DO_BREAK_LINES
+     * @throws java.io.IOException if there is an error
+     * @since 2.0
+     */
+    public static String encodeObject( java.io.Serializable serializableObject, int options )
+            throws java.io.IOException {
+
+<span class="nc bnc" id="L652" title="All 2 branches missed.">        if( serializableObject == null ){</span>
+<span class="nc" id="L653">            throw new NullPointerException( &quot;Cannot serialize a null object.&quot; );</span>
+        }   // end if: null
+
+        // Streams
+<span class="nc" id="L657">        java.io.ByteArrayOutputStream  baos  = null;</span>
+<span class="nc" id="L658">        java.io.OutputStream           b64os = null;</span>
+<span class="nc" id="L659">        java.util.zip.GZIPOutputStream gzos  = null;</span>
+<span class="nc" id="L660">        java.io.ObjectOutputStream     oos   = null;</span>
+
+
+        try {
+            // ObjectOutputStream -&gt; (GZIP) -&gt; Base64 -&gt; ByteArrayOutputStream
+<span class="nc" id="L665">            baos  = new java.io.ByteArrayOutputStream();</span>
+<span class="nc" id="L666">            b64os = new Base64.OutputStream( baos, ENCODE | options );</span>
+<span class="nc bnc" id="L667" title="All 2 branches missed.">            if( (options &amp; GZIP) != 0 ){</span>
+                // Gzip
+<span class="nc" id="L669">                gzos = new java.util.zip.GZIPOutputStream(b64os);</span>
+<span class="nc" id="L670">                oos = new java.io.ObjectOutputStream( gzos );</span>
+            } else {
+                // Not gzipped
+<span class="nc" id="L673">                oos = new java.io.ObjectOutputStream( b64os );</span>
+            }
+<span class="nc" id="L675">            oos.writeObject( serializableObject );</span>
+        }   // end try
+<span class="nc" id="L677">        catch( java.io.IOException e ) {</span>
+            // Catch it and then throw it immediately so that
+            // the finally{} block is called for cleanup.
+<span class="nc" id="L680">            throw e;</span>
+        }   // end catch
+        finally {
+<span class="nc bnc" id="L683" title="All 4 branches missed.">            if (oos != null) {oos.close();}</span>
+<span class="nc bnc" id="L684" title="All 4 branches missed.">            if (gzos != null) {gzos.close();}</span>
+<span class="nc bnc" id="L685" title="All 4 branches missed.">            if (b64os != null) {b64os.close();}</span>
+<span class="nc bnc" id="L686" title="All 4 branches missed.">            if (baos != null) {baos.close();}</span>
+<span class="nc" id="L687">        }   // end finally</span>
+
+        // Return value according to relevant encoding.
+        try {
+<span class="nc" id="L691">            return new String( baos.toByteArray(), PREFERRED_ENCODING );</span>
+        }   // end try
+<span class="nc" id="L693">        catch (java.io.UnsupportedEncodingException uue){</span>
+<span class="nc" id="L694">            logger.trace(uue.getMessage(), uue);</span>
+            // Fall back to some Java default
+<span class="nc" id="L696">            return new String( baos.toByteArray() );</span>
+        }   // end catch
+
+    }   // end encode
+
+
+
+    /**
+     * Encodes a byte array into Base64 notation.
+     * Does not GZip-compress data.
+     *
+     * @param source The data to convert
+     * @return The data in Base64-encoded form
+     * @throws NullPointerException if source array is null
+     * @since 1.4
+     */
+    public static String encodeBytes( byte[] source ) {
+        // Since we're not going to have the GZIP encoding turned on,
+        // we're not going to have an java.io.IOException thrown, so
+        // we should not force the user to have to catch it.
+<span class="fc" id="L716">        String encoded = null;</span>
+        try {
+<span class="fc" id="L718">            encoded = encodeBytes(source, 0, source.length, NO_OPTIONS);</span>
+<span class="nc" id="L719">        } catch (java.io.IOException ex) {</span>
+<span class="nc" id="L720">            logger.trace(ex.getMessage(), ex);</span>
+<span class="nc bnc" id="L721" title="All 2 branches missed.">            assert false : ex.getMessage();</span>
+<span class="fc" id="L722">        }   // end catch</span>
+<span class="pc bpc" id="L723" title="2 of 4 branches missed.">        assert encoded != null;</span>
+<span class="fc" id="L724">        return encoded;</span>
+    }   // end encodeBytes
+
+
+
+    /**
+     * Encodes a byte array into Base64 notation.
+     * &lt;p&gt;
+     * Example options:&lt;pre&gt;
+     *   GZIP: gzip-compresses object before encoding it.
+     *   DO_BREAK_LINES: break lines at 76 characters
+     *     &lt;i&gt;Note: Technically, this makes your encoding non-compliant.&lt;/i&gt;
+     * &lt;/pre&gt;
+     * &lt;p&gt;
+     * Example: &lt;code&gt;encodeBytes( myData, Base64.GZIP )&lt;/code&gt; or
+     * &lt;p&gt;
+     * Example: &lt;code&gt;encodeBytes( myData, Base64.GZIP | Base64.DO_BREAK_LINES )&lt;/code&gt;
+     *
+     *
+     * &lt;p&gt;As of v 2.3, if there is an error with the GZIP stream,
+     * the method will throw an java.io.IOException. &lt;b&gt;This is new to v2.3!&lt;/b&gt;
+     * In earlier versions, it just returned a null value, but
+     * in retrospect that's a pretty poor way to handle it.&lt;/p&gt;
+     *
+     *
+     * @param source The data to convert
+     * @param options Specified options
+     * @return The Base64-encoded data as a String
+     * @see Base64#GZIP
+     * @see Base64#DO_BREAK_LINES
+     * @throws java.io.IOException if there is an error
+     * @throws NullPointerException if source array is null
+     * @since 2.0
+     */
+    public static String encodeBytes( byte[] source, int options ) throws java.io.IOException {
+<span class="nc" id="L759">        return encodeBytes( source, 0, source.length, options );</span>
+    }   // end encodeBytes
+
+
+    /**
+     * Encodes a byte array into Base64 notation.
+     * Does not GZip-compress data.
+     *
+     * &lt;p&gt;As of v 2.3, if there is an error,
+     * the method will throw an java.io.IOException. &lt;b&gt;This is new to v2.3!&lt;/b&gt;
+     * In earlier versions, it just returned a null value, but
+     * in retrospect that's a pretty poor way to handle it.&lt;/p&gt;
+     *
+     *
+     * @param source The data to convert
+     * @param off Offset in array where conversion should begin
+     * @param len Length of data to convert
+     * @return The Base64-encoded data as a String
+     * @throws NullPointerException if source array is null
+     * @throws IllegalArgumentException if source array, offset, or length are invalid
+     * @since 1.4
+     */
+    public static String encodeBytes( byte[] source, int off, int len ) {
+        // Since we're not going to have the GZIP encoding turned on,
+        // we're not going to have an java.io.IOException thrown, so
+        // we should not force the user to have to catch it.
+<span class="nc" id="L785">        String encoded = null;</span>
+        try {
+<span class="nc" id="L787">            encoded = encodeBytes( source, off, len, NO_OPTIONS );</span>
+<span class="nc" id="L788">        } catch (java.io.IOException ex) {</span>
+<span class="nc" id="L789">            logger.trace(ex.getMessage(), ex);</span>
+<span class="nc bnc" id="L790" title="All 2 branches missed.">            assert false : ex.getMessage();</span>
+<span class="nc" id="L791">        }   // end catch</span>
+<span class="nc bnc" id="L792" title="All 4 branches missed.">        assert encoded != null;</span>
+<span class="nc" id="L793">        return encoded;</span>
+    }   // end encodeBytes
+
+
+
+    /**
+     * Encodes a byte array into Base64 notation.
+     * &lt;p&gt;
+     * Example options:&lt;pre&gt;
+     *   GZIP: gzip-compresses object before encoding it.
+     *   DO_BREAK_LINES: break lines at 76 characters
+     *     &lt;i&gt;Note: Technically, this makes your encoding non-compliant.&lt;/i&gt;
+     * &lt;/pre&gt;
+     * &lt;p&gt;
+     * Example: &lt;code&gt;encodeBytes( myData, Base64.GZIP )&lt;/code&gt; or
+     * &lt;p&gt;
+     * Example: &lt;code&gt;encodeBytes( myData, Base64.GZIP | Base64.DO_BREAK_LINES )&lt;/code&gt;
+     *
+     *
+     * &lt;p&gt;As of v 2.3, if there is an error with the GZIP stream,
+     * the method will throw an java.io.IOException. &lt;b&gt;This is new to v2.3!&lt;/b&gt;
+     * In earlier versions, it just returned a null value, but
+     * in retrospect that's a pretty poor way to handle it.&lt;/p&gt;
+     *
+     *
+     * @param source The data to convert
+     * @param off Offset in array where conversion should begin
+     * @param len Length of data to convert
+     * @param options Specified options
+     * @return The Base64-encoded data as a String
+     * @see Base64#GZIP
+     * @see Base64#DO_BREAK_LINES
+     * @throws java.io.IOException if there is an error
+     * @throws NullPointerException if source array is null
+     * @throws IllegalArgumentException if source array, offset, or length are invalid
+     * @since 2.0
+     */
+    public static String encodeBytes( byte[] source, int off, int len, int options ) throws java.io.IOException {
+<span class="fc" id="L831">        byte[] encoded = encodeBytesToBytes( source, off, len, options );</span>
+
+        // Return value according to relevant encoding.
+        try {
+<span class="fc" id="L835">            return new String( encoded, PREFERRED_ENCODING );</span>
+        }   // end try
+<span class="nc" id="L837">        catch (java.io.UnsupportedEncodingException uue) {</span>
+<span class="nc" id="L838">            logger.trace(uue.getMessage(), uue);</span>
+<span class="nc" id="L839">            return new String( encoded );</span>
+        }   // end catch
+
+    }   // end encodeBytes
+
+
+
+
+    /**
+     * Similar to {@link #encodeBytes(byte[])} but returns
+     * a byte array instead of instantiating a String. This is more efficient
+     * if you're working with I/O streams and have large data sets to encode.
+     *
+     *
+     * @param source The data to convert
+     * @return The Base64-encoded data as a byte[] (of ASCII characters)
+     * @throws NullPointerException if source array is null
+     * @since 2.3.1
+     */
+    public static byte[] encodeBytesToBytes( byte[] source ) {
+<span class="nc" id="L859">        byte[] encoded = null;</span>
+        try {
+<span class="nc" id="L861">            encoded = encodeBytesToBytes(source, 0, source.length, Base64.NO_OPTIONS);</span>
+<span class="nc" id="L862">        } catch (java.io.IOException ex) {</span>
+<span class="nc" id="L863">            logger.trace(&quot;IOExceptions only come from GZipping, which is turned off: &quot;</span>
+<span class="nc" id="L864">                    + ex.getMessage(), ex);</span>
+<span class="nc" id="L865">            throw new Base64UtilException(</span>
+                    &quot;IOExceptions only come from GZipping, which is turned off: &quot;
+<span class="nc" id="L867">                            + ex.getMessage());</span>
+<span class="nc" id="L868">        }</span>
+<span class="nc" id="L869">        return encoded;</span>
+    }
+
+
+    /**
+     * Similar to {@link #encodeBytes(byte[], int, int, int)} but returns
+     * a byte array instead of instantiating a String. This is more efficient
+     * if you're working with I/O streams and have large data sets to encode.
+     *
+     *
+     * @param source The data to convert
+     * @param off Offset in array where conversion should begin
+     * @param len Length of data to convert
+     * @param options Specified options
+     * @return The Base64-encoded data as a String
+     * @see Base64#GZIP
+     * @see Base64#DO_BREAK_LINES
+     * @throws java.io.IOException if there is an error
+     * @throws NullPointerException if source array is null
+     * @throws IllegalArgumentException if source array, offset, or length are invalid
+     * @since 2.3.1
+     */
+    public static byte[] encodeBytesToBytes( byte[] source, int off, int len, int options ) throws java.io.IOException {
+
+<span class="pc bpc" id="L893" title="1 of 2 branches missed.">        if( source == null ){</span>
+<span class="nc" id="L894">            throw new NullPointerException( &quot;Cannot serialize a null array.&quot; );</span>
+        }   // end if: null
+
+<span class="pc bpc" id="L897" title="1 of 2 branches missed.">        if( off &lt; 0 ){</span>
+<span class="nc" id="L898">            throw new IllegalArgumentException( &quot;Cannot have negative offset: &quot; + off );</span>
+        }   // end if: off &lt; 0
+
+<span class="pc bpc" id="L901" title="1 of 2 branches missed.">        if( len &lt; 0 ){</span>
+<span class="nc" id="L902">            throw new IllegalArgumentException( &quot;Cannot have length offset: &quot; + len );</span>
+        }   // end if: len &lt; 0
+
+<span class="pc bpc" id="L905" title="1 of 2 branches missed.">        if( off + len &gt; source.length  ){</span>
+<span class="nc" id="L906">            throw new IllegalArgumentException(</span>
+<span class="nc" id="L907">                    String.format( &quot;Cannot have offset of %d and length of %d with array of length %d&quot;, off,len,source.length));</span>
+        }   // end if: off &lt; 0
+
+
+
+        // Compress?
+<span class="pc bpc" id="L913" title="1 of 2 branches missed.">        if( (options &amp; GZIP) != 0 ) {</span>
+<span class="nc" id="L914">            java.io.ByteArrayOutputStream  baos  = null;</span>
+<span class="nc" id="L915">            java.util.zip.GZIPOutputStream gzos  = null;</span>
+<span class="nc" id="L916">            Base64.OutputStream            b64os = null;</span>
+
+            try {
+                // GZip -&gt; Base64 -&gt; ByteArray
+<span class="nc" id="L920">                baos = new java.io.ByteArrayOutputStream();</span>
+<span class="nc" id="L921">                b64os = new Base64.OutputStream( baos, ENCODE | options );</span>
+<span class="nc" id="L922">                gzos  = new java.util.zip.GZIPOutputStream( b64os );</span>
+
+<span class="nc" id="L924">                gzos.write( source, off, len );</span>
+<span class="nc" id="L925">                gzos.close();</span>
+            }   // end try
+<span class="nc" id="L927">            catch( java.io.IOException e ) {</span>
+                // Catch it and then throw it immediately so that
+                // the finally{} block is called for cleanup.
+<span class="nc" id="L930">                throw e;</span>
+            }   // end catch
+            finally {
+<span class="nc bnc" id="L933" title="All 4 branches missed.">                if (gzos != null) {gzos.close();}</span>
+<span class="nc bnc" id="L934" title="All 4 branches missed.">                if (b64os != null) {b64os.close();}</span>
+<span class="nc bnc" id="L935" title="All 4 branches missed.">                if (baos != null) {baos.close();}</span>
+<span class="nc" id="L936">            }   // end finally</span>
+
+<span class="nc" id="L938">            return baos.toByteArray();</span>
+        }   // end if: compress
+
+        // Else, don't compress. Better not to use streams at all then.
+        else {
+<span class="pc bpc" id="L943" title="1 of 2 branches missed.">            boolean breakLines = (options &amp; DO_BREAK_LINES) != 0;</span>
+
+            //int    len43   = len * 4 / 3;
+            //byte[] outBuff = new byte[   ( len43 )                      // Main 4:3
+            //                           + ( (len % 3) &gt; 0 ? 4 : 0 )      // Account for padding
+            //                           + (breakLines ? ( len43 / MAX_LINE_LENGTH ) : 0) ]; // New lines
+            // Try to determine more precisely how big the array needs to be.
+            // If we get it right, we don't have to do an array copy, and
+            // we save a bunch of memory.
+<span class="fc bfc" id="L952" title="All 2 branches covered.">            int encLen = ( len / 3 ) * 4 + ( len % 3 &gt; 0 ? 4 : 0 ); // Bytes needed for actual encoding</span>
+<span class="pc bpc" id="L953" title="1 of 2 branches missed.">            if( breakLines ){</span>
+<span class="nc" id="L954">                encLen += encLen / MAX_LINE_LENGTH; // Plus extra newline characters</span>
+            }
+<span class="fc" id="L956">            byte[] outBuff = new byte[ encLen ];</span>
+
+
+<span class="fc" id="L959">            int d = 0;</span>
+<span class="fc" id="L960">            int e = 0;</span>
+<span class="fc" id="L961">            int len2 = len - 2;</span>
+<span class="fc" id="L962">            int lineLength = 0;</span>
+<span class="fc bfc" id="L963" title="All 2 branches covered.">            for( ; d &lt; len2; d+=3, e+=4 ) {</span>
+<span class="fc" id="L964">                encode3to4( source, d+off, 3, outBuff, e, options );</span>
+
+<span class="fc" id="L966">                lineLength += 4;</span>
+<span class="pc bpc" id="L967" title="3 of 4 branches missed.">                if( breakLines &amp;&amp; lineLength &gt;= MAX_LINE_LENGTH )</span>
+                {
+<span class="nc" id="L969">                    outBuff[e+4] = NEW_LINE;</span>
+<span class="nc" id="L970">                    e++;</span>
+<span class="nc" id="L971">                    lineLength = 0;</span>
+                }   // end if: end of line
+            }   // en dfor: each piece of array
+
+<span class="fc bfc" id="L975" title="All 2 branches covered.">            if( d &lt; len ) {</span>
+<span class="fc" id="L976">                encode3to4( source, d+off, len - d, outBuff, e, options );</span>
+<span class="fc" id="L977">                e += 4;</span>
+            }   // end if: some padding needed
+
+
+            // Only resize array if we didn't guess it right.
+<span class="pc bpc" id="L982" title="1 of 2 branches missed.">            if( e &lt;= outBuff.length - 1 ){</span>
+                // If breaking lines and the last byte falls right at
+                // the line length (76 bytes per line), there will be
+                // one extra byte, and the array will need to be resized.
+                // Not too bad of an estimate on array size, I'd say.
+<span class="nc" id="L987">                byte[] finalOut = new byte[e];</span>
+<span class="nc" id="L988">                System.arraycopy(outBuff,0, finalOut,0,e);</span>
+<span class="nc" id="L989">                return finalOut;</span>
+            } else {
+<span class="fc" id="L991">                return outBuff;</span>
+            }
+
+        }   // end else: don't compress
+
+    }   // end encodeBytesToBytes
+
+
+
+
+
+/* ********  D E C O D I N G   M E T H O D S  ******** */
+
+
+    /**
+     * Decodes four bytes from array &lt;var&gt;source&lt;/var&gt;
+     * and writes the resulting bytes (up to three of them)
+     * to &lt;var&gt;destination&lt;/var&gt;.
+     * The source and destination arrays can be manipulated
+     * anywhere along their length by specifying
+     * &lt;var&gt;srcOffset&lt;/var&gt; and &lt;var&gt;destOffset&lt;/var&gt;.
+     * This method does not check to make sure your arrays
+     * are large enough to accomodate &lt;var&gt;srcOffset&lt;/var&gt; + 4 for
+     * the &lt;var&gt;source&lt;/var&gt; array or &lt;var&gt;destOffset&lt;/var&gt; + 3 for
+     * the &lt;var&gt;destination&lt;/var&gt; array.
+     * This method returns the actual number of bytes that
+     * were converted from the Base64 encoding.
+     * &lt;p&gt;This is the lowest level of the decoding methods with
+     * all possible parameters.&lt;/p&gt;
+     *
+     *
+     * @param source the array to convert
+     * @param srcOffset the index where conversion begins
+     * @param destination the array to hold the conversion
+     * @param destOffset the index where output will be put
+     * @param options alphabet type is pulled from this (standard, url-safe, ordered)
+     * @return the number of decoded bytes converted
+     * @throws NullPointerException if source or destination arrays are null
+     * @throws IllegalArgumentException if srcOffset or destOffset are invalid
+     *         or there is not enough room in the array.
+     * @since 1.3
+     */
+    private static int decode4to3(
+            byte[] source, int srcOffset,
+            byte[] destination, int destOffset, int options ) {
+
+        // Lots of error checking and exception throwing
+<span class="pc bpc" id="L1038" title="1 of 2 branches missed.">        if( source == null ){</span>
+<span class="nc" id="L1039">            throw new NullPointerException( &quot;Source array was null.&quot; );</span>
+        }   // end if
+<span class="pc bpc" id="L1041" title="1 of 2 branches missed.">        if( destination == null ){</span>
+<span class="nc" id="L1042">            throw new NullPointerException( &quot;Destination array was null.&quot; );</span>
+        }   // end if
+<span class="pc bpc" id="L1044" title="2 of 4 branches missed.">        if( srcOffset &lt; 0 || srcOffset + 3 &gt;= source.length ){</span>
+<span class="nc" id="L1045">            throw new IllegalArgumentException( String.format(</span>
+<span class="nc" id="L1046">                    &quot;Source array with length %d cannot have offset of %d and still process four bytes.&quot;, source.length, srcOffset ) );</span>
+        }   // end if
+<span class="pc bpc" id="L1048" title="2 of 4 branches missed.">        if( destOffset &lt; 0 || destOffset +2 &gt;= destination.length ){</span>
+<span class="nc" id="L1049">            throw new IllegalArgumentException( String.format(</span>
+<span class="nc" id="L1050">                    &quot;Destination array with length %d cannot have offset of %d and still store three bytes.&quot;, destination.length, destOffset ) );</span>
+        }   // end if
+
+
+<span class="fc" id="L1054">        byte[] DECODABET = getDecodabet( options );</span>
+
+        // Example: Dk==
+<span class="fc bfc" id="L1057" title="All 2 branches covered.">        if( source[ srcOffset + 2] == EQUALS_SIGN ) {</span>
+            // Two ways to do the same thing. Don't know which way I like best.
+            //int outBuff =   ( ( DECODABET[ source[ srcOffset    ] ] &lt;&lt; 24 ) &gt;&gt;&gt;  6 )
+            //              | ( ( DECODABET[ source[ srcOffset + 1] ] &lt;&lt; 24 ) &gt;&gt;&gt; 12 );
+<span class="fc" id="L1061">            int outBuff =   ( ( DECODABET[ source[ srcOffset    ] ] &amp; 0xFF ) &lt;&lt; 18 )</span>
+                    | ( ( DECODABET[ source[ srcOffset + 1] ] &amp; 0xFF ) &lt;&lt; 12 );
+
+<span class="fc" id="L1064">            destination[ destOffset ] = (byte)( outBuff &gt;&gt;&gt; 16 );</span>
+<span class="fc" id="L1065">            return 1;</span>
+        }
+
+        // Example: DkL=
+<span class="fc bfc" id="L1069" title="All 2 branches covered.">        else if( source[ srcOffset + 3 ] == EQUALS_SIGN ) {</span>
+            // Two ways to do the same thing. Don't know which way I like best.
+            //int outBuff =   ( ( DECODABET[ source[ srcOffset     ] ] &lt;&lt; 24 ) &gt;&gt;&gt;  6 )
+            //              | ( ( DECODABET[ source[ srcOffset + 1 ] ] &lt;&lt; 24 ) &gt;&gt;&gt; 12 )
+            //              | ( ( DECODABET[ source[ srcOffset + 2 ] ] &lt;&lt; 24 ) &gt;&gt;&gt; 18 );
+<span class="fc" id="L1074">            int outBuff =   ( ( DECODABET[ source[ srcOffset     ] ] &amp; 0xFF ) &lt;&lt; 18 )</span>
+                    | ( ( DECODABET[ source[ srcOffset + 1 ] ] &amp; 0xFF ) &lt;&lt; 12 )
+                    | ( ( DECODABET[ source[ srcOffset + 2 ] ] &amp; 0xFF ) &lt;&lt;  6 );
+
+<span class="fc" id="L1078">            destination[ destOffset     ] = (byte)( outBuff &gt;&gt;&gt; 16 );</span>
+<span class="fc" id="L1079">            destination[ destOffset + 1 ] = (byte)( outBuff &gt;&gt;&gt;  8 );</span>
+<span class="fc" id="L1080">            return 2;</span>
+        }
+
+        // Example: DkLE
+        else {
+            // Two ways to do the same thing. Don't know which way I like best.
+            //int outBuff =   ( ( DECODABET[ source[ srcOffset     ] ] &lt;&lt; 24 ) &gt;&gt;&gt;  6 )
+            //              | ( ( DECODABET[ source[ srcOffset + 1 ] ] &lt;&lt; 24 ) &gt;&gt;&gt; 12 )
+            //              | ( ( DECODABET[ source[ srcOffset + 2 ] ] &lt;&lt; 24 ) &gt;&gt;&gt; 18 )
+            //              | ( ( DECODABET[ source[ srcOffset + 3 ] ] &lt;&lt; 24 ) &gt;&gt;&gt; 24 );
+<span class="fc" id="L1090">            int outBuff =   ( ( DECODABET[ source[ srcOffset     ] ] &amp; 0xFF ) &lt;&lt; 18 )</span>
+                    | ( ( DECODABET[ source[ srcOffset + 1 ] ] &amp; 0xFF ) &lt;&lt; 12 )
+                    | ( ( DECODABET[ source[ srcOffset + 2 ] ] &amp; 0xFF ) &lt;&lt;  6)
+                    | ( ( DECODABET[ source[ srcOffset + 3 ] ] &amp; 0xFF )      );
+
+
+<span class="fc" id="L1096">            destination[ destOffset     ] = (byte)( outBuff &gt;&gt; 16 );</span>
+<span class="fc" id="L1097">            destination[ destOffset + 1 ] = (byte)( outBuff &gt;&gt;  8 );</span>
+<span class="fc" id="L1098">            destination[ destOffset + 2 ] = (byte)( outBuff       );</span>
+
+<span class="fc" id="L1100">            return 3;</span>
+        }
+    }   // end decodeToBytes
+
+
+
+
+
+    /*
+     * Low-level access to decoding ASCII characters in
+     * the form of a byte array. &lt;strong&gt;Ignores GUNZIP option, if
+     * it's set.&lt;/strong&gt; This is not generally a recommended method,
+     * although it is used internally as part of the decoding process.
+     * Special case: if len = 0, an empty array is returned. Still,
+     * if you need more speed and reduced memory footprint (and aren't
+     * gzipping), consider this method.
+     *
+     * @param source The Base64 encoded data
+     * @return decoded data
+     * @throws java.io.IOException
+     * @since 2.3.1
+     */
+    public static byte[] decode( byte[] source )
+            throws java.io.IOException {
+<span class="nc" id="L1124">        byte[] decoded = null;</span>
+//        try {
+<span class="nc" id="L1126">        decoded = decode( source, 0, source.length, Base64.NO_OPTIONS );</span>
+//        } catch( java.io.IOException ex ) {
+//            assert false : &quot;IOExceptions only come from GZipping, which is turned off: &quot; + ex.getMessage();
+//        }
+<span class="nc" id="L1130">        return decoded;</span>
+    }
+
+
+
+    /**
+     * Low-level access to decoding ASCII characters in
+     * the form of a byte array. &lt;strong&gt;Ignores GUNZIP option, if
+     * it's set.&lt;/strong&gt; This is not generally a recommended method,
+     * although it is used internally as part of the decoding process.
+     * Special case: if len = 0, an empty array is returned. Still,
+     * if you need more speed and reduced memory footprint (and aren't
+     * gzipping), consider this method.
+     *
+     * @param source The Base64 encoded data
+     * @param off    The offset of where to begin decoding
+     * @param len    The length of characters to decode
+     * @param options Can specify options such as alphabet type to use
+     * @return decoded data
+     * @throws java.io.IOException If bogus characters exist in source data
+     * @since 1.3
+     */
+    public static byte[] decode( byte[] source, int off, int len, int options )
+            throws java.io.IOException {
+
+        // Lots of error checking and exception throwing
+<span class="pc bpc" id="L1156" title="1 of 2 branches missed.">        if( source == null ){</span>
+<span class="nc" id="L1157">            throw new NullPointerException( &quot;Cannot decode null source array.&quot; );</span>
+        }   // end if
+<span class="pc bpc" id="L1159" title="2 of 4 branches missed.">        if( off &lt; 0 || off + len &gt; source.length ){</span>
+<span class="nc" id="L1160">            throw new IllegalArgumentException( String.format(</span>
+<span class="nc" id="L1161">                    &quot;Source array with length %d cannot have offset of %d and process %d bytes.&quot;, source.length, off, len ) );</span>
+        }   // end if
+
+<span class="pc bpc" id="L1164" title="1 of 2 branches missed.">        if( len == 0 ){</span>
+<span class="nc" id="L1165">            return new byte[0];</span>
+<span class="pc bpc" id="L1166" title="1 of 2 branches missed.">        }else if( len &lt; 4 ){</span>
+<span class="nc" id="L1167">            throw new IllegalArgumentException(</span>
+                    &quot;Base64-encoded string must have at least four characters, but length specified was &quot; + len );
+        }   // end if
+
+<span class="fc" id="L1171">        byte[] DECODABET = getDecodabet( options );</span>
+
+<span class="fc" id="L1173">        int    len34   = len * 3 / 4;       // Estimate on array size</span>
+<span class="fc" id="L1174">        byte[] outBuff = new byte[ len34 ]; // Upper limit on size of output</span>
+<span class="fc" id="L1175">        int    outBuffPosn = 0;             // Keep track of where we're writing</span>
+
+<span class="fc" id="L1177">        byte[] b4        = new byte[4];     // Four byte buffer from source, eliminating white space</span>
+<span class="fc" id="L1178">        int    b4Posn    = 0;               // Keep track of four byte input buffer</span>
+<span class="fc" id="L1179">        int    i         = 0;               // Source array counter</span>
+<span class="fc" id="L1180">        byte   sbiDecode = 0;               // Special value from DECODABET</span>
+
+<span class="fc bfc" id="L1182" title="All 2 branches covered.">        for( i = off; i &lt; off+len; i++ ) {  // Loop through source</span>
+
+<span class="fc" id="L1184">            sbiDecode = DECODABET[ source[i]&amp;0xFF ];</span>
+
+            // White space, Equals sign, or legit Base64 character
+            // Note the values such as -5 and -9 in the
+            // DECODABETs at the top of the file.
+<span class="pc bpc" id="L1189" title="1 of 2 branches missed.">            if( sbiDecode &gt;= WHITE_SPACE_ENC )  {</span>
+<span class="pc bpc" id="L1190" title="1 of 2 branches missed.">                if( sbiDecode &gt;= EQUALS_SIGN_ENC ) {</span>
+<span class="fc" id="L1191">                    b4[ b4Posn++ ] = source[i];         // Save non-whitespace</span>
+<span class="fc bfc" id="L1192" title="All 2 branches covered.">                    if( b4Posn &gt; 3 ) {                  // Time to decode?</span>
+<span class="fc" id="L1193">                        outBuffPosn += decode4to3( b4, 0, outBuff, outBuffPosn, options );</span>
+<span class="fc" id="L1194">                        b4Posn = 0;</span>
+
+                        // If that was the equals sign, break out of 'for' loop
+<span class="fc bfc" id="L1197" title="All 2 branches covered.">                        if( source[i] == EQUALS_SIGN ) {</span>
+<span class="fc" id="L1198">                            break;</span>
+                        }   // end if: equals sign
+                    }   // end if: quartet built
+                }   // end if: equals sign or better
+            }   // end if: white space, equals sign or better
+            else {
+                // There's a bad input character in the Base64 stream.
+<span class="nc" id="L1205">                throw new java.io.IOException( String.format(</span>
+<span class="nc" id="L1206">                        &quot;Bad Base64 input character decimal %d in array position %d&quot;, ((int)source[i])&amp;0xFF, i ) );</span>
+            }   // end else:
+        }   // each input character
+
+<span class="fc" id="L1210">        byte[] out = new byte[ outBuffPosn ];</span>
+<span class="fc" id="L1211">        System.arraycopy( outBuff, 0, out, 0, outBuffPosn );</span>
+<span class="fc" id="L1212">        return out;</span>
+    }   // end decode
+
+
+
+
+    /**
+     * Decodes data from Base64 notation, automatically
+     * detecting gzip-compressed data and decompressing it.
+     *
+     * @param s the string to decode
+     * @return the decoded data
+     * @throws java.io.IOException If there is a problem
+     * @since 1.4
+     */
+    public static byte[] decode( String s ) throws java.io.IOException {
+<span class="fc" id="L1228">        return decode( s, NO_OPTIONS );</span>
+    }
+
+
+
+    /**
+     * Decodes data from Base64 notation, automatically
+     * detecting gzip-compressed data and decompressing it.
+     *
+     * @param s the string to decode
+     * @param options encode options such as URL_SAFE
+     * @return the decoded data
+     * @throws java.io.IOException if there is an error
+     * @throws NullPointerException if &lt;tt&gt;s&lt;/tt&gt; is null
+     * @since 1.4
+     */
+    public static byte[] decode( String s, int options ) throws java.io.IOException {
+
+<span class="pc bpc" id="L1246" title="1 of 2 branches missed.">        if( s == null ){</span>
+<span class="nc" id="L1247">            throw new NullPointerException( &quot;Input string was null.&quot; );</span>
+        }   // end if
+
+        byte[] bytes;
+        try {
+<span class="fc" id="L1252">            bytes = s.getBytes( PREFERRED_ENCODING );</span>
+        }   // end try
+<span class="nc" id="L1254">        catch( java.io.UnsupportedEncodingException uee ) {</span>
+<span class="nc" id="L1255">            logger.trace(uee.getMessage(), uee);</span>
+<span class="nc" id="L1256">            bytes = s.getBytes();</span>
+<span class="fc" id="L1257">        }   // end catch</span>
+        //&lt;/change&gt;
+
+        // Decode
+<span class="fc" id="L1261">        bytes = decode( bytes, 0, bytes.length, options );</span>
+
+<span class="pc bpc" id="L1263" title="1 of 2 branches missed.">        if (bytes == null) {</span>
+<span class="nc" id="L1264">            return null;</span>
+        }
+        // Check to see if it's gzip-compressed
+        // GZIP Magic Two-Byte Number: 0x8b1f (35615)
+<span class="fc bfc" id="L1268" title="All 2 branches covered.">        boolean dontGunzip = (options &amp; DONT_GUNZIP) == 0;</span>
+<span class="pc bpc" id="L1269" title="1 of 4 branches missed.">        if (bytes.length &gt;= 4 &amp;&amp; dontGunzip) {</span>
+
+<span class="fc" id="L1271">            int head = ((int)bytes[0] &amp; 0xff) | ((bytes[1] &lt;&lt; 8) &amp; 0xff00);</span>
+<span class="pc bpc" id="L1272" title="1 of 2 branches missed.">            if( java.util.zip.GZIPInputStream.GZIP_MAGIC == head )  {</span>
+<span class="nc" id="L1273">                java.io.ByteArrayInputStream  bais = null;</span>
+<span class="nc" id="L1274">                java.util.zip.GZIPInputStream gzis = null;</span>
+<span class="nc" id="L1275">                java.io.ByteArrayOutputStream baos = null;</span>
+<span class="nc" id="L1276">                byte[] buffer = new byte[2048];</span>
+                int    length;
+
+                try {
+<span class="nc" id="L1280">                    baos = new java.io.ByteArrayOutputStream();</span>
+<span class="nc" id="L1281">                    bais = new java.io.ByteArrayInputStream( bytes );</span>
+<span class="nc" id="L1282">                    gzis = new java.util.zip.GZIPInputStream( bais );</span>
+
+<span class="nc bnc" id="L1284" title="All 2 branches missed.">                    while( ( length = gzis.read( buffer ) ) &gt;= 0 ) {</span>
+<span class="nc" id="L1285">                        baos.write(buffer,0,length);</span>
+                    }   // end while: reading input
+
+                    // No error? Get new bytes.
+<span class="nc" id="L1289">                    bytes = baos.toByteArray();</span>
+
+                }   // end try
+<span class="nc" id="L1292">                catch( java.io.IOException e ) {</span>
+<span class="nc bnc" id="L1293" title="All 2 branches missed.">                    if (&quot;Unsupported compression method&quot;.equals(e.getMessage())) {</span>
+<span class="nc" id="L1294">                        logger.trace(&quot;Base64 decoding: Ignoring GZIP header and just returning originally-decoded bytes.&quot;); // Better to log as debug, but jboss logging not available in the module :/</span>
+                    } else {
+<span class="nc" id="L1296">                        logger.trace(e.getMessage(), e);</span>
+                    }
+
+                    // Just return originally-decoded bytes
+                }   // end catch
+                finally {
+<span class="nc bnc" id="L1302" title="All 6 branches missed.">                    if (baos != null) {baos.close();}</span>
+<span class="nc bnc" id="L1303" title="All 6 branches missed.">                    if (gzis != null) {gzis.close();}</span>
+<span class="nc bnc" id="L1304" title="All 6 branches missed.">                    if (bais != null) {bais.close();}</span>
+<span class="nc" id="L1305">                }   // end finally</span>
+
+            }   // end if: gzipped
+        }   // end if: bytes.length &gt;= 2
+
+<span class="fc" id="L1310">        return bytes;</span>
+    }   // end decode
+
+
+
+    /**
+     * Attempts to decode Base64 data and deserialize a Java
+     * Object within. Returns &lt;tt&gt;null&lt;/tt&gt; if there was an error.
+     *
+     * @param encodedObject The Base64 data to decode
+     * @return The decoded and deserialized object
+     * @throws NullPointerException if encodedObject is null
+     * @throws java.io.IOException if there is a general error
+     * @throws ClassNotFoundException if the decoded object is of a
+     *         class that cannot be found by the JVM
+     * @since 1.5
+     */
+    public static Object decodeToObject( String encodedObject )
+            throws java.io.IOException, ClassNotFoundException {
+<span class="nc" id="L1329">        return decodeToObject(encodedObject,NO_OPTIONS,null);</span>
+    }
+
+
+    /**
+     * Attempts to decode Base64 data and deserialize a Java
+     * Object within. Returns &lt;tt&gt;null&lt;/tt&gt; if there was an error.
+     * If &lt;tt&gt;loader&lt;/tt&gt; is not null, it will be the class loader
+     * used when deserializing.
+     *
+     * @param encodedObject The Base64 data to decode
+     * @param options Various parameters related to decoding
+     * @param loader Optional class loader to use in deserializing classes.
+     * @return The decoded and deserialized object
+     * @throws NullPointerException if encodedObject is null
+     * @throws java.io.IOException if there is a general error
+     * @throws ClassNotFoundException if the decoded object is of a
+     *         class that cannot be found by the JVM
+     * @since 2.3.4
+     */
+    public static Object decodeToObject(
+            String encodedObject, int options, final ClassLoader loader )
+            throws java.io.IOException, ClassNotFoundException {
+
+        // Decode and gunzip if necessary
+<span class="nc" id="L1354">        byte[] objBytes = decode( encodedObject, options );</span>
+
+<span class="nc" id="L1356">        java.io.ByteArrayInputStream  bais = null;</span>
+<span class="nc" id="L1357">        java.io.ObjectInputStream     ois  = null;</span>
+<span class="nc" id="L1358">        Object obj = null;</span>
+
+        try {
+<span class="nc" id="L1361">            bais = new java.io.ByteArrayInputStream( objBytes );</span>
+
+            // If no custom class loader is provided, use Java's builtin OIS.
+<span class="nc bnc" id="L1364" title="All 2 branches missed.">            if( loader == null ){</span>
+<span class="nc" id="L1365">                ois  = new java.io.ObjectInputStream( bais );</span>
+            }   // end if: no loader provided
+
+            // Else make a customized object input stream that uses
+            // the provided class loader.
+            else {
+<span class="nc" id="L1371">                ois = new java.io.ObjectInputStream(bais){</span>
+                    @Override
+                    public Class&lt;?&gt; resolveClass(java.io.ObjectStreamClass streamClass)
+                            throws java.io.IOException, ClassNotFoundException {
+<span class="nc" id="L1375">                        Class c = Class.forName(streamClass.getName(), false, loader);</span>
+<span class="nc bnc" id="L1376" title="All 2 branches missed.">                        if( c == null ){</span>
+<span class="nc" id="L1377">                            return super.resolveClass(streamClass);</span>
+                        } else {
+<span class="nc" id="L1379">                            return c;   // Class loader knows of this class.</span>
+                        }   // end else: not null
+                    }   // end resolveClass
+                };  // end ois
+            }   // end else: no custom class loader
+
+<span class="nc" id="L1385">            obj = ois.readObject();</span>
+        }   // end try
+<span class="nc" id="L1387">        catch( java.io.IOException e ) {</span>
+<span class="nc" id="L1388">            throw e;    // Catch and throw in order to execute finally{}</span>
+        }   // end catch
+<span class="nc" id="L1390">        catch( ClassNotFoundException e ) {</span>
+<span class="nc" id="L1391">            throw e;    // Catch and throw in order to execute finally{}</span>
+        }   // end catch
+        finally {
+<span class="nc bnc" id="L1394" title="All 4 branches missed.">            if (bais != null) {bais.close();}</span>
+<span class="nc bnc" id="L1395" title="All 4 branches missed.">            if (ois != null) {ois.close();}</span>
+<span class="nc" id="L1396">        }   // end finally</span>
+
+<span class="nc" id="L1398">        return obj;</span>
+    }   // end decodeObject
+
+
+
+    /**
+     * Convenience method for encoding data to a file.
+     *
+     * &lt;p&gt;As of v 2.3, if there is a error,
+     * the method will throw an java.io.IOException. &lt;b&gt;This is new to v2.3!&lt;/b&gt;
+     * In earlier versions, it just returned false, but
+     * in retrospect that's a pretty poor way to handle it.&lt;/p&gt;
+     *
+     * @param dataToEncode byte array of data to encode in base64 form
+     * @param filename Filename for saving encoded data
+     * @throws java.io.IOException if there is an error
+     * @throws NullPointerException if dataToEncode is null
+     * @since 2.1
+     */
+    public static void encodeToFile( byte[] dataToEncode, String filename )
+            throws java.io.IOException {
+
+<span class="nc bnc" id="L1420" title="All 2 branches missed.">        if( dataToEncode == null ){</span>
+<span class="nc" id="L1421">            throw new NullPointerException( &quot;Data to encode was null.&quot; );</span>
+        }   // end iff
+
+<span class="nc" id="L1424">        Base64.OutputStream bos = null;</span>
+<span class="nc" id="L1425">        FileOutputStream out = null;</span>
+        try {
+<span class="nc" id="L1427">            out = new FileOutputStream(filename);</span>
+<span class="nc" id="L1428">            bos = new Base64.OutputStream(out, Base64.ENCODE );</span>
+<span class="nc" id="L1429">            bos.write( dataToEncode );</span>
+        }   // end try
+<span class="nc" id="L1431">        catch( java.io.IOException e ) {</span>
+<span class="nc" id="L1432">            throw e; // Catch and throw to execute finally{} block</span>
+        }   // end catch: java.io.IOException
+        finally {
+<span class="nc bnc" id="L1435" title="All 4 branches missed.">            if (out != null) {out.close();}</span>
+<span class="nc bnc" id="L1436" title="All 4 branches missed.">            if (bos != null) {bos.close();}</span>
+<span class="nc" id="L1437">        }   // end finally</span>
+
+<span class="nc" id="L1439">    }   // end encodeToFile</span>
+
+
+    /**
+     * Convenience method for decoding data to a file.
+     *
+     * &lt;p&gt;As of v 2.3, if there is a error,
+     * the method will throw an java.io.IOException. &lt;b&gt;This is new to v2.3!&lt;/b&gt;
+     * In earlier versions, it just returned false, but
+     * in retrospect that's a pretty poor way to handle it.&lt;/p&gt;
+     *
+     * @param dataToDecode Base64-encoded data as a string
+     * @param filename Filename for saving decoded data
+     * @throws java.io.IOException if there is an error
+     * @since 2.1
+     */
+    public static void decodeToFile( String dataToDecode, String filename )
+            throws java.io.IOException {
+
+<span class="nc" id="L1458">        Base64.OutputStream bos = null;</span>
+<span class="nc" id="L1459">        FileOutputStream out = null;</span>
+        try{
+<span class="nc" id="L1461">            out = new FileOutputStream(filename);</span>
+<span class="nc" id="L1462">            bos = new Base64.OutputStream(out, Base64.DECODE );</span>
+<span class="nc" id="L1463">            bos.write( dataToDecode.getBytes( PREFERRED_ENCODING ) );</span>
+        }   // end try
+<span class="nc" id="L1465">        catch( java.io.IOException e ) {</span>
+<span class="nc" id="L1466">            throw e; // Catch and throw to execute finally{} block</span>
+        }   // end catch: java.io.IOException
+        finally {
+<span class="nc bnc" id="L1469" title="All 4 branches missed.">            if (out != null) {out.close();}</span>
+<span class="nc bnc" id="L1470" title="All 4 branches missed.">            if (bos != null) {bos.close();}</span>
+<span class="nc" id="L1471">        }   // end finally</span>
+
+<span class="nc" id="L1473">    }   // end decodeToFile</span>
+
+
+
+
+    /**
+     * Convenience method for reading a base64-encoded
+     * file and decoding it.
+     *
+     * &lt;p&gt;As of v 2.3, if there is a error,
+     * the method will throw an java.io.IOException. &lt;b&gt;This is new to v2.3!&lt;/b&gt;
+     * In earlier versions, it just returned false, but
+     * in retrospect that's a pretty poor way to handle it.&lt;/p&gt;
+     *
+     * @param filename Filename for reading encoded data
+     * @return decoded byte array
+     * @throws java.io.IOException if there is an error
+     * @since 2.1
+     */
+    public static byte[] decodeFromFile( String filename )
+            throws java.io.IOException {
+
+<span class="nc" id="L1495">        byte[] decodedData = null;</span>
+<span class="nc" id="L1496">        Base64.InputStream bis = null;</span>
+<span class="nc" id="L1497">        FileInputStream in = null;</span>
+        try
+        {
+            // Set up some useful variables
+<span class="nc" id="L1501">            java.io.File file = new java.io.File( filename );</span>
+<span class="nc" id="L1502">            byte[] buffer = null;</span>
+<span class="nc" id="L1503">            int length   = 0;</span>
+<span class="nc" id="L1504">            int numBytes = 0;</span>
+
+            // Check for size of file
+<span class="nc bnc" id="L1507" title="All 2 branches missed.">            if( file.length() &gt; Integer.MAX_VALUE )</span>
+            {
+<span class="nc" id="L1509">                throw new java.io.IOException( &quot;File is too big for this convenience method (&quot; + file.length() + &quot; bytes).&quot; );</span>
+            }   // end if: file too big for int index
+<span class="nc" id="L1511">            buffer = new byte[ (int)file.length() ];</span>
+
+            // Open a stream
+<span class="nc" id="L1514">            in = new FileInputStream(file);</span>
+<span class="nc" id="L1515">            bis = new Base64.InputStream(new java.io.BufferedInputStream(in), Base64.DECODE );</span>
+
+            // Read until done
+<span class="nc bnc" id="L1518" title="All 2 branches missed.">            while( ( numBytes = bis.read( buffer, length, 4096 ) ) &gt;= 0 ) {</span>
+<span class="nc" id="L1519">                length += numBytes;</span>
+            }   // end while
+
+            // Save in a variable to return
+<span class="nc" id="L1523">            decodedData = new byte[ length ];</span>
+<span class="nc" id="L1524">            System.arraycopy( buffer, 0, decodedData, 0, length );</span>
+
+        }   // end try
+<span class="nc" id="L1527">        catch( java.io.IOException e ) {</span>
+<span class="nc" id="L1528">            throw e; // Catch and release to execute finally{}</span>
+        }   // end catch: java.io.IOException
+        finally {
+<span class="nc bnc" id="L1531" title="All 4 branches missed.">            if (in != null) {in.close();}</span>
+<span class="nc bnc" id="L1532" title="All 4 branches missed.">            if (bis != null) {bis.close();}</span>
+<span class="nc" id="L1533">        }   // end finally</span>
+
+<span class="nc" id="L1535">        return decodedData;</span>
+    }   // end decodeFromFile
+
+
+
+    /**
+     * Convenience method for reading a binary file
+     * and base64-encoding it.
+     *
+     * &lt;p&gt;As of v 2.3, if there is a error,
+     * the method will throw an java.io.IOException. &lt;b&gt;This is new to v2.3!&lt;/b&gt;
+     * In earlier versions, it just returned false, but
+     * in retrospect that's a pretty poor way to handle it.&lt;/p&gt;
+     *
+     * @param filename Filename for reading binary data
+     * @return base64-encoded string
+     * @throws java.io.IOException if there is an error
+     * @since 2.1
+     */
+    public static String encodeFromFile( String filename )
+            throws java.io.IOException {
+
+<span class="nc" id="L1557">        String encodedData = null;</span>
+<span class="nc" id="L1558">        Base64.InputStream bis = null;</span>
+<span class="nc" id="L1559">        FileInputStream in = null;</span>
+        try
+        {
+            // Set up some useful variables
+<span class="nc" id="L1563">            java.io.File file = new java.io.File( filename );</span>
+<span class="nc" id="L1564">            byte[] buffer = new byte[ Math.max((int)(file.length() * 1.4+1),40) ]; // Need max() for math on small files (v2.2.1); Need +1 for a few corner cases (v2.3.5)</span>
+<span class="nc" id="L1565">            int length   = 0;</span>
+<span class="nc" id="L1566">            int numBytes = 0;</span>
+
+            // Open a stream
+<span class="nc" id="L1569">            in = new FileInputStream(file);</span>
+<span class="nc" id="L1570">            bis = new Base64.InputStream(new java.io.BufferedInputStream(in), Base64.ENCODE );</span>
+
+            // Read until done
+<span class="nc bnc" id="L1573" title="All 2 branches missed.">            while( ( numBytes = bis.read( buffer, length, 4096 ) ) &gt;= 0 ) {</span>
+<span class="nc" id="L1574">                length += numBytes;</span>
+            }   // end while
+
+            // Save in a variable to return
+<span class="nc" id="L1578">            encodedData = new String( buffer, 0, length, Base64.PREFERRED_ENCODING );</span>
+
+        }   // end try
+<span class="nc" id="L1581">        catch( java.io.IOException e ) {</span>
+<span class="nc" id="L1582">            throw e; // Catch and release to execute finally{}</span>
+        }   // end catch: java.io.IOException
+        finally {
+<span class="nc bnc" id="L1585" title="All 4 branches missed.">            if (in != null) {in.close();}</span>
+<span class="nc bnc" id="L1586" title="All 4 branches missed.">            if (bis != null) {bis.close();}</span>
+<span class="nc" id="L1587">        }   // end finally</span>
+
+<span class="nc" id="L1589">        return encodedData;</span>
+    }   // end encodeFromFile
+
+    /**
+     * Reads &lt;tt&gt;infile&lt;/tt&gt; and encodes it to &lt;tt&gt;outfile&lt;/tt&gt;.
+     *
+     * @param infile Input file
+     * @param outfile Output file
+     * @throws java.io.IOException if there is an error
+     * @since 2.2
+     */
+    public static void encodeFileToFile( String infile, String outfile )
+            throws java.io.IOException {
+
+<span class="nc" id="L1603">        String encoded = Base64.encodeFromFile( infile );</span>
+<span class="nc" id="L1604">        java.io.OutputStream out = null;</span>
+<span class="nc" id="L1605">        FileOutputStream fos = null;</span>
+        try{
+<span class="nc" id="L1607">            fos = new FileOutputStream(outfile);</span>
+<span class="nc" id="L1608">            out = new java.io.BufferedOutputStream(fos);</span>
+<span class="nc" id="L1609">            out.write( encoded.getBytes(&quot;US-ASCII&quot;) ); // Strict, 7-bit output.</span>
+        }   // end try
+<span class="nc" id="L1611">        catch( java.io.IOException e ) {</span>
+<span class="nc" id="L1612">            throw e; // Catch and release to execute finally{}</span>
+        }   // end catch
+        finally {
+<span class="nc bnc" id="L1615" title="All 4 branches missed.">            if (fos != null) {fos.close();}</span>
+<span class="nc bnc" id="L1616" title="All 4 branches missed.">            if (out != null) {out.close();}</span>
+
+<span class="nc" id="L1618">        }   // end finally</span>
+<span class="nc" id="L1619">    }   // end encodeFileToFile</span>
+
+
+    /**
+     * Reads &lt;tt&gt;infile&lt;/tt&gt; and decodes it to &lt;tt&gt;outfile&lt;/tt&gt;.
+     *
+     * @param infile Input file
+     * @param outfile Output file
+     * @throws java.io.IOException if there is an error
+     * @since 2.2
+     */
+    public static void decodeFileToFile( String infile, String outfile )
+            throws java.io.IOException {
+
+<span class="nc" id="L1633">        byte[] decoded = Base64.decodeFromFile( infile );</span>
+<span class="nc" id="L1634">        java.io.OutputStream out = null;</span>
+<span class="nc" id="L1635">        FileOutputStream fos = null;</span>
+        try{
+<span class="nc" id="L1637">            fos = new FileOutputStream(outfile);</span>
+<span class="nc" id="L1638">            out = new java.io.BufferedOutputStream(</span>
+                    fos);
+<span class="nc" id="L1640">            out.write( decoded );</span>
+        }   // end try
+<span class="nc" id="L1642">        catch( java.io.IOException e ) {</span>
+<span class="nc" id="L1643">            throw e; // Catch and release to execute finally{}</span>
+        }   // end catch
+        finally {
+<span class="nc bnc" id="L1646" title="All 4 branches missed.">            if (fos != null) {fos.close();}</span>
+<span class="nc bnc" id="L1647" title="All 4 branches missed.">            if (out != null) {out.close();}</span>
+<span class="nc" id="L1648">        }   // end finally</span>
+<span class="nc" id="L1649">    }   // end decodeFileToFile</span>
+
+
+    /* ********  I N N E R   C L A S S   I N P U T S T R E A M  ******** */
+
+
+
+    /**
+     * A {@link Base64.InputStream} will read data from another
+     * &lt;tt&gt;java.io.InputStream&lt;/tt&gt;, given in the constructor,
+     * and encode/decode to/from Base64 notation on the fly.
+     *
+     * @see Base64
+     * @since 1.3
+     */
+    public static class InputStream extends java.io.FilterInputStream {
+
+        private boolean encode;         // Encoding or decoding
+        private int     position;       // Current position in the buffer
+        private byte[]  buffer;         // Small buffer holding converted data
+        private int     bufferLength;   // Length of buffer (3 or 4)
+        private int     numSigBytes;    // Number of meaningful bytes in the buffer
+        private int     lineLength;
+        private boolean breakLines;     // Break lines at less than 80 characters
+        private int     options;        // Record options used to create the stream.
+        private byte[]  decodabet;      // Local copies to avoid extra method calls
+
+
+        /**
+         * Constructs a {@link Base64.InputStream} in DECODE mode.
+         *
+         * @param in the &lt;tt&gt;java.io.InputStream&lt;/tt&gt; from which to read data.
+         * @since 1.3
+         */
+        public InputStream( java.io.InputStream in ) {
+<span class="nc" id="L1684">            this( in, DECODE );</span>
+<span class="nc" id="L1685">        }   // end constructor</span>
+
+
+        /**
+         * Constructs a {@link Base64.InputStream} in
+         * either ENCODE or DECODE mode.
+         * &lt;p&gt;
+         * Valid options:&lt;pre&gt;
+         *   ENCODE or DECODE: Encode or Decode as data is read.
+         *   DO_BREAK_LINES: break lines at 76 characters
+         *     (only meaningful when encoding)
+         * &lt;/pre&gt;
+         * &lt;p&gt;
+         * Example: &lt;code&gt;new Base64.InputStream( in, Base64.DECODE )&lt;/code&gt;
+         *
+         *
+         * @param in the &lt;tt&gt;java.io.InputStream&lt;/tt&gt; from which to read data.
+         * @param options Specified options
+         * @see Base64#ENCODE
+         * @see Base64#DECODE
+         * @see Base64#DO_BREAK_LINES
+         * @since 2.0
+         */
+        public InputStream( java.io.InputStream in, int options ) {
+
+<span class="nc" id="L1710">            super( in );</span>
+<span class="nc" id="L1711">            this.options      = options; // Record for later</span>
+<span class="nc bnc" id="L1712" title="All 2 branches missed.">            this.breakLines   = (options &amp; DO_BREAK_LINES) &gt; 0;</span>
+<span class="nc bnc" id="L1713" title="All 2 branches missed.">            this.encode       = (options &amp; ENCODE) &gt; 0;</span>
+<span class="nc bnc" id="L1714" title="All 2 branches missed.">            this.bufferLength = encode ? 4 : 3;</span>
+<span class="nc" id="L1715">            this.buffer       = new byte[ bufferLength ];</span>
+<span class="nc" id="L1716">            this.position     = -1;</span>
+<span class="nc" id="L1717">            this.lineLength   = 0;</span>
+<span class="nc" id="L1718">            this.decodabet    = getDecodabet(options);</span>
+<span class="nc" id="L1719">        }   // end constructor</span>
+
+        /**
+         * Reads enough of the input stream to convert
+         * to/from Base64 and returns the next byte.
+         *
+         * @return next byte
+         * @since 1.3
+         */
+        @Override
+        public int read() throws java.io.IOException  {
+
+            // Do we need to get data?
+<span class="nc bnc" id="L1732" title="All 2 branches missed.">            if( position &lt; 0 ) {</span>
+<span class="nc bnc" id="L1733" title="All 2 branches missed.">                if( encode ) {</span>
+<span class="nc" id="L1734">                    byte[] b3 = new byte[3];</span>
+<span class="nc" id="L1735">                    int numBinaryBytes = 0;</span>
+<span class="nc bnc" id="L1736" title="All 2 branches missed.">                    for( int i = 0; i &lt; 3; i++ ) {</span>
+<span class="nc" id="L1737">                        int b = in.read();</span>
+
+                        // If end of stream, b is -1.
+<span class="nc bnc" id="L1740" title="All 2 branches missed.">                        if( b &gt;= 0 ) {</span>
+<span class="nc" id="L1741">                            b3[i] = (byte)b;</span>
+<span class="nc" id="L1742">                            numBinaryBytes++;</span>
+                        } else {
+                            break; // out of for loop
+                        }   // end else: end of stream
+
+                    }   // end for: each needed input byte
+
+<span class="nc bnc" id="L1749" title="All 2 branches missed.">                    if( numBinaryBytes &gt; 0 ) {</span>
+<span class="nc" id="L1750">                        encode3to4( b3, 0, numBinaryBytes, buffer, 0, options );</span>
+<span class="nc" id="L1751">                        position = 0;</span>
+<span class="nc" id="L1752">                        numSigBytes = 4;</span>
+                    }   // end if: got data
+                    else {
+<span class="nc" id="L1755">                        return -1;  // Must be end of stream</span>
+                    }   // end else
+<span class="nc" id="L1757">                }   // end if: encoding</span>
+
+                // Else decoding
+                else {
+<span class="nc" id="L1761">                    byte[] b4 = new byte[4];</span>
+<span class="nc" id="L1762">                    int i = 0;</span>
+<span class="nc bnc" id="L1763" title="All 2 branches missed.">                    for( i = 0; i &lt; 4; i++ ) {</span>
+                        // Read four &quot;meaningful&quot; bytes:
+<span class="nc" id="L1765">                        int b = 0;</span>
+<span class="nc" id="L1766">                        do{ b = in.read(); }</span>
+<span class="nc bnc" id="L1767" title="All 4 branches missed.">                        while( b &gt;= 0 &amp;&amp; decodabet[ b &amp; 0x7f ] &lt;= WHITE_SPACE_ENC );</span>
+
+<span class="nc bnc" id="L1769" title="All 2 branches missed.">                        if( b &lt; 0 ) {</span>
+<span class="nc" id="L1770">                            break; // Reads a -1 if end of stream</span>
+                        }   // end if: end of stream
+
+<span class="nc" id="L1773">                        b4[i] = (byte)b;</span>
+                    }   // end for: each needed input byte
+
+<span class="nc bnc" id="L1776" title="All 2 branches missed.">                    if( i == 4 ) {</span>
+<span class="nc" id="L1777">                        numSigBytes = decode4to3( b4, 0, buffer, 0, options );</span>
+<span class="nc" id="L1778">                        position = 0;</span>
+                    }   // end if: got four characters
+<span class="nc bnc" id="L1780" title="All 2 branches missed.">                    else if( i == 0 ){</span>
+<span class="nc" id="L1781">                        return -1;</span>
+                    }   // end else if: also padded correctly
+                    else {
+                        // Must have broken out from above.
+<span class="nc" id="L1785">                        throw new java.io.IOException( &quot;Improperly padded Base64 input.&quot; );</span>
+                    }   // end
+
+                }   // end else: decode
+            }   // end else: get data
+
+            // Got data?
+<span class="nc bnc" id="L1792" title="All 2 branches missed.">            if( position &gt;= 0 ) {</span>
+                // End of relevant data?
+<span class="nc bnc" id="L1794" title="All 2 branches missed.">                if( /*!encode &amp;&amp;*/ position &gt;= numSigBytes ){</span>
+<span class="nc" id="L1795">                    return -1;</span>
+                }   // end if: got data
+
+<span class="nc bnc" id="L1798" title="All 6 branches missed.">                if( encode &amp;&amp; breakLines &amp;&amp; lineLength &gt;= MAX_LINE_LENGTH ) {</span>
+<span class="nc" id="L1799">                    lineLength = 0;</span>
+<span class="nc" id="L1800">                    return '\n';</span>
+                }   // end if
+                else {
+<span class="nc" id="L1803">                    lineLength++;   // This isn't important when decoding</span>
+                    // but throwing an extra &quot;if&quot; seems
+                    // just as wasteful.
+
+<span class="nc" id="L1807">                    int b = buffer[ position++ ];</span>
+
+<span class="nc bnc" id="L1809" title="All 2 branches missed.">                    if( position &gt;= bufferLength ) {</span>
+<span class="nc" id="L1810">                        position = -1;</span>
+                    }   // end if: end
+
+<span class="nc" id="L1813">                    return b &amp; 0xFF; // This is how you &quot;cast&quot; a byte that's</span>
+                    // intended to be unsigned.
+                }   // end else
+            }   // end if: position &gt;= 0
+
+            // Else error
+            else {
+<span class="nc" id="L1820">                throw new java.io.IOException( &quot;Error in Base64 code reading stream.&quot; );</span>
+            }   // end else
+        }   // end read
+
+
+        /**
+         * Calls {@link #read()} repeatedly until the end of stream
+         * is reached or &lt;var&gt;len&lt;/var&gt; bytes are read.
+         * Returns number of bytes read into array or -1 if
+         * end of stream is encountered.
+         *
+         * @param dest array to hold values
+         * @param off offset for array
+         * @param len max number of bytes to read into array
+         * @return bytes read into array or -1 if end of stream is encountered.
+         * @since 1.3
+         */
+        @Override
+        public int read( byte[] dest, int off, int len )
+                throws java.io.IOException {
+            int i;
+            int b;
+<span class="nc bnc" id="L1842" title="All 2 branches missed.">            for( i = 0; i &lt; len; i++ ) {</span>
+<span class="nc" id="L1843">                b = read();</span>
+
+<span class="nc bnc" id="L1845" title="All 2 branches missed.">                if( b &gt;= 0 ) {</span>
+<span class="nc" id="L1846">                    dest[off + i] = (byte) b;</span>
+                }
+<span class="nc bnc" id="L1848" title="All 2 branches missed.">                else if( i == 0 ) {</span>
+<span class="nc" id="L1849">                    return -1;</span>
+                }
+                else {
+                    break; // Out of 'for' loop
+                } // Out of 'for' loop
+            }   // end for: each byte read
+<span class="nc" id="L1855">            return i;</span>
+        }   // end read
+
+    }   // end inner class InputStream
+
+
+
+
+
+
+    /* ********  I N N E R   C L A S S   O U T P U T S T R E A M  ******** */
+
+
+
+    /**
+     * A {@link Base64.OutputStream} will write data to another
+     * &lt;tt&gt;java.io.OutputStream&lt;/tt&gt;, given in the constructor,
+     * and encode/decode to/from Base64 notation on the fly.
+     *
+     * @see Base64
+     * @since 1.3
+     */
+    public static class OutputStream extends java.io.FilterOutputStream {
+
+        private boolean encode;
+        private int     position;
+        private byte[]  buffer;
+        private int     bufferLength;
+        private int     lineLength;
+        private boolean breakLines;
+        private byte[]  b4;         // Scratch used in a few places
+        private boolean suspendEncoding;
+        private int     options;    // Record for later
+        private byte[]  decodabet;  // Local copies to avoid extra method calls
+
+        /**
+         * Constructs a {@link Base64.OutputStream} in ENCODE mode.
+         *
+         * @param out the &lt;tt&gt;java.io.OutputStream&lt;/tt&gt; to which data will be written.
+         * @since 1.3
+         */
+        public OutputStream( java.io.OutputStream out ) {
+<span class="nc" id="L1897">            this( out, ENCODE );</span>
+<span class="nc" id="L1898">        }   // end constructor</span>
+
+
+        /**
+         * Constructs a {@link Base64.OutputStream} in
+         * either ENCODE or DECODE mode.
+         * &lt;p&gt;
+         * Valid options:&lt;pre&gt;
+         *   ENCODE or DECODE: Encode or Decode as data is read.
+         *   DO_BREAK_LINES: don't break lines at 76 characters
+         *     (only meaningful when encoding)
+         * &lt;/pre&gt;
+         * &lt;p&gt;
+         * Example: &lt;code&gt;new Base64.OutputStream( out, Base64.ENCODE )&lt;/code&gt;
+         *
+         * @param out the &lt;tt&gt;java.io.OutputStream&lt;/tt&gt; to which data will be written.
+         * @param options Specified options.
+         * @see Base64#ENCODE
+         * @see Base64#DECODE
+         * @see Base64#DO_BREAK_LINES
+         * @since 1.3
+         */
+        public OutputStream( java.io.OutputStream out, int options ) {
+<span class="nc" id="L1921">            super( out );</span>
+<span class="nc bnc" id="L1922" title="All 2 branches missed.">            this.breakLines   = (options &amp; DO_BREAK_LINES) != 0;</span>
+<span class="nc bnc" id="L1923" title="All 2 branches missed.">            this.encode       = (options &amp; ENCODE) != 0;</span>
+<span class="nc bnc" id="L1924" title="All 2 branches missed.">            this.bufferLength = encode ? 3 : 4;</span>
+<span class="nc" id="L1925">            this.buffer       = new byte[ bufferLength ];</span>
+<span class="nc" id="L1926">            this.position     = 0;</span>
+<span class="nc" id="L1927">            this.lineLength   = 0;</span>
+<span class="nc" id="L1928">            this.suspendEncoding = false;</span>
+<span class="nc" id="L1929">            this.b4           = new byte[4];</span>
+<span class="nc" id="L1930">            this.options      = options;</span>
+<span class="nc" id="L1931">            this.decodabet    = getDecodabet(options);</span>
+<span class="nc" id="L1932">        }   // end constructor</span>
+
+
+        /**
+         * Writes the byte to the output stream after
+         * converting to/from Base64 notation.
+         * When encoding, bytes are buffered three
+         * at a time before the output stream actually
+         * gets a write() call.
+         * When decoding, bytes are buffered four
+         * at a time.
+         *
+         * @param theByte the byte to write
+         * @since 1.3
+         */
+        @Override
+        public void write(int theByte)
+                throws java.io.IOException {
+            // Encoding suspended?
+<span class="nc bnc" id="L1951" title="All 2 branches missed.">            if( suspendEncoding ) {</span>
+<span class="nc" id="L1952">                this.out.write( theByte );</span>
+<span class="nc" id="L1953">                return;</span>
+            }   // end if: supsended
+
+            // Encode?
+<span class="nc bnc" id="L1957" title="All 2 branches missed.">            if( encode ) {</span>
+<span class="nc" id="L1958">                buffer[ position++ ] = (byte)theByte;</span>
+<span class="nc bnc" id="L1959" title="All 2 branches missed.">                if( position &gt;= bufferLength ) { // Enough to encode.</span>
+
+<span class="nc" id="L1961">                    this.out.write( encode3to4( b4, buffer, bufferLength, options ) );</span>
+
+<span class="nc" id="L1963">                    lineLength += 4;</span>
+<span class="nc bnc" id="L1964" title="All 4 branches missed.">                    if( breakLines &amp;&amp; lineLength &gt;= MAX_LINE_LENGTH ) {</span>
+<span class="nc" id="L1965">                        this.out.write( NEW_LINE );</span>
+<span class="nc" id="L1966">                        lineLength = 0;</span>
+                    }   // end if: end of line
+
+<span class="nc" id="L1969">                    position = 0;</span>
+                }   // end if: enough to output
+            }   // end if: encoding
+
+            // Else, Decoding
+            else {
+                // Meaningful Base64 character?
+<span class="nc bnc" id="L1976" title="All 2 branches missed.">                if( decodabet[ theByte &amp; 0x7f ] &gt; WHITE_SPACE_ENC ) {</span>
+<span class="nc" id="L1977">                    buffer[ position++ ] = (byte)theByte;</span>
+<span class="nc bnc" id="L1978" title="All 2 branches missed.">                    if( position &gt;= bufferLength ) { // Enough to output.</span>
+
+<span class="nc" id="L1980">                        int len = Base64.decode4to3( buffer, 0, b4, 0, options );</span>
+<span class="nc" id="L1981">                        out.write( b4, 0, len );</span>
+<span class="nc" id="L1982">                        position = 0;</span>
+<span class="nc" id="L1983">                    }   // end if: enough to output</span>
+                }   // end if: meaningful base64 character
+<span class="nc bnc" id="L1985" title="All 2 branches missed.">                else if( decodabet[ theByte &amp; 0x7f ] != WHITE_SPACE_ENC ) {</span>
+<span class="nc" id="L1986">                    throw new java.io.IOException( &quot;Invalid character in Base64 data.&quot; );</span>
+                }   // end else: not white space either
+            }   // end else: decoding
+<span class="nc" id="L1989">        }   // end write</span>
+
+
+
+        /**
+         * Calls {@link #write(int)} repeatedly until &lt;var&gt;len&lt;/var&gt; 
+         * bytes are written.
+         *
+         * @param theBytes array from which to read bytes
+         * @param off offset for array
+         * @param len max number of bytes to read into array
+         * @since 1.3
+         */
+        @Override
+        public void write( byte[] theBytes, int off, int len )
+                throws java.io.IOException {
+            // Encoding suspended?
+<span class="nc bnc" id="L2006" title="All 2 branches missed.">            if( suspendEncoding ) {</span>
+<span class="nc" id="L2007">                this.out.write( theBytes, off, len );</span>
+<span class="nc" id="L2008">                return;</span>
+            }   // end if: supsended
+
+<span class="nc bnc" id="L2011" title="All 2 branches missed.">            for( int i = 0; i &lt; len; i++ ) {</span>
+<span class="nc" id="L2012">                write( theBytes[ off + i ] );</span>
+            }   // end for: each byte written
+
+<span class="nc" id="L2015">        }   // end write</span>
+
+
+
+        /**
+         * Method added by PHIL. [Thanks, PHIL. -Rob]
+         * This pads the buffer without closing the stream.
+         * @throws java.io.IOException  if there's an error.
+         */
+        public void flushBase64() throws java.io.IOException  {
+<span class="nc bnc" id="L2025" title="All 2 branches missed.">            if( position &gt; 0 ) {</span>
+<span class="nc bnc" id="L2026" title="All 2 branches missed.">                if( encode ) {</span>
+<span class="nc" id="L2027">                    out.write( encode3to4( b4, buffer, position, options ) );</span>
+<span class="nc" id="L2028">                    position = 0;</span>
+                }   // end if: encoding
+                else {
+<span class="nc" id="L2031">                    throw new java.io.IOException( &quot;Base64 input not properly padded.&quot; );</span>
+                }   // end else: decoding
+            }   // end if: buffer partially full
+
+<span class="nc" id="L2035">        }   // end flush</span>
+
+
+        /**
+         * Flushes and closes (I think, in the superclass) the stream. 
+         *
+         * @since 1.3
+         */
+        @Override
+        public void close() throws java.io.IOException {
+            // 1. Ensure that pending characters are written
+<span class="nc" id="L2046">            flushBase64();</span>
+
+            // 2. Actually close the stream
+            // Base class both flushes and closes.
+<span class="nc" id="L2050">            super.close();</span>
+
+<span class="nc" id="L2052">            buffer = null;</span>
+<span class="nc" id="L2053">            out    = null;</span>
+<span class="nc" id="L2054">        }   // end close</span>
+
+
+
+        /**
+         * Suspends encoding of the stream.
+         * May be helpful if you need to embed a piece of
+         * base64-encoded data in a stream.
+         *
+         * @throws java.io.IOException  if there's an error flushing
+         * @since 1.5.1
+         */
+        public void suspendEncoding() throws java.io.IOException  {
+<span class="nc" id="L2067">            flushBase64();</span>
+<span class="nc" id="L2068">            this.suspendEncoding = true;</span>
+<span class="nc" id="L2069">        }   // end suspendEncoding</span>
+
+
+        /**
+         * Resumes encoding of the stream.
+         * May be helpful if you need to embed a piece of
+         * base64-encoded data in a stream.
+         *
+         * @since 1.5.1
+         */
+        public void resumeEncoding() {
+<span class="nc" id="L2080">            this.suspendEncoding = false;</span>
+<span class="nc" id="L2081">        }   // end resumeEncoding</span>
+
+
+
+    }   // end inner class OutputStream
+
+
+}   // end class Base64
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RealmPublicKeyCacheConfiguration.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">public-key-cache-redis-impl</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security</a> &gt; <span class="el_source">RealmPublicKeyCacheConfiguration.java</span></div><h1>RealmPublicKeyCacheConfiguration.java</h1><pre class="source lang-java linenums">package pro.javatar.security;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+@Configuration
+<span class="fc" id="L14">public class RealmPublicKeyCacheConfiguration implements InitializingBean {</span>
+<span class="fc" id="L15">    private static final Logger logger = LoggerFactory.getLogger(RealmPublicKeyCacheConfiguration.class);</span>
+
+    private String host;
+    private Integer port;
+    private Boolean usePool;
+    private String keyPattern;
+    private boolean isEnabled;
+
+    @Value(&quot;${security.realm.cache.host:localhost}&quot;)
+    public void setHost(String host) {
+<span class="fc" id="L25">        this.host = host;</span>
+<span class="fc" id="L26">    }</span>
+
+    @Value(&quot;${security.realm.cache.port:6379}&quot;)
+    public void setPort(Integer port) {
+<span class="fc" id="L30">        this.port = port;</span>
+<span class="fc" id="L31">    }</span>
+
+    @Value(&quot;${security.realm.cache.usePool:true}&quot;)
+    public void setUsePool(Boolean usePool) {
+<span class="fc" id="L35">        this.usePool = usePool;</span>
+<span class="fc" id="L36">    }</span>
+
+    @Value(&quot;${security.realm.cache.keyPattern:security.public.key.for.realm.}&quot;)
+    public void setKeyPattern(String keyPattern) {
+<span class="fc" id="L40">        this.keyPattern = keyPattern;</span>
+<span class="fc" id="L41">    }</span>
+
+    @Value(&quot;${security.realm.cache.enable:true}&quot;)
+    public void setEnabled(boolean enabled) {
+<span class="fc" id="L45">        isEnabled = enabled;</span>
+<span class="fc" id="L46">    }</span>
+
+    @Bean
+    public RealmPublicKeyCacheService getPublicKeyCacheServiceImpl() {
+<span class="fc" id="L50">        logger.debug(&quot;security.realm.cache.enable={}&quot;, isEnabled);</span>
+<span class="fc" id="L51">        logger.debug(&quot;security.realm.cache.keyPattern={}&quot;, keyPattern);</span>
+
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (!isEnabled) {</span>
+<span class="nc" id="L54">            return new RealmPublicKeyCacheServiceMap();</span>
+        }
+
+<span class="fc" id="L57">        logger.debug(&quot;security.realm.cache.host={}&quot;, host);</span>
+<span class="fc" id="L58">        logger.debug(&quot;security.realm.cache.port={}&quot;, port);</span>
+<span class="fc" id="L59">        logger.debug(&quot;security.realm.cache.usePool={}&quot;, usePool);</span>
+
+<span class="fc" id="L61">        return new RealmPublicKeyCacheServiceImpl(keyPattern, createRedisTemplate());</span>
+    }
+
+    RedisTemplate createRedisTemplate() {
+<span class="fc" id="L65">        JedisConnectionFactory jedisConnectionFactory = createJedisConnectionFactory();</span>
+<span class="fc" id="L66">        RedisTemplate redisTemplate = new StringRedisTemplate();</span>
+<span class="fc" id="L67">        redisTemplate.setConnectionFactory(jedisConnectionFactory);</span>
+<span class="fc" id="L68">        redisTemplate.afterPropertiesSet();</span>
+<span class="fc" id="L69">        return redisTemplate;</span>
+    }
+
+    private JedisConnectionFactory createJedisConnectionFactory() {
+<span class="fc" id="L73">        JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();</span>
+<span class="fc" id="L74">        jedisConnectionFactory.setHostName(host);</span>
+<span class="fc" id="L75">        jedisConnectionFactory.setPort(port);</span>
+<span class="fc" id="L76">        jedisConnectionFactory.setUsePool(usePool);</span>
+<span class="fc" id="L77">        jedisConnectionFactory.afterPropertiesSet();</span>
+<span class="fc" id="L78">        return jedisConnectionFactory;</span>
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        if (logger.isDebugEnabled()) {</span>
+<span class="nc" id="L84">            logger.debug(this.toString());</span>
+        }
+<span class="fc" id="L86">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L90">        return &quot;Cache Configuration: {&quot; +</span>
+                &quot;host='&quot; + host + '\'' +
+                &quot;, port=&quot; + port +
+                &quot;, usePool=&quot; + usePool +
+                &quot;, keyPattern='&quot; + keyPattern + '\'' +
+                &quot;, isEnabled=&quot; + isEnabled +
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

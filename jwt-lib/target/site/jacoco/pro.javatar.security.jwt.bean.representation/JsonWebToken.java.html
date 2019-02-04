@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>JsonWebToken.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jwt-lib</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.jwt.bean.representation</a> &gt; <span class="el_source">JsonWebToken.java</span></div><h1>JsonWebToken.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2016 Red Hat, Inc. and/or its affiliates
+ * and other contributors as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package pro.javatar.security.jwt.bean.representation;
+
+import pro.javatar.security.jwt.json.StringOrArrayDeserializer;
+import pro.javatar.security.jwt.json.StringOrArraySerializer;
+import pro.javatar.security.jwt.utils.Time;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import java.io.Serializable;
+
+/**
+ * @author &lt;a href=&quot;mailto:bill@burkecentral.com&quot;&gt;Bill Burke&lt;/a&gt;
+ * @version $Revision: 1 $
+ */
+<span class="fc" id="L35">public class JsonWebToken implements Serializable {</span>
+    @JsonProperty(&quot;jti&quot;)
+    protected String id;
+    @JsonProperty(&quot;exp&quot;)
+    protected int expiration;
+    @JsonProperty(&quot;nbf&quot;)
+    protected int notBefore;
+    @JsonProperty(&quot;iat&quot;)
+    protected int issuedAt;
+    @JsonProperty(&quot;iss&quot;)
+    protected String issuer;
+    @JsonProperty(&quot;aud&quot;)
+    @JsonSerialize(using = StringOrArraySerializer.class)
+    @JsonDeserialize(using = StringOrArrayDeserializer.class)
+    protected String[] audience;
+    @JsonProperty(&quot;sub&quot;)
+    protected String subject;
+    @JsonProperty(&quot;typ&quot;)
+    protected String type;
+    @JsonProperty(&quot;azp&quot;)
+    public String issuedFor;
+
+    public String getId() {
+<span class="fc" id="L58">        return id;</span>
+    }
+
+    public JsonWebToken id(String id) {
+<span class="nc" id="L62">        this.id = id;</span>
+<span class="nc" id="L63">        return this;</span>
+    }
+
+
+    public int getExpiration() {
+<span class="fc" id="L68">        return expiration;</span>
+    }
+
+    public JsonWebToken expiration(int expiration) {
+<span class="fc" id="L72">        this.expiration = expiration;</span>
+<span class="fc" id="L73">        return this;</span>
+    }
+
+    @JsonIgnore
+    public boolean isExpired() {
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        return Time.currentTime() &gt; expiration;</span>
+    }
+
+    public int getNotBefore() {
+<span class="fc" id="L82">        return notBefore;</span>
+    }
+
+    public JsonWebToken notBefore(int notBefore) {
+<span class="nc" id="L86">        this.notBefore = notBefore;</span>
+<span class="nc" id="L87">        return this;</span>
+    }
+
+
+    @JsonIgnore
+    public boolean isNotBefore() {
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">        return Time.currentTime() &gt;= notBefore;</span>
+    }
+
+    /*
+     * Tests that the token is not expired and is not-before.
+     */
+    @JsonIgnore
+    public boolean isActive() {
+<span class="pc bpc" id="L101" title="4 of 8 branches missed.">        return (!isExpired() || expiration == 0) &amp;&amp; (isNotBefore() || notBefore == 0);</span>
+    }
+
+    public int getIssuedAt() {
+<span class="fc" id="L105">        return issuedAt;</span>
+    }
+
+    /*
+     * Set issuedAt to the current time
+     */
+    @JsonIgnore
+    public JsonWebToken issuedNow() {
+<span class="nc" id="L113">        issuedAt = Time.currentTime();</span>
+<span class="nc" id="L114">        return this;</span>
+    }
+
+    public JsonWebToken issuedAt(int issuedAt) {
+<span class="nc" id="L118">        this.issuedAt = issuedAt;</span>
+<span class="nc" id="L119">        return this;</span>
+    }
+
+
+    public String getIssuer() {
+<span class="fc" id="L124">        return issuer;</span>
+    }
+
+    public JsonWebToken issuer(String issuer) {
+<span class="fc" id="L128">        this.issuer = issuer;</span>
+<span class="fc" id="L129">        return this;</span>
+    }
+
+    @JsonIgnore
+    public String[] getAudience() {
+<span class="nc" id="L134">        return audience;</span>
+    }
+
+    public boolean hasAudience(String audience) {
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        for (String a : this.audience) {</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">            if (a.equals(audience)) {</span>
+<span class="nc" id="L140">                return true;</span>
+            }
+        }
+<span class="nc" id="L143">        return false;</span>
+    }
+
+    public JsonWebToken audience(String... audience) {
+<span class="nc" id="L147">        this.audience = audience;</span>
+<span class="nc" id="L148">        return this;</span>
+    }
+
+    public String getSubject() {
+<span class="fc" id="L152">        return subject;</span>
+    }
+
+    public JsonWebToken subject(String subject) {
+<span class="fc" id="L156">        this.subject = subject;</span>
+<span class="fc" id="L157">        return this;</span>
+    }
+
+    public void setSubject(String subject) {
+<span class="fc" id="L161">        this.subject = subject;</span>
+<span class="fc" id="L162">    }</span>
+
+    public String getType() {
+<span class="fc" id="L165">        return type;</span>
+    }
+
+    public JsonWebToken type(String type) {
+<span class="fc" id="L169">        this.type = type;</span>
+<span class="fc" id="L170">        return this;</span>
+    }
+
+    /*
+     * OAuth client the token was issued for.
+     */
+    public String getIssuedFor() {
+<span class="fc" id="L177">        return issuedFor;</span>
+    }
+
+    public JsonWebToken issuedFor(String issuedFor) {
+<span class="nc" id="L181">        this.issuedFor = issuedFor;</span>
+<span class="nc" id="L182">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

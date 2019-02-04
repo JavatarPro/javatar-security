@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: pro.javatar.security.oidc.filters.AuthenticationOAuth2RedirectAwareFilterTest
+-------------------------------------------------------------------------------
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.264 sec

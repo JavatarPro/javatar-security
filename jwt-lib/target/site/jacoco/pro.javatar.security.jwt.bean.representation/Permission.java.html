@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>Permission.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jwt-lib</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.jwt.bean.representation</a> &gt; <span class="el_source">Permission.java</span></div><h1>Permission.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2016 Red Hat, Inc. and/or its affiliates
+ * and other contributors as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package pro.javatar.security.jwt.bean.representation;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * @author &lt;a href=&quot;mailto:psilva@redhat.com&quot;&gt;Pedro Igor&lt;/a&gt;
+ */
+public class Permission implements Serializable{
+    private static final long serialVersionUID = 1705122041945671207L;
+
+    @JsonProperty(&quot;resource_set_id&quot;)
+    private String resourceSetId;
+
+    @JsonProperty(&quot;resource_set_name&quot;)
+    private final String resourceSetName;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private Set&lt;String&gt; scopes;
+
+    public Permission() {
+<span class="nc" id="L42">        this(null, null, null);</span>
+<span class="nc" id="L43">    }</span>
+
+<span class="nc" id="L45">    public Permission(final String resourceSetId, String resourceSetName, final Set&lt;String&gt; scopes) {</span>
+<span class="nc" id="L46">        this.resourceSetId = resourceSetId;</span>
+<span class="nc" id="L47">        this.resourceSetName = resourceSetName;</span>
+<span class="nc" id="L48">        this.scopes = scopes;</span>
+<span class="nc" id="L49">    }</span>
+
+    public String getResourceSetId() {
+<span class="nc" id="L52">        return this.resourceSetId;</span>
+    }
+
+    public String getResourceSetName() {
+<span class="nc" id="L56">        return this.resourceSetName;</span>
+    }
+
+    public Set&lt;String&gt; getScopes() {
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (this.scopes == null) {</span>
+<span class="nc" id="L61">            this.scopes = new HashSet&lt;&gt;();</span>
+        }
+
+<span class="nc" id="L64">        return this.scopes;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L69">        StringBuilder builder = new StringBuilder();</span>
+
+<span class="nc" id="L71">        builder.append(&quot;Permission {&quot;).append(&quot;id=&quot;).append(resourceSetId).append(&quot;, name=&quot;).append(resourceSetName)</span>
+<span class="nc" id="L72">                .append(&quot;, scopes=&quot;).append(scopes).append(&quot;}&quot;);</span>
+
+<span class="nc" id="L74">        return builder.toString();</span>
+    }
+
+    public void setScopes(Set&lt;String&gt; scopes) {
+<span class="nc" id="L78">        this.scopes = scopes;</span>
+<span class="nc" id="L79">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

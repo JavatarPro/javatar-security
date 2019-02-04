@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>OidcAuthenticationHelper.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">security-filter</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.oidc.services</a> &gt; <span class="el_source">OidcAuthenticationHelper.java</span></div><h1>OidcAuthenticationHelper.java</h1><pre class="source lang-java linenums">package pro.javatar.security.oidc.services;
+
+import pro.javatar.security.oidc.model.OAuth2Constants;
+import pro.javatar.security.jwt.TokenVerifier;
+import pro.javatar.security.jwt.bean.representation.AccessToken;
+import pro.javatar.security.oidc.model.TokenDetails;
+import pro.javatar.security.jwt.exception.TokenExpirationException;
+import pro.javatar.security.jwt.exception.VerificationException;
+import pro.javatar.security.oidc.SecurityConstants;
+import pro.javatar.security.oidc.exceptions.AuthenticationException;
+import pro.javatar.security.oidc.exceptions.BearerJwtTokenNotFoundAuthenticationException;
+import pro.javatar.security.oidc.exceptions.MaliciousBearerJwtTokenAuthenticationException;
+import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
+import pro.javatar.security.oidc.exceptions.RealmInJwtTokenNotFoundAuthenticationException;
+import pro.javatar.security.oidc.exceptions.RefreshTokenObsoleteAuthenticationException;
+import pro.javatar.security.oidc.exceptions.TokenSignedForOtherRealmAuthorizationException;
+import pro.javatar.security.oidc.utils.SecurityContextUtils;
+import pro.javatar.security.oidc.utils.StringUtils;
+
+import org.apache.http.HttpHeaders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.text.MessageFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+
+@Service
+<span class="fc" id="L47">public class OidcAuthenticationHelper {</span>
+
+<span class="fc" id="L49">    private static final Logger logger = LoggerFactory.getLogger(OidcAuthenticationHelper.class);</span>
+
+    public static final String AUTH_HEADER_VALUE_PREFIX = &quot;Bearer &quot;;
+
+<span class="fc" id="L53">    public static final ThreadLocal&lt;String&gt; realms = new ThreadLocal&lt;&gt;();</span>
+
+    private OidcConfiguration oidcConfiguration;
+
+    private OAuth2AuthorizationFlowService auth2AuthorizationFlowService;
+
+    /**
+     * Get the bearer token from the HTTP request.
+     * The token is in HTTP session firstly or in the HTTP request &quot;Authorization&quot; header in the form of: &quot;Bearer [token]&quot;
+     */
+    public String getBearerToken(HttpServletRequest request) {
+<span class="fc" id="L64">        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);</span>
+<span class="fc" id="L65">        return obtainCleanBearerToken(authHeader);</span>
+    }
+
+    public String getBearerToken(HttpServletResponse response) {
+<span class="fc" id="L69">        String authorizationHeader = response.getHeader(HttpHeaders.AUTHORIZATION);</span>
+<span class="fc" id="L70">        return obtainCleanBearerToken(authorizationHeader);</span>
+    }
+
+    public TokenDetails getTokenDetails(HttpServletResponse response) {
+<span class="nc" id="L74">        return generateTokenDetails(getBearerToken(response), getRefreshToken(response));</span>
+    }
+
+    public String getRefreshToken(HttpServletResponse response) {
+<span class="fc" id="L78">        return response.getHeader(SecurityConstants.REFRESH_TOKEN_HEADER);</span>
+    }
+
+    public String getRefreshToken(HttpServletRequest request) {
+<span class="fc" id="L82">        return request.getHeader(SecurityConstants.REFRESH_TOKEN_HEADER);</span>
+    }
+
+    public String createRedirectUrl(String redirectUrlTemplate, HttpServletRequest request)
+            throws UnsupportedEncodingException {
+<span class="nc" id="L87">        String requestUrl = request.getRequestURL().toString();</span>
+<span class="nc" id="L88">        return MessageFormat.format(redirectUrlTemplate, URLEncoder.encode(requestUrl, &quot;UTF-8&quot;));</span>
+    }
+
+    public void setRealmForCurrentRequest(String realm) {
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        if (StringUtils.isBlank(realm))</span>
+<span class="fc" id="L93">            return;</span>
+<span class="fc" id="L94">        logger.debug(&quot;setting up realm: {} for current request&quot;, realm);</span>
+<span class="fc" id="L95">        realms.set(realm);</span>
+<span class="fc" id="L96">    }</span>
+
+    public String getRealmForCurrentRequest() {
+<span class="fc" id="L99">        String realm = realms.get();</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (StringUtils.isBlank(realm))</span>
+<span class="fc" id="L101">            return oidcConfiguration.getDefaultRealm();</span>
+<span class="fc" id="L102">        return realm;</span>
+    }
+
+    public String getRealmForCurrentRequest(HttpServletResponse response) {
+<span class="fc" id="L106">        String realm = realms.get();</span>
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (StringUtils.isNotBlank(realm)) {</span>
+<span class="nc" id="L108">            return realm;</span>
+        }
+<span class="fc" id="L110">        String responseHeaderRealm = response.getHeader(SecurityConstants.REALM_HEADER);</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        return StringUtils.isNotBlank(responseHeaderRealm) ?</span>
+                responseHeaderRealm :
+<span class="fc" id="L113">                oidcConfiguration.getDefaultRealm();</span>
+    }
+
+    public void validateRealm(TokenDetails tokenDetails) {
+<span class="fc" id="L117">        logger.info(&quot;Start validate realm token&quot;);</span>
+<span class="fc" id="L118">        String tokenRealm = tokenDetails.getRealm();</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        if (oidcConfiguration.getExcludeValidationRealm().equalsIgnoreCase(tokenRealm)) {</span>
+<span class="fc" id="L120">            return;</span>
+        }
+<span class="fc" id="L122">        String resourceAccessRealm = getRealmForCurrentRequest();</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        if (!tokenRealm.equalsIgnoreCase(resourceAccessRealm)) {</span>
+<span class="fc" id="L124">            String devMessage =</span>
+<span class="fc" id="L125">                    String.format(&quot;Token signed for %s realm, but user try to access %s realm&quot;,</span>
+                            tokenRealm, resourceAccessRealm);
+<span class="fc" id="L127">            logger.error(&quot;Token signed for {} realm, but user try to access {} realm&quot;, tokenRealm, resourceAccessRealm);</span>
+<span class="fc" id="L128">            AuthenticationException e = new TokenSignedForOtherRealmAuthorizationException();</span>
+<span class="fc" id="L129">            e.setDevMessage(devMessage);</span>
+<span class="fc" id="L130">            throw e;</span>
+        }
+<span class="fc" id="L132">        logger.info(&quot;Realm token validation completed successfully&quot;);</span>
+<span class="fc" id="L133">    }</span>
+
+    public void removeRealmFromCurrentRequest() {
+<span class="fc" id="L136">        realms.remove();</span>
+<span class="fc" id="L137">    }</span>
+
+    public boolean shouldApplyUrl(HttpRequest request) {
+<span class="fc" id="L140">        return oidcConfiguration.getUrlResolver().apply(request);</span>
+    }
+
+    public boolean shouldSkip(HttpRequest request) {
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        return !shouldApplyUrl(request);</span>
+    }
+
+    public void authenticateCurrentThread(TokenDetails tokenDetails) {
+<span class="fc" id="L148">        logger.info(&quot;Start authenticate current thread&quot;);</span>
+<span class="fc" id="L149">        AccessToken accessToken = parseAccessToken(tokenDetails);</span>
+<span class="fc" id="L150">        AccessToken.Access access =</span>
+<span class="fc" id="L151">                accessToken.getResourceAccess().get(oidcConfiguration.getClientId());</span>
+<span class="fc" id="L152">        Collection&lt;GrantedAuthority&gt; authorities = retrieveAuthorities(access);</span>
+<span class="fc" id="L153">        UsernamePasswordAuthenticationToken authenticationToken =</span>
+<span class="fc" id="L154">                new UsernamePasswordAuthenticationToken(accessToken.getPreferredUsername(), tokenDetails, authorities);</span>
+
+<span class="fc" id="L156">        SecurityContextUtils.setAuthentication(authenticationToken);</span>
+<span class="fc" id="L157">        logger.info(&quot;Finish authenticate current thread&quot;);</span>
+<span class="fc" id="L158">    }</span>
+
+    public AccessToken parseAccessToken(TokenDetails tokenDetails) {
+<span class="fc" id="L161">        String accessToken = getAccessToken(tokenDetails);</span>
+<span class="fc" id="L162">        String realm = getRealmFromToken(accessToken);</span>
+        try {
+<span class="fc" id="L164">            return auth2AuthorizationFlowService.parseAccessToken(accessToken, realm);</span>
+<span class="nc" id="L165">        } catch (TokenExpirationException e) {</span>
+<span class="nc" id="L166">            logger.debug(&quot;Access token is not active: {}, realm: {}&quot;, accessToken, realm, e);</span>
+<span class="nc" id="L167">            return changeRefreshToken(tokenDetails, accessToken, realm);</span>
+<span class="nc" id="L168">        } catch (VerificationException e) {</span>
+<span class="nc" id="L169">            logger.error(&quot;Malicious token: {}, realm: {}&quot;, accessToken, realm, e);</span>
+<span class="nc" id="L170">            throw new MaliciousBearerJwtTokenAuthenticationException();</span>
+        }
+    }
+
+    public String removeCodeFromUrl(String url, String code) {
+<span class="fc" id="L175">        return url.replaceFirst(&quot;&amp;?code=&quot; + code, &quot;&quot;);</span>
+    }
+
+    public String removeCodeFromUrl(HttpServletRequest request) {
+<span class="fc" id="L179">        String code = request.getParameter(OAuth2Constants.CODE);</span>
+<span class="fc" id="L180">        String url = request.getRequestURL().toString();</span>
+<span class="fc" id="L181">        String cleanUrl = removeCodeFromUrl(url, code);</span>
+<span class="fc" id="L182">        logger.info(&quot;Code was removed from request. Clean url looks like {}&quot;, cleanUrl);</span>
+<span class="fc" id="L183">        return cleanUrl;</span>
+    }
+
+    public boolean isTokenExpiredOrShouldBeRefreshed(TokenDetails tokenDetails) {
+<span class="fc bfc" id="L187" title="All 2 branches covered.">        if (tokenDetails.getAccessTokenExpiration() == null) return true;</span>
+        LocalDateTime refreshDate =
+<span class="fc" id="L189">                LocalDateTime.now().plusSeconds(oidcConfiguration.getTokenShouldBeRefreshed());</span>
+<span class="fc" id="L190">        return tokenDetails.getAccessTokenExpiration().isBefore(refreshDate);</span>
+    }
+
+    public TokenDetails generateTokenDetails(String accessToken, String refreshToken) {
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">        if (StringUtils.isBlank(accessToken))</span>
+<span class="nc" id="L195">            return new TokenDetails();</span>
+        AccessToken token;
+        try {
+<span class="fc" id="L198">            token =</span>
+<span class="fc" id="L199">                    auth2AuthorizationFlowService.parseAccessToken(accessToken, getRealmFromToken(accessToken));</span>
+<span class="nc" id="L200">        } catch (VerificationException e) {</span>
+<span class="nc" id="L201">            logger.error(&quot;Malicious token: {}, realm: {}&quot;, accessToken, TokenVerifier.getRealm(accessToken), e);</span>
+<span class="nc" id="L202">            throw new MaliciousBearerJwtTokenAuthenticationException();</span>
+<span class="nc" id="L203">        } catch (TokenExpirationException e) {</span>
+<span class="nc" id="L204">            logger.debug(&quot;Access token is expired trying to refresh one...&quot;, e);</span>
+            TokenDetails tokenDetails;
+<span class="nc" id="L206">            String realmFromToken = getRealmFromToken(accessToken);</span>
+            try {
+<span class="nc" id="L208">                tokenDetails = auth2AuthorizationFlowService.getTokenByRefreshToken(refreshToken);</span>
+<span class="nc" id="L209">                token =</span>
+<span class="nc" id="L210">                        auth2AuthorizationFlowService.parseAccessToken(tokenDetails.getAccessToken(), realmFromToken);</span>
+<span class="nc" id="L211">                return createTokenDetails(tokenDetails.getAccessToken(), tokenDetails.getRefreshToken(), token.getExpiration());</span>
+<span class="nc" id="L212">            } catch (Exception e1) {</span>
+<span class="nc" id="L213">                logger.error(&quot;Refresh token is spoiled: {}, realm: {}&quot;, StringUtils.getMaskedString(refreshToken),</span>
+                        realmFromToken, e1);
+<span class="nc" id="L215">                throw new RefreshTokenObsoleteAuthenticationException();</span>
+            }
+<span class="fc" id="L217">        }</span>
+<span class="fc" id="L218">        return createTokenDetails(accessToken, refreshToken, token.getExpiration());</span>
+    }
+
+    private TokenDetails createTokenDetails(String accessToken, String refreshToken, int expiration){
+<span class="fc" id="L222">        LocalDateTime accessTokenExpiration =</span>
+<span class="fc" id="L223">                LocalDateTime.ofInstant(Instant.ofEpochSecond(expiration), ZoneId.systemDefault());</span>
+<span class="fc" id="L224">        return new TokenDetails(accessToken, refreshToken, accessTokenExpiration);</span>
+    }
+
+    public void safeCleanupSecurityContext(Class clazz) {
+<span class="fc" id="L228">        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();</span>
+<span class="pc bpc" id="L229" title="1 of 4 branches missed.">        if (authentication == null || !(authentication.getCredentials() instanceof TokenDetails)) {</span>
+<span class="fc" id="L230">            return;</span>
+        }
+<span class="fc" id="L232">        TokenDetails tokenDetails = (TokenDetails) authentication.getCredentials();</span>
+<span class="pc bpc" id="L233" title="1 of 4 branches missed.">        if (tokenDetails != null &amp;&amp; tokenDetails.getCredentialsProvider() == clazz) {</span>
+<span class="fc" id="L234">            SecurityContextHolder.clearContext();</span>
+        }
+<span class="fc" id="L236">    }</span>
+
+    private AccessToken changeRefreshToken(TokenDetails tokenDetails, String accessToken, String realm) {
+        try {
+<span class="nc" id="L240">            TokenDetails refreshedTokenDetails =</span>
+<span class="nc" id="L241">                    auth2AuthorizationFlowService.getTokenByRefreshToken(tokenDetails.getRefreshToken());</span>
+<span class="nc" id="L242">            return auth2AuthorizationFlowService.parseAccessToken(refreshedTokenDetails.getAccessToken(), realm);</span>
+<span class="nc" id="L243">        } catch (VerificationException | TokenExpirationException e) {</span>
+<span class="nc" id="L244">            logger.error(&quot;Malicious token: {}, realm: {}&quot;, accessToken, realm, e);</span>
+<span class="nc" id="L245">            throw new MaliciousBearerJwtTokenAuthenticationException();</span>
+<span class="nc" id="L246">        } catch (Exception ex) {</span>
+<span class="nc" id="L247">            logger.error(&quot;Error during obtaining access token by refresh one.&quot;, ex);</span>
+<span class="nc" id="L248">            throw new ObtainRefreshTokenException();</span>
+        }
+    }
+
+    private String obtainCleanBearerToken(String bearerToken) {
+<span class="fc bfc" id="L253" title="All 2 branches covered.">        if (StringUtils.isBlank(bearerToken)) {</span>
+<span class="fc" id="L254">            return null;</span>
+        }
+<span class="fc bfc" id="L256" title="All 2 branches covered.">        return bearerToken.startsWith(AUTH_HEADER_VALUE_PREFIX) ?</span>
+<span class="fc" id="L257">                bearerToken.substring(AUTH_HEADER_VALUE_PREFIX.length()) : bearerToken;</span>
+
+    }
+
+    private String getRealmFromToken(String accessToken) {
+<span class="fc" id="L262">        String realm = TokenVerifier.getRealm(accessToken);</span>
+<span class="pc bpc" id="L263" title="1 of 2 branches missed.">        if (StringUtils.isBlank(realm)) {</span>
+<span class="nc" id="L264">            logger.error(&quot;Unable to obtain realm from Access token.&quot;);</span>
+<span class="nc" id="L265">            throw new RealmInJwtTokenNotFoundAuthenticationException();</span>
+        }
+<span class="fc" id="L267">        return realm;</span>
+    }
+
+    private String getAccessToken(TokenDetails tokenDetails) {
+<span class="fc" id="L271">        String accessToken = tokenDetails.getAccessToken();</span>
+<span class="pc bpc" id="L272" title="1 of 2 branches missed.">        if (StringUtils.isBlank(accessToken)) {</span>
+<span class="nc" id="L273">            logger.error(&quot;Token is empty.&quot;);</span>
+<span class="nc" id="L274">            throw new BearerJwtTokenNotFoundAuthenticationException();</span>
+        }
+<span class="fc" id="L276">        return accessToken;</span>
+    }
+
+    private Collection&lt;GrantedAuthority&gt; retrieveAuthorities(AccessToken.Access access) {
+<span class="pc bpc" id="L280" title="1 of 2 branches missed.">        if (access == null) {</span>
+<span class="nc" id="L281">            return Collections.emptyList();</span>
+        }
+<span class="fc" id="L283">        Collection&lt;GrantedAuthority&gt; authorities = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L284">        Set&lt;String&gt; clientRoles = access.getRoles();</span>
+<span class="fc bfc" id="L285" title="All 2 branches covered.">        for (String role : clientRoles) {</span>
+<span class="fc" id="L286">            authorities.add(new SimpleGrantedAuthority(role));</span>
+<span class="fc" id="L287">        }</span>
+<span class="fc" id="L288">        return authorities;</span>
+    }
+
+    @Autowired
+    public void setAuth2AuthorizationFlowService(OAuth2AuthorizationFlowService auth2AuthorizationFlowService) {
+<span class="fc" id="L293">        this.auth2AuthorizationFlowService = auth2AuthorizationFlowService;</span>
+<span class="fc" id="L294">    }</span>
+
+    @Autowired
+    public void setOidcConfiguration(OidcConfiguration oidcConfiguration) {
+<span class="fc" id="L298">        this.oidcConfiguration = oidcConfiguration;</span>
+<span class="fc" id="L299">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

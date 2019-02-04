@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>UriPredicate.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">security-filter</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.oidc.filters.uri</a> &gt; <span class="el_source">UriPredicate.java</span></div><h1>UriPredicate.java</h1><pre class="source lang-java linenums">package pro.javatar.security.oidc.filters.uri;
+
+import org.springframework.http.HttpRequest;
+
+import java.util.Objects;
+import java.util.function.Predicate;
+
+<span class="nc" id="L8">public class UriPredicate {</span>
+
+    public static Predicate&lt;UriFilterOption&gt; httpMethodEquals(HttpRequest request) {
+<span class="fc" id="L11">        return p -&gt; {</span>
+<span class="fc bfc" id="L12" title="All 2 branches covered.">            if (p.getHttpMethod().isPresent() &amp;&amp;</span>
+<span class="fc bfc" id="L13" title="All 2 branches covered.">                    !Objects.equals(request.getMethod(), p.getHttpMethod().get())) {</span>
+<span class="fc" id="L14">                return false;</span>
+            }
+<span class="fc" id="L16">            return true;</span>
+        };
+    }
+
+    public static Predicate&lt;UriFilterOption&gt; uriContains(HttpRequest request) {
+<span class="fc" id="L21">        return p -&gt; request.getURI().getPath().contains(p.getUri());</span>
+    }
+
+    public static Predicate&lt;UriFilterOption&gt; uriEquals(HttpRequest request) {
+<span class="fc" id="L25">        return p -&gt; request.getURI().getPath().equals(p.getUri());</span>
+    }
+
+    public static Predicate&lt;UriFilterOption&gt; uriStarts(HttpRequest request) {
+<span class="fc" id="L29">        return p -&gt; request.getURI().getPath().startsWith(p.getUri());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

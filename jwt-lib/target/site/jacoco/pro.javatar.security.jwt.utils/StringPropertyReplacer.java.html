@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>StringPropertyReplacer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jwt-lib</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.jwt.utils</a> &gt; <span class="el_source">StringPropertyReplacer.java</span></div><h1>StringPropertyReplacer.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2016 Red Hat, Inc. and/or its affiliates
+ * and other contributors as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package pro.javatar.security.jwt.utils;
+
+import java.io.File;
+import java.util.Properties;
+
+/**
+ * A utility class for replacing properties in strings. 
+ *
+ * @author &lt;a href=&quot;mailto:jason@planet57.com&quot;&gt;Jason Dillon&lt;/a&gt;
+ * @author &lt;a href=&quot;Scott.Stark@jboss.org&quot;&gt;Scott Stark&lt;/a&gt;
+ * @author &lt;a href=&quot;claudio.vesco@previnet.it&quot;&gt;Claudio Vesco&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:adrian@jboss.com&quot;&gt;Adrian Brock&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:dimitris@jboss.org&quot;&gt;Dimitris Andreadis&lt;/a&gt;
+ * @version &lt;tt&gt;$Revision: 2898 $&lt;/tt&gt; 
+ */
+<span class="nc" id="L32">public final class StringPropertyReplacer</span>
+{
+    /** New line string constant */
+<span class="nc" id="L35">    public static final String NEWLINE = System.getProperty(&quot;line.separator&quot;, &quot;\n&quot;);</span>
+
+    /** File separator value */
+<span class="nc" id="L38">    private static final String FILE_SEPARATOR = File.separator;</span>
+
+    /** Path separator value */
+<span class="nc" id="L41">    private static final String PATH_SEPARATOR = File.pathSeparator;</span>
+
+    /** File separator alias */
+    private static final String FILE_SEPARATOR_ALIAS = &quot;/&quot;;
+
+    /** Path separator alias */
+    private static final String PATH_SEPARATOR_ALIAS = &quot;:&quot;;
+
+    // States used in property parsing
+    private static final int NORMAL = 0;
+    private static final int SEEN_DOLLAR = 1;
+    private static final int IN_BRACKET = 2;
+
+    /**
+     * Go through the input string and replace any occurance of ${p} with
+     * the System.getProperty(p) value. If there is no such property p defined,
+     * then the ${p} reference will remain unchanged.
+     *
+     * If the property reference is of the form ${p:v} and there is no such property p,
+     * then the default value v will be returned.
+     *
+     * If the property reference is of the form ${p1,p2} or ${p1,p2:v} then
+     * the primary and the secondary properties will be tried in turn, before
+     * returning either the unchanged input, or the default value.
+     *
+     * The property ${/} is replaced with System.getProperty(&quot;file.separator&quot;)
+     * value and the property ${:} is replaced with System.getProperty(&quot;path.separator&quot;).
+     *
+     * @param string - the string with possible ${} references
+     * @return the input string with all property references replaced if any.
+     *    If there are no valid references the input string will be returned.
+     */
+    public static String replaceProperties(final String string)
+    {
+<span class="nc" id="L75">        return replaceProperties(string, null);</span>
+    }
+
+    /**
+     * Go through the input string and replace any occurance of ${p} with
+     * the props.getProperty(p) value. If there is no such property p defined,
+     * then the ${p} reference will remain unchanged.
+     *
+     * If the property reference is of the form ${p:v} and there is no such property p,
+     * then the default value v will be returned.
+     *
+     * If the property reference is of the form ${p1,p2} or ${p1,p2:v} then
+     * the primary and the secondary properties will be tried in turn, before
+     * returning either the unchanged input, or the default value.
+     *
+     * The property ${/} is replaced with System.getProperty(&quot;file.separator&quot;)
+     * value and the property ${:} is replaced with System.getProperty(&quot;path.separator&quot;).
+     *
+     * @param string - the string with possible ${} references
+     * @param props - the source for ${x} property ref values, null means use System.getProperty()
+     * @return the input string with all property references replaced if any.
+     *    If there are no valid references the input string will be returned.
+     */
+    public static String replaceProperties(final String string, final Properties props)
+    {
+<span class="nc" id="L100">        final char[] chars = string.toCharArray();</span>
+<span class="nc" id="L101">        StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L102">        boolean properties = false;</span>
+<span class="nc" id="L103">        int state = NORMAL;</span>
+<span class="nc" id="L104">        int start = 0;</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        for (int i = 0; i &lt; chars.length; ++i)</span>
+        {
+<span class="nc" id="L107">            char c = chars[i];</span>
+
+            // Dollar sign outside brackets
+<span class="nc bnc" id="L110" title="All 4 branches missed.">            if (c == '$' &amp;&amp; state != IN_BRACKET)</span>
+<span class="nc" id="L111">                state = SEEN_DOLLAR;</span>
+
+                // Open bracket immediatley after dollar
+<span class="nc bnc" id="L114" title="All 4 branches missed.">            else if (c == '{' &amp;&amp; state == SEEN_DOLLAR)</span>
+            {
+<span class="nc" id="L116">                buffer.append(string.substring(start, i - 1));</span>
+<span class="nc" id="L117">                state = IN_BRACKET;</span>
+<span class="nc" id="L118">                start = i - 1;</span>
+            }
+
+            // No open bracket after dollar
+<span class="nc bnc" id="L122" title="All 2 branches missed.">            else if (state == SEEN_DOLLAR)</span>
+<span class="nc" id="L123">                state = NORMAL;</span>
+
+                // Closed bracket after open bracket
+<span class="nc bnc" id="L126" title="All 4 branches missed.">            else if (c == '}' &amp;&amp; state == IN_BRACKET)</span>
+            {
+                // No content
+<span class="nc bnc" id="L129" title="All 2 branches missed.">                if (start + 2 == i)</span>
+                {
+<span class="nc" id="L131">                    buffer.append(&quot;${}&quot;); // REVIEW: Correct?</span>
+                }
+                else // Collect the system property
+                {
+<span class="nc" id="L135">                    String value = null;</span>
+
+<span class="nc" id="L137">                    String key = string.substring(start + 2, i);</span>
+
+                    // check for alias
+<span class="nc bnc" id="L140" title="All 2 branches missed.">                    if (FILE_SEPARATOR_ALIAS.equals(key))</span>
+                    {
+<span class="nc" id="L142">                        value = FILE_SEPARATOR;</span>
+                    }
+<span class="nc bnc" id="L144" title="All 2 branches missed.">                    else if (PATH_SEPARATOR_ALIAS.equals(key))</span>
+                    {
+<span class="nc" id="L146">                        value = PATH_SEPARATOR;</span>
+                    }
+                    else
+                    {
+                        // check from the properties
+<span class="nc bnc" id="L151" title="All 2 branches missed.">                        if (props != null)</span>
+<span class="nc" id="L152">                            value = props.getProperty(key);</span>
+                        else
+<span class="nc" id="L154">                            value = System.getProperty(key);</span>
+
+<span class="nc bnc" id="L156" title="All 2 branches missed.">                        if (value == null)</span>
+                        {
+                            // Check for a default value ${key:default}
+<span class="nc" id="L159">                            int colon = key.indexOf(':');</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">                            if (colon &gt; 0)</span>
+                            {
+<span class="nc" id="L162">                                String realKey = key.substring(0, colon);</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">                                if (props != null)</span>
+<span class="nc" id="L164">                                    value = props.getProperty(realKey);</span>
+                                else
+<span class="nc" id="L166">                                    value = System.getProperty(realKey);</span>
+
+<span class="nc bnc" id="L168" title="All 2 branches missed.">                                if (value == null)</span>
+                                {
+                                    // Check for a composite key, &quot;key1,key2&quot;
+<span class="nc" id="L171">                                    value = resolveCompositeKey(realKey, props);</span>
+
+                                    // Not a composite key either, use the specified default
+<span class="nc bnc" id="L174" title="All 2 branches missed.">                                    if (value == null)</span>
+<span class="nc" id="L175">                                        value = key.substring(colon+1);</span>
+                                }
+<span class="nc" id="L177">                            }</span>
+                            else
+                            {
+                                // No default, check for a composite key, &quot;key1,key2&quot;
+<span class="nc" id="L181">                                value = resolveCompositeKey(key, props);</span>
+                            }
+                        }
+                    }
+
+<span class="nc bnc" id="L186" title="All 2 branches missed.">                    if (value != null)</span>
+                    {
+<span class="nc" id="L188">                        properties = true;</span>
+<span class="nc" id="L189">                        buffer.append(value);</span>
+                    }
+                    else
+                    {
+<span class="nc" id="L193">                        buffer.append(&quot;${&quot;);</span>
+<span class="nc" id="L194">                        buffer.append(key);</span>
+<span class="nc" id="L195">                        buffer.append('}');</span>
+                    }
+
+                }
+<span class="nc" id="L199">                start = i + 1;</span>
+<span class="nc" id="L200">                state = NORMAL;</span>
+            }
+        }
+
+        // No properties
+<span class="nc bnc" id="L205" title="All 2 branches missed.">        if (!properties)</span>
+<span class="nc" id="L206">            return string;</span>
+
+        // Collect the trailing characters
+<span class="nc bnc" id="L209" title="All 2 branches missed.">        if (start != chars.length)</span>
+<span class="nc" id="L210">            buffer.append(string.substring(start, chars.length));</span>
+
+        // Done
+<span class="nc" id="L213">        return buffer.toString();</span>
+    }
+
+    /**
+     * Try to resolve a &quot;key&quot; from the provided properties by
+     * checking if it is actually a &quot;key1,key2&quot;, in which case
+     * try first &quot;key1&quot;, then &quot;key2&quot;. If all fails, return null.
+     *
+     * It also accepts &quot;key1,&quot; and &quot;,key2&quot;.
+     *
+     * @param key the key to resolve
+     * @param props the properties to use
+     * @return the resolved key or null
+     */
+    private static String resolveCompositeKey(String key, Properties props)
+    {
+<span class="nc" id="L229">        String value = null;</span>
+
+        // Look for the comma
+<span class="nc" id="L232">        int comma = key.indexOf(',');</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">        if (comma &gt; -1)</span>
+        {
+            // If we have a first part, try resolve it
+<span class="nc bnc" id="L236" title="All 2 branches missed.">            if (comma &gt; 0)</span>
+            {
+                // Check the first part
+<span class="nc" id="L239">                String key1 = key.substring(0, comma);</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">                if (props != null)</span>
+<span class="nc" id="L241">                    value = props.getProperty(key1);</span>
+                else
+<span class="nc" id="L243">                    value = System.getProperty(key1);</span>
+            }
+            // Check the second part, if there is one and first lookup failed
+<span class="nc bnc" id="L246" title="All 4 branches missed.">            if (value == null &amp;&amp; comma &lt; key.length() - 1)</span>
+            {
+<span class="nc" id="L248">                String key2 = key.substring(comma + 1);</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">                if (props != null)</span>
+<span class="nc" id="L250">                    value = props.getProperty(key2);</span>
+                else
+<span class="nc" id="L252">                    value = System.getProperty(key2);</span>
+            }
+        }
+        // Return whatever we've found or null
+<span class="nc" id="L256">        return value;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

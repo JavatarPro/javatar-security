@@ -1,0 +1,6 @@
+/root/jenkins/workspace/github/release-library/repo/jwt-lib/src/test/java/pro/javatar/security/jwt/utils/JwtTokenGenerator.java
+/root/jenkins/workspace/github/release-library/repo/jwt-lib/src/test/java/pro/javatar/security/jwt/TokenValidatorTest.java
+/root/jenkins/workspace/github/release-library/repo/jwt-lib/src/test/java/pro/javatar/security/jwt/utils/PemUtilsTest.java
+/root/jenkins/workspace/github/release-library/repo/jwt-lib/src/test/java/pro/javatar/security/jwt/TokenVerifierTest.java
+/root/jenkins/workspace/github/release-library/repo/jwt-lib/src/test/java/pro/javatar/security/jwt/bean/representation/AccessTokenTest.java
+/root/jenkins/workspace/github/release-library/repo/jwt-lib/src/test/java/pro/javatar/security/jwt/RSATokenVerifierTest.java

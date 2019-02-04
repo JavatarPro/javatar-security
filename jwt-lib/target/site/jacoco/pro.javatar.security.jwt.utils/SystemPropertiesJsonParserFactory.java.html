@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>SystemPropertiesJsonParserFactory.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jwt-lib</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.jwt.utils</a> &gt; <span class="el_source">SystemPropertiesJsonParserFactory.java</span></div><h1>SystemPropertiesJsonParserFactory.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2016 Red Hat, Inc. and/or its affiliates
+ * and other contributors as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package pro.javatar.security.jwt.utils;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.io.IOContext;
+import com.fasterxml.jackson.core.util.JsonParserDelegate;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.Properties;
+
+/**
+ * Provides replacing of system properties for parsed values
+ *
+ * @author &lt;a href=&quot;mailto:mposolda@redhat.com&quot;&gt;Marek Posolda&lt;/a&gt;
+ */
+<span class="fc" id="L35">public class SystemPropertiesJsonParserFactory extends MappingJsonFactory {</span>
+
+<span class="fc" id="L37">    private static final Properties properties = new SystemEnvProperties();</span>
+
+    @Override
+    protected JsonParser _createParser(InputStream in, IOContext ctxt) throws IOException {
+<span class="nc" id="L41">        JsonParser delegate =  super._createParser(in, ctxt);</span>
+<span class="nc" id="L42">        return new SystemPropertiesAwareJsonParser(delegate);</span>
+    }
+
+    @Override
+    protected JsonParser _createParser(Reader r, IOContext ctxt) throws IOException {
+<span class="nc" id="L47">        JsonParser delegate =  super._createParser(r, ctxt);</span>
+<span class="nc" id="L48">        return new SystemPropertiesAwareJsonParser(delegate);</span>
+    }
+
+    @Override
+    protected JsonParser _createParser(char[] data, int offset, int len, IOContext ctxt, boolean recyclable) throws IOException {
+<span class="nc" id="L53">        JsonParser delegate =  super._createParser(data, offset, len, ctxt, recyclable);</span>
+<span class="nc" id="L54">        return new SystemPropertiesAwareJsonParser(delegate);</span>
+    }
+
+    @Override
+    protected JsonParser _createParser(byte[] data, int offset, int len, IOContext ctxt) throws IOException {
+<span class="nc" id="L59">        JsonParser delegate =  super._createParser(data, offset, len, ctxt);</span>
+<span class="nc" id="L60">        return new SystemPropertiesAwareJsonParser(delegate);</span>
+    }
+
+    public static class SystemPropertiesAwareJsonParser extends JsonParserDelegate {
+
+        public SystemPropertiesAwareJsonParser(JsonParser d) {
+<span class="nc" id="L66">            super(d);</span>
+<span class="nc" id="L67">        }</span>
+
+        @Override
+        public String getText() throws IOException {
+<span class="nc" id="L71">            String orig = super.getText();</span>
+<span class="nc" id="L72">            return StringPropertyReplacer.replaceProperties(orig, properties);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

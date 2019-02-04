@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>UriFilterOption.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">security-filter</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.oidc.filters.uri</a> &gt; <span class="el_source">UriFilterOption.java</span></div><h1>UriFilterOption.java</h1><pre class="source lang-java linenums">package pro.javatar.security.oidc.filters.uri;
+
+import pro.javatar.security.oidc.utils.StringUtils;
+
+import org.springframework.http.HttpMethod;
+
+import java.text.MessageFormat;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public final class UriFilterOption {
+
+<span class="fc" id="L15">    private static final Pattern URI_PATTERN = Pattern.compile(&quot;^((GET|POST|PUT|DELETE|PATCH) )?((/|\\*).*)$&quot;);</span>
+<span class="fc" id="L16">    private static final UriFilterOption EMPTY = new UriFilterOption(&quot;&quot;);</span>
+
+    String uri;
+    Optional&lt;HttpMethod&gt; httpMethod;
+
+    public UriFilterOption(String uri) {
+<span class="fc" id="L22">        this(uri, Optional.empty());</span>
+<span class="fc" id="L23">    }</span>
+
+<span class="fc" id="L25">    public UriFilterOption(String uri, Optional&lt;HttpMethod&gt; httpMethod) {</span>
+<span class="fc" id="L26">        Objects.requireNonNull(uri);</span>
+<span class="fc" id="L27">        Objects.requireNonNull(httpMethod);</span>
+<span class="fc" id="L28">        this.uri = uri;</span>
+<span class="fc" id="L29">        this.httpMethod = httpMethod;</span>
+<span class="fc" id="L30">    }</span>
+
+    public String getUri() {
+<span class="fc" id="L33">        return uri;</span>
+    }
+
+    public Optional&lt;HttpMethod&gt; getHttpMethod() {
+<span class="fc" id="L37">        return httpMethod;</span>
+    }
+
+    public boolean isEmpty() {
+<span class="pc bpc" id="L41" title="1 of 4 branches missed.">        return StringUtils.isBlank(getUri()) &amp;&amp; !httpMethod.isPresent();</span>
+    }
+
+    public boolean isNotEmpty() {
+<span class="fc bfc" id="L45" title="All 2 branches covered.">        return !isEmpty();</span>
+    }
+
+    public static UriFilterOption fromString(String value) {
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        if (StringUtils.isBlank(value)) {</span>
+<span class="fc" id="L50">            return UriFilterOption.EMPTY;</span>
+        }
+<span class="fc" id="L52">        Matcher matcher = URI_PATTERN.matcher(value);</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (matcher.matches()) {</span>
+<span class="fc" id="L54">            String method = matcher.group(2);</span>
+<span class="fc" id="L55">            String uri = matcher.group(3);</span>
+<span class="fc" id="L56">            return new UriFilterOption(uri, Optional.ofNullable(HttpMethod.resolve(method)));</span>
+        }
+<span class="fc" id="L58">        throw new IllegalArgumentException(</span>
+<span class="fc" id="L59">                MessageFormat.format(&quot;Value \&quot;{0}\&quot; does not match pattern \&quot;{1}\&quot;&quot;, value, URI_PATTERN.toString()));</span>
+    }
+
+    @Override
+    public boolean equals(Object o) {
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (this == o)</span>
+<span class="nc" id="L65">            return true;</span>
+<span class="nc bnc" id="L66" title="All 4 branches missed.">        if (o == null || getClass() != o.getClass())</span>
+<span class="nc" id="L67">            return false;</span>
+<span class="nc" id="L68">        UriFilterOption that = (UriFilterOption) o;</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        return Objects.equals(uri, that.uri) &amp;&amp;</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">                Objects.equals(httpMethod, that.httpMethod);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L75">        return Objects.hash(uri, httpMethod);</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L80">        return &quot;UriFilterOption{&quot; +</span>
+                &quot;uri='&quot; + uri + '\'' +
+                &quot;, httpMethod=&quot; + httpMethod +
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

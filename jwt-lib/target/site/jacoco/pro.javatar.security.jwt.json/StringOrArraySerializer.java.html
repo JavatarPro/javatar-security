@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>StringOrArraySerializer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jwt-lib</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.jwt.json</a> &gt; <span class="el_source">StringOrArraySerializer.java</span></div><h1>StringOrArraySerializer.java</h1><pre class="source lang-java linenums">package pro.javatar.security.jwt.json;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+
+import java.io.IOException;
+
+<span class="fc" id="L9">public class StringOrArraySerializer extends JsonSerializer&lt;Object&gt; {</span>
+    @Override
+    public void serialize(Object o, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+<span class="nc" id="L12">        String[] array = (String[]) o;</span>
+<span class="nc bnc" id="L13" title="All 2 branches missed.">        if (array == null) {</span>
+<span class="nc" id="L14">            jsonGenerator.writeNull();</span>
+<span class="nc bnc" id="L15" title="All 2 branches missed.">        } else if (array.length == 1) {</span>
+<span class="nc" id="L16">            jsonGenerator.writeString(array[0]);</span>
+        } else {
+<span class="nc" id="L18">            jsonGenerator.writeStartArray();</span>
+<span class="nc bnc" id="L19" title="All 2 branches missed.">            for (String s : array) {</span>
+<span class="nc" id="L20">                jsonGenerator.writeString(s);</span>
+            }
+<span class="nc" id="L22">            jsonGenerator.writeEndArray();</span>
+        }
+<span class="nc" id="L24">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

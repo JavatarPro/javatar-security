@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: pro.javatar.security.oidc.filters.AuthenticationRealmAwareFilterTest
+-------------------------------------------------------------------------------
+Tests run: 23, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.017 sec

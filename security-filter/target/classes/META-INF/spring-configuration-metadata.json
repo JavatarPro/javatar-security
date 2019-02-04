@@ -1,0 +1,312 @@
+{
+  "properties": [
+    {
+      "name": "security.oidc.identity_provider_host",
+      "type": "java.lang.String",
+      "description": "Identity provider uri (host and port)"
+    },
+    {
+      "name": "security.oauth2.client_id",
+      "type": "java.lang.String",
+      "description": "Client id from identity provider"
+    },
+    {
+      "name": "security.oauth2.client_secret",
+      "type": "java.lang.String",
+      "description": "Client secret from identity provider"
+    },
+    {
+      "name": "security.oidc.checkTokenIsActive",
+      "type": "java.lang.Boolean",
+      "description": "Check token is active",
+      "defaultValue": true
+    },
+    {
+      "name": "security.oidc.skipRefererCheck",
+      "type": "java.lang.Boolean",
+      "description": "Check referer header while checking code from query",
+      "defaultValue": false
+    },
+    {
+      "name": "security.oidc.checkTokenType",
+      "type": "java.lang.Boolean",
+      "description": "Check token type",
+      "defaultValue": true
+    },
+    {
+      "name": "security.oidc.token_endpoint",
+      "type": "java.lang.String",
+      "description": "Token endpoint URL"
+    },
+    {
+      "name": "security.oauth2.username",
+      "type": "java.lang.String",
+      "description": "User name from mservice user"
+    },
+    {
+      "name": "security.oauth2.password",
+      "type": "java.lang.String",
+      "description": "User password from mservice user"
+    },
+    {
+      "name": "security.oidc.defaultRealm",
+      "type": "java.lang.String",
+      "description": "Default realm for security library",
+      "defaultValue": "mservice"
+    },
+    {
+      "name": "security.oauth2.tokenShouldBeRefreshed",
+      "type": "java.lang.Integer",
+      "description": "Token refresh time",
+      "defaultValue": "75"
+    },
+    {
+      "name": "security.oauth2.publicKey",
+      "type": "java.lang.String",
+      "description": "Deprecated"
+    },
+    {
+      "name": "security.oidc.filterApplyUrlRegex",
+      "type": "java.lang.String",
+      "description": "@Depreceted: use \"security.oidc.filterApplyUrlList\" (list has highter priority). Security apply url regex",
+      "defaultValue": "\\/.*"
+    },
+    {
+      "name": "security.oidc.filterApplyUrlList",
+      "type": "java.util.List",
+      "description": "Security apply urls comma separated list. Has priority over \"security.oidc.filterApplyUrlRegex\""
+    },
+    {
+      "name": "security.oidc.filterIgnoreUrlList",
+      "type": "java.util.List",
+      "description": "Security ignore urls comma separated list. Has priority over \"security.oidc.filterApplyUrlRegex\" and \"security.oidc.filterApplyUrlList\""
+    },
+    {
+      "name": "security.oidc.encodeRedirectUri",
+      "type": "java.lang.Boolean",
+      "description": "Encode redirect uri",
+      "defaultValue": true
+    },
+    {
+      "name": "security.oidc.useReferAsRedirectUri",
+      "type": "java.lang.Boolean",
+      "description": "Use referer as redirect uri",
+      "defaultValue": false
+    },
+    {
+      "name": "security.oidc.AuthenticationRealmAwareFilter.realmUrlPattern",
+      "type": "java.lang.String",
+      "description": "Pattern url for realm"
+    },
+    {
+      "name": "security.oidc.AuthenticationRealmAwareFilter.filterApplyUrlRegex",
+      "type": "java.lang.String",
+      "description": "Regex url for AuthenticationRealmAwareFilter"
+    },
+    {
+      "name": "security.oidc.AuthenticationRealmAwareFilter.filterApplyUrlList",
+      "type": "java.util.List",
+      "description": "Security apply urls comma separated list"
+    },
+    {
+      "name": "security.oidc.AuthenticationRealmAwareFilter.filterIgnoreUrlList",
+      "type": "java.util.List",
+      "description": "Security ignore urls comma separated list"
+    },
+    {
+      "name": "security.oidc.OidcAuthenticationHttpClientInterceptor.applyUrlRegex",
+      "type": "java.lang.String",
+      "description": "Regex url for OidcAuthenticationHttpClientInterceptor"
+    },
+    {
+      "name": "security.oidc.OidcAuthenticationHttpClientInterceptor.filterApplyUrlList",
+      "type": "java.util.List",
+      "description": "Security apply urls comma separated list"
+    },
+    {
+      "name": "security.oidc.OidcAuthenticationHttpClientInterceptor.filterIgnoreUrlList",
+      "type": "java.util.List",
+      "description": "Security ignore urls comma separated list"
+    },
+    {
+      "name": "security.oidc.OidcAuthenticationHttpClientInterceptor.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable OidcAuthenticationHttpClient interceptor",
+      "defaultValue": true
+    },
+    {
+      "name": "security.oidc.AuthenticationJwtBearerTokenAwareFilter.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable AuthenticationJwtBearerTokenAware filter",
+      "defaultValue": false
+    },
+    {
+      "name": "security.oidc.AuthenticationJwtBearerTokenAwareFilter.anonymousAllowed",
+      "type": "java.lang.Boolean",
+      "description": "Allow anonymous enter",
+      "defaultValue": false
+    },
+    {
+      "name": "security.oidc.AuthenticationJwtBearerTokenAwareFilter.jwtBearerTokenRequired",
+      "type": "java.lang.Boolean",
+      "description": "JWT bearer token required",
+      "defaultValue": true
+    },
+    {
+      "name": "security.oidc.AuthenticationJwtBearerTokenAwareFilter.jwtBearerTokenIntoSessionEnable",
+      "type": "java.lang.Boolean",
+      "description": "Use JWT bearer token into session",
+      "defaultValue": false
+    },
+    {
+      "name": "security.oidc.AuthenticationJwtBearerTokenAwareFilter.jwtBearerTokenOtherAuthenticationAllowed",
+      "type": "java.lang.Boolean",
+      "description": "JWT bearer token other authentication allowed",
+      "defaultValue": false
+    },
+    {
+      "name": "security.oidc.AuthenticationOAuth2RedirectAwareFilter.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable AuthenticationOAuth2RedirectAware filter",
+      "defaultValue": true
+    },
+    {
+      "name": "security.oidc.AuthenticationOAuth2RedirectAwareFilter.filterApplyUrlRegex",
+      "type": "java.lang.String",
+      "description": "Regex url for AuthenticationOAuth2RedirectAware filter"
+    },
+    {
+      "name": "security.oidc.AuthenticationOAuth2RedirectAwareFilter.filterApplyUrlList",
+      "type": "java.util.List",
+      "description": "Security apply urls comma separated list"
+    },
+    {
+      "name": "security.oidc.AuthenticationOAuth2RedirectAwareFilter.filterIgnoreUrlList",
+      "type": "java.util.List",
+      "description": "Security ignore urls comma separated list"
+    },
+    {
+      "name": "security.oidc.AuthenticationRealmAwareFilter.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable AuthenticationRealmAware filter",
+      "defaultValue": true
+    },
+    {
+      "name": "security.oidc.AuthenticationRealmAwareFilter.realmParamName",
+      "type": "java.lang.String",
+      "description": "Realm parameter name",
+      "defaultValue": "realm"
+    },
+    {
+      "name": "security.oidc.AuthenticationRealmAwareFilter.isRealmMandatory",
+      "type": "java.lang.Boolean",
+      "description": "Realm is required",
+      "defaultValue": true
+    },
+    {
+      "name": "security.oidc.AuthenticationLogoutFilter.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable AuthenticationLogout filter",
+      "defaultValue": true
+    },
+    {
+      "name": "security.oidc.AuthenticationIPlanetDirectoryProAwareFilter.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable AuthenticationIPlanetDirectoryProAware filter",
+      "defaultValue": false
+    },
+    {
+      "name": "security.oidc.AuthenticationIPlanetDirectoryProAwareFilter.filterApplyUrlRegex",
+      "type": "java.lang.String",
+      "description": "Regex url for AuthenticationIPlanetDirectoryProAware filter"
+    },
+    {
+      "name": "security.oidc.AuthenticationIPlanetDirectoryProAwareFilter.filterApplyUrlList",
+      "type": "java.util.List",
+      "description": "Security apply urls comma separated list"
+    },
+    {
+      "name": "security.oidc.AuthenticationIPlanetDirectoryProAwareFilter.filterIgnoreUrlList",
+      "type": "java.util.List",
+      "description": "Security ignore urls comma separated list"
+    },
+    {
+      "name": "security.oidc.AuthenticationIPlanetDirectoryProAwareFilter.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable AuthenticationIPlanetDirectoryProAware filter",
+      "defaultValue": false
+    },
+    {
+      "name": "security.oidc.AuthenticationIPlanetDirectoryProAwareFilter.authorities",
+      "type": "java.lang.String",
+      "description": "Authorities for AuthenticationIPlanetDirectoryProAware filter",
+      "defaultValue": "ADMIN,USER"
+    },
+    {
+      "name": "security.oidc.AuthenticationIPlanetDirectoryProAwareFilter.userLogin",
+      "type": "java.lang.String",
+      "description": "User login for AuthenticationIPlanetDirectoryProAware filter",
+      "defaultValue": "stubAdmin"
+    },
+    {
+      "name": "security.oidc.OidcAuthenticationHttpClientInterceptor.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable OidcAuthenticationHttpClient interceptor",
+      "defaultValue": true
+    },
+    {
+      "name": "security.oidc.OidcAuthenticationHttpClientInterceptor.applyUrlRegex",
+      "type": "java.lang.String",
+      "description": "Regex url for OidcAuthenticationHttpClient interceptor",
+      "defaultValue": "/.*"
+    },
+    {
+      "name": "security.oidc.AuthorizationStubFilter.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable AuthorizationStub filter",
+      "defaultValue": false
+    },
+    {
+      "name": "security.oidc.AuthorizationStubFilter.userLogin",
+      "type": "java.lang.String",
+      "description": "User login for AuthorizationStub filter",
+      "defaultValue": "stubAdmin"
+    },
+    {
+      "name": "security.oidc.AuthorizationStubFilter.authorities",
+      "type": "java.lang.String",
+      "description": "Authorities for AuthorizationStub filter",
+      "defaultValue": "ADMIN,USER"
+    },
+    {
+      "name": "security.realm.cache.host",
+      "type": "java.lang.String",
+      "description": "Host for cache service",
+      "defaultValue": "localhost"
+    },
+    {
+      "name": "security.realm.cache.port",
+      "type": "java.lang.Integer",
+      "description": "Port for cache service",
+      "defaultValue": "6379"
+    },
+    {
+      "name": "security.realm.cache.usePool",
+      "type": "java.lang.Boolean",
+      "description": "Use pool for cache service",
+      "defaultValue": true
+    },
+    {
+      "name": "security.realm.cache.keyPattern",
+      "type": "java.lang.String",
+      "description": "Key pattern for cache service",
+      "defaultValue": "security.public.key.for.realm."
+    },
+    {
+      "name": "security.realm.cache.enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable cache service",
+      "defaultValue": true
+    }
+  ]
+}

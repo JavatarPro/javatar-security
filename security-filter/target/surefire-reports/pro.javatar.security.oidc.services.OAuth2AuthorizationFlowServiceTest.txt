@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: pro.javatar.security.oidc.services.OAuth2AuthorizationFlowServiceTest
+-------------------------------------------------------------------------------
+Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.835 sec

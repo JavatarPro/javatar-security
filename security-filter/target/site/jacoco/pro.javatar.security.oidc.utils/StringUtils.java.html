@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>StringUtils.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">security-filter</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.oidc.utils</a> &gt; <span class="el_source">StringUtils.java</span></div><h1>StringUtils.java</h1><pre class="source lang-java linenums">package pro.javatar.security.oidc.utils;
+
+public class StringUtils {
+
+<span class="nc" id="L5">    private StringUtils() {</span>
+<span class="nc" id="L6">    }</span>
+
+    /**
+     * &lt;p&gt;Checks if a CharSequence is whitespace, empty (&quot;&quot;) or null.&lt;/p&gt;
+     * &lt;p&gt;
+     * &lt;pre&gt;
+     * StringUtils.isBlank(null)      = true
+     * StringUtils.isBlank(&quot;&quot;)        = true
+     * StringUtils.isBlank(&quot; &quot;)       = true
+     * StringUtils.isBlank(&quot;bob&quot;)     = false
+     * StringUtils.isBlank(&quot;  bob  &quot;) = false
+     * &lt;/pre&gt;
+     *
+     * @param cs the CharSequence to check, may be null
+     * @return {@code true} if the CharSequence is null, empty or whitespace
+     */
+    public static boolean isBlank(final CharSequence cs) {
+        int strLen;
+<span class="fc bfc" id="L24" title="All 4 branches covered.">        if (cs == null || (strLen = cs.length()) == 0) {</span>
+<span class="fc" id="L25">            return true;</span>
+        }
+<span class="fc bfc" id="L27" title="All 2 branches covered.">        for (int i = 0; i &lt; strLen; i++) {</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">            if (Character.isWhitespace(cs.charAt(i)) == false) {</span>
+<span class="fc" id="L29">                return false;</span>
+            }
+        }
+<span class="fc" id="L32">        return true;</span>
+    }
+
+    /**
+     * &lt;p&gt;Checks if a CharSequence is not empty (&quot;&quot;), not null and not whitespace only.&lt;/p&gt;
+     * &lt;p&gt;
+     * &lt;pre&gt;
+     * StringUtils.isNotBlank(null)      = false
+     * StringUtils.isNotBlank(&quot;&quot;)        = false
+     * StringUtils.isNotBlank(&quot; &quot;)       = false
+     * StringUtils.isNotBlank(&quot;bob&quot;)     = true
+     * StringUtils.isNotBlank(&quot;  bob  &quot;) = true
+     * &lt;/pre&gt;
+     *
+     * @param cs the CharSequence to check, may be null
+     * @return {@code true} if the CharSequence is
+     * not empty and not null and not whitespace
+     * @since 3.0 Changed signature from isNotBlank(String) to isNotBlank(CharSequence)
+     */
+    public static boolean isNotBlank(final CharSequence cs) {
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        return !isBlank(cs);</span>
+    }
+
+    public static String getMaskedString(String secret, int lastSymbolsCount) {
+<span class="fc bfc" id="L56" title="All 4 branches covered.">        if (StringUtils.isBlank(secret) || secret.length() &lt; lastSymbolsCount) {return secret;}</span>
+<span class="fc" id="L57">        return &quot;*****&quot; + secret.substring(secret.length() - lastSymbolsCount);</span>
+    }
+
+    public static String getMaskedString(String secret) {
+<span class="fc" id="L61">        return getMaskedString(secret, 7);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RSAProvider.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jwt-lib</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.jwt.bean.jws.crypto</a> &gt; <span class="el_source">RSAProvider.java</span></div><h1>RSAProvider.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2016 Red Hat, Inc. and/or its affiliates
+ * and other contributors as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package pro.javatar.security.jwt.bean.jws.crypto;
+
+
+import pro.javatar.security.jwt.bean.jws.Algorithm;
+import pro.javatar.security.jwt.bean.jws.JWSInput;
+import pro.javatar.security.jwt.exception.JwtException;
+import pro.javatar.security.jwt.utils.PemUtils;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.cert.X509Certificate;
+
+/**
+ * @author &lt;a href=&quot;mailto:bill@burkecentral.com&quot;&gt;Bill Burke&lt;/a&gt;
+ * @version $Revision: 1 $
+ */
+<span class="fc" id="L38">public class RSAProvider implements SignatureProvider {</span>
+<span class="fc" id="L39">    private static final Logger logger = LoggerFactory.getLogger(RSAProvider.class.getName());</span>
+
+    public static String getJavaAlgorithm(Algorithm alg) {
+<span class="pc bpc" id="L42" title="3 of 4 branches missed.">        switch (alg) {</span>
+            case RS256:
+<span class="fc" id="L44">                return &quot;SHA256withRSA&quot;;</span>
+            case RS384:
+<span class="nc" id="L46">                return &quot;SHA384withRSA&quot;;</span>
+            case RS512:
+<span class="nc" id="L48">                return &quot;SHA512withRSA&quot;;</span>
+            default:
+<span class="nc" id="L50">                throw new IllegalArgumentException(&quot;Not an RSA Algorithm&quot;);</span>
+        }
+    }
+
+    public static Signature getSignature(Algorithm alg) {
+        try {
+<span class="fc" id="L56">            return Signature.getInstance(getJavaAlgorithm(alg));</span>
+<span class="nc" id="L57">        } catch (Exception e) {</span>
+<span class="nc" id="L58">            logger.error(&quot;Get signature exception: &quot;, e.getMessage());</span>
+<span class="nc" id="L59">            throw new JwtException(e.getMessage(), e);</span>
+        }
+    }
+
+    public static byte[] sign(byte[] data, Algorithm algorithm, PrivateKey privateKey) {
+        try {
+<span class="fc" id="L65">            Signature signature = getSignature(algorithm);</span>
+<span class="fc" id="L66">            signature.initSign(privateKey);</span>
+<span class="fc" id="L67">            signature.update(data);</span>
+<span class="fc" id="L68">            return signature.sign();</span>
+<span class="nc" id="L69">        } catch (Exception e) {</span>
+<span class="nc" id="L70">            logger.error(&quot;Sign exception: &quot;,  e.getMessage());</span>
+<span class="nc" id="L71">            throw new JwtException(e.getMessage(), e);</span>
+        }
+    }
+
+    public static boolean verifyViaCertificate(JWSInput input, String cert) {
+<span class="nc" id="L76">        X509Certificate certificate = null;</span>
+        try {
+<span class="nc" id="L78">            certificate = PemUtils.decodeCertificate(cert);</span>
+<span class="nc" id="L79">        } catch (Exception e) {</span>
+<span class="nc" id="L80">            logger.error(&quot;Verify via certificate exception: &quot;,  e.getMessage());</span>
+<span class="nc" id="L81">            throw new JwtException(e.getMessage(), e);</span>
+<span class="nc" id="L82">        }</span>
+<span class="nc" id="L83">        return verify(input, certificate.getPublicKey());</span>
+    }
+
+    public static boolean verify(JWSInput input, PublicKey publicKey) {
+        try {
+<span class="fc" id="L88">            Signature verifier = getSignature(input.getHeader().getAlgorithm());</span>
+<span class="fc" id="L89">            verifier.initVerify(publicKey);</span>
+<span class="fc" id="L90">            verifier.update(input.getEncodedSignatureInput().getBytes(&quot;UTF-8&quot;));</span>
+<span class="fc" id="L91">            return verifier.verify(input.getSignature());</span>
+<span class="fc" id="L92">        } catch (Exception e) {</span>
+<span class="fc" id="L93">            logger.error(&quot;Verify exception: &quot;,  e.getMessage());</span>
+<span class="fc" id="L94">            throw new JwtException(e.getMessage(), e);</span>
+        }
+
+    }
+
+    @Override
+    public boolean verify(JWSInput input, String key) {
+<span class="nc" id="L101">        return verifyViaCertificate(input, key);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

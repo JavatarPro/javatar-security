@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TokenValidator.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jwt-lib</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.jwt</a> &gt; <span class="el_source">TokenValidator.java</span></div><h1>TokenValidator.java</h1><pre class="source lang-java linenums">package pro.javatar.security.jwt;
+
+import pro.javatar.security.jwt.bean.jws.AlgorithmType;
+import pro.javatar.security.jwt.bean.jws.JWSInput;
+import pro.javatar.security.jwt.bean.jws.crypto.HMACProvider;
+import pro.javatar.security.jwt.bean.jws.crypto.RSAProvider;
+import pro.javatar.security.jwt.bean.representation.AccessToken;
+import pro.javatar.security.jwt.exception.TokenExpirationException;
+import pro.javatar.security.jwt.exception.VerificationException;
+import pro.javatar.security.jwt.utils.TokenUtil;
+
+import javax.crypto.SecretKey;
+import java.security.PublicKey;
+
+public class TokenValidator {
+<span class="fc" id="L16">    private boolean checkTokenType = true;</span>
+<span class="fc" id="L17">    private boolean checkActive = true;</span>
+<span class="fc" id="L18">    private boolean checkRealm = true;</span>
+    private String realm;
+    private AlgorithmType algorithmType;
+    private PublicKey publicKey;
+    private SecretKey secretKey;
+    private JWSInput jws;
+    private AccessToken token;
+
+    public TokenValidator() {
+<span class="fc" id="L27">        this(true, true, true);</span>
+<span class="fc" id="L28">    }</span>
+
+<span class="fc" id="L30">    public TokenValidator(boolean checkTokenType, boolean checkActive, boolean checkRealm) {</span>
+<span class="fc" id="L31">        this.checkTokenType = checkTokenType;</span>
+<span class="fc" id="L32">        this.checkActive = checkActive;</span>
+<span class="fc" id="L33">        this.checkRealm = checkRealm;</span>
+<span class="fc" id="L34">    }</span>
+
+    public void validate() throws VerificationException, TokenExpirationException {
+<span class="fc" id="L37">        validateRealm();</span>
+<span class="fc" id="L38">        validateAlgorithmType();</span>
+<span class="fc" id="L39">        validateTokenSubject();</span>
+<span class="fc" id="L40">        validateTokenType();</span>
+<span class="fc" id="L41">        validateIsTokenActive();</span>
+<span class="fc" id="L42">    }</span>
+
+    private void validateIsTokenActive() throws TokenExpirationException {
+<span class="pc bpc" id="L45" title="1 of 4 branches missed.">        if (checkActive &amp;&amp; !token.isActive()) {</span>
+<span class="fc" id="L46">            throw new TokenExpirationException(&quot;Token is not active&quot;);</span>
+        }
+<span class="fc" id="L48">    }</span>
+
+    private void validateTokenType() throws VerificationException {
+<span class="pc bpc" id="L51" title="2 of 4 branches missed.">        if (checkTokenType &amp;&amp; !TokenUtil.TOKEN_TYPE_BEARER.equalsIgnoreCase(token.getType())) {</span>
+<span class="nc" id="L52">            throw new VerificationException(</span>
+                    &quot;Token type is incorrect. Expected '&quot; + TokenUtil.TOKEN_TYPE_BEARER
+<span class="nc" id="L54">                            + &quot;' but was '&quot; + token.getType() + &quot;'&quot;);</span>
+        }
+<span class="fc" id="L56">    }</span>
+
+    private void validateTokenSubject() throws VerificationException {
+<span class="fc" id="L59">        String user = token.getSubject();</span>
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">        if (user == null) {</span>
+<span class="nc" id="L61">            throw new VerificationException(&quot;Subject missing in token&quot;);</span>
+        }
+
+<span class="pc bpc" id="L64" title="1 of 4 branches missed.">        if (checkRealm &amp;&amp; !isRealmValid(token.getIssuer(), realm)) {</span>
+<span class="fc" id="L65">            throw new VerificationException(</span>
+                    &quot;Invalid token issuer. Expected realm '&quot; + realm + &quot;', but was '&quot;
+<span class="fc" id="L67">                            + token.getIssuer() + &quot;'&quot;);</span>
+        }
+<span class="fc" id="L69">    }</span>
+
+    private void validateRealm() throws VerificationException {
+<span class="pc bpc" id="L72" title="2 of 4 branches missed.">        if (checkRealm &amp;&amp; realm == null) {</span>
+<span class="nc" id="L73">            throw new VerificationException(&quot;Realm URL not set&quot;);</span>
+        }
+<span class="fc" id="L75">    }</span>
+
+    private void validateAlgorithmType() throws VerificationException {
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (AlgorithmType.RSA.equals(algorithmType)) {</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">            if (publicKey == null) {</span>
+<span class="nc" id="L80">                throw new VerificationException(&quot;Public key not set&quot;);</span>
+            }
+
+<span class="fc bfc" id="L83" title="All 2 branches covered.">            if (!RSAProvider.verify(jws, publicKey)) {</span>
+<span class="fc" id="L84">                throw new VerificationException(&quot;Invalid token signature&quot;);</span>
+            }
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        } else if (AlgorithmType.HMAC.equals(algorithmType)) {</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            if (secretKey == null) {</span>
+<span class="nc" id="L88">                throw new VerificationException(&quot;Secret key not set&quot;);</span>
+            }
+
+<span class="nc bnc" id="L91" title="All 2 branches missed.">            if (!HMACProvider.verify(jws, secretKey)) {</span>
+<span class="nc" id="L92">                throw new VerificationException(&quot;Invalid token signature&quot;);</span>
+            }
+        } else {
+<span class="nc" id="L95">            throw new VerificationException(&quot;Unknown or unsupported token algorithm&quot;);</span>
+        }
+<span class="fc" id="L97">    }</span>
+
+    public TokenValidator setRealm(String realm) {
+<span class="fc" id="L100">        this.realm = realm;</span>
+<span class="fc" id="L101">        return this;</span>
+    }
+
+    public TokenValidator setAlgorithmType(AlgorithmType algorithmType) {
+<span class="fc" id="L105">        this.algorithmType = algorithmType;</span>
+<span class="fc" id="L106">        return this;</span>
+    }
+
+    public TokenValidator setPublicKey(PublicKey publicKey) {
+<span class="fc" id="L110">        this.publicKey = publicKey;</span>
+<span class="fc" id="L111">        return this;</span>
+    }
+
+    public TokenValidator setSecretKey(SecretKey secretKey) {
+<span class="fc" id="L115">        this.secretKey = secretKey;</span>
+<span class="fc" id="L116">        return this;</span>
+    }
+
+    public TokenValidator setJwt(JWSInput jws) {
+<span class="fc" id="L120">        this.jws = jws;</span>
+<span class="fc" id="L121">        return this;</span>
+    }
+
+    public TokenValidator setToken(AccessToken token) {
+<span class="fc" id="L125">        this.token = token;</span>
+<span class="fc" id="L126">        return this;</span>
+    }
+
+    boolean isRealmValid(String issuer, String realm) {
+<span class="fc bfc" id="L130" title="All 6 branches covered.">        return !((issuer == null || issuer.isEmpty()) ||</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">                (realm == null || realm.isEmpty())) &amp;&amp;</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">                issuer.endsWith(&quot;/&quot;.concat(realm));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

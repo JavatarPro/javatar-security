@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>JWSBuilder.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">jwt-lib</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.jwt.bean.jws</a> &gt; <span class="el_source">JWSBuilder.java</span></div><h1>JWSBuilder.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2016 Red Hat, Inc. and/or its affiliates
+ * and other contributors as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package pro.javatar.security.jwt.bean.jws;
+
+import pro.javatar.security.jwt.bean.jws.crypto.HMACProvider;
+import pro.javatar.security.jwt.bean.jws.crypto.RSAProvider;
+import pro.javatar.security.jwt.exception.JwtException;
+import pro.javatar.security.jwt.utils.Base64Url;
+import pro.javatar.security.jwt.utils.JsonSerialization;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.PrivateKey;
+
+/**
+ * @author &lt;a href=&quot;mailto:bill@burkecentral.com&quot;&gt;Bill Burke&lt;/a&gt;
+ * @version $Revision: 1 $
+ */
+<span class="fc" id="L38">public class JWSBuilder {</span>
+<span class="fc" id="L39">    private static final Logger logger = LoggerFactory.getLogger(JWSBuilder.class.getName());</span>
+
+    String type;
+    String kid;
+    String contentType;
+    byte[] contentBytes;
+
+    public JWSBuilder type(String type) {
+<span class="nc" id="L47">        this.type = type;</span>
+<span class="nc" id="L48">        return this;</span>
+    }
+
+    public JWSBuilder kid(String kid) {
+<span class="nc" id="L52">        this.kid = kid;</span>
+<span class="nc" id="L53">        return this;</span>
+    }
+
+    public JWSBuilder contentType(String type) {
+<span class="nc" id="L57">        this.contentType = type;</span>
+<span class="nc" id="L58">        return this;</span>
+    }
+
+    public EncodingBuilder content(byte[] bytes) {
+<span class="nc" id="L62">        this.contentBytes = bytes;</span>
+<span class="nc" id="L63">        return new EncodingBuilder();</span>
+    }
+
+    public EncodingBuilder jsonContent(Object object) {
+        try {
+<span class="fc" id="L68">            this.contentBytes = JsonSerialization.writeValueAsBytes(object);</span>
+<span class="nc" id="L69">        } catch (IOException e) {</span>
+<span class="nc" id="L70">            logger.error(&quot;Json serialization error: &quot;, e);</span>
+<span class="nc" id="L71">            throw new JwtException(e.getMessage());</span>
+<span class="fc" id="L72">        }</span>
+<span class="fc" id="L73">        return new EncodingBuilder();</span>
+    }
+
+
+    protected String encodeHeader(Algorithm alg) {
+<span class="fc" id="L78">        StringBuilder builder = new StringBuilder(&quot;{&quot;);</span>
+<span class="fc" id="L79">        builder.append(&quot;\&quot;alg\&quot;:\&quot;&quot;).append(alg.toString()).append(&quot;\&quot;&quot;);</span>
+
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (type != null) {</span>
+<span class="nc" id="L82">            builder.append(&quot;,\&quot;typ\&quot; : \&quot;&quot;).append(type).append(&quot;\&quot;&quot;);</span>
+        }
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (kid != null) {</span>
+<span class="nc" id="L85">            builder.append(&quot;,\&quot;kid\&quot; : \&quot;&quot;).append(kid).append(&quot;\&quot;&quot;);</span>
+        }
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if (contentType != null) {</span>
+<span class="nc" id="L88">            builder.append(&quot;,\&quot;cty\&quot;:\&quot;&quot;).append(contentType).append(&quot;\&quot;&quot;);</span>
+        }
+<span class="fc" id="L90">        builder.append(&quot;}&quot;);</span>
+        try {
+<span class="fc" id="L92">            return Base64Url.encode(builder.toString().getBytes(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L93">        } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L94">            logger.error(&quot;Error during encoding header: &quot;, e);</span>
+<span class="nc" id="L95">            throw new JwtException(e.getMessage());</span>
+        }
+    }
+
+    protected String encodeAll(StringBuilder encoding, byte[] signature) {
+<span class="fc" id="L100">        encoding.append('.');</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">        if (signature != null) {</span>
+<span class="fc" id="L102">            encoding.append(Base64Url.encode(signature));</span>
+        }
+<span class="fc" id="L104">        return encoding.toString();</span>
+    }
+
+    protected void encode(Algorithm alg, byte[] data, StringBuilder encoding) {
+<span class="fc" id="L108">        encoding.append(encodeHeader(alg));</span>
+<span class="fc" id="L109">        encoding.append('.');</span>
+<span class="fc" id="L110">        encoding.append(Base64Url.encode(data));</span>
+<span class="fc" id="L111">    }</span>
+
+    protected byte[] marshalContent() {
+<span class="fc" id="L114">        return contentBytes;</span>
+    }
+
+<span class="fc" id="L117">    public class EncodingBuilder {</span>
+        public String none() {
+<span class="nc" id="L119">            StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L120">            byte[] data = marshalContent();</span>
+<span class="nc" id="L121">            encode(Algorithm.none, data, buffer);</span>
+<span class="nc" id="L122">            return encodeAll(buffer, null);</span>
+        }
+
+        public String sign(Algorithm algorithm, PrivateKey privateKey) {
+<span class="fc" id="L126">            StringBuilder builder = new StringBuilder();</span>
+<span class="fc" id="L127">            byte[] data = marshalContent();</span>
+<span class="fc" id="L128">            encode(algorithm, data, builder);</span>
+<span class="fc" id="L129">            byte[] signature = null;</span>
+            try {
+<span class="fc" id="L131">                signature = RSAProvider.sign(builder.toString().getBytes(&quot;UTF-8&quot;), algorithm, privateKey);</span>
+<span class="nc" id="L132">            } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L133">                logger.error(&quot;UnsupportedEncodingException&quot;, e);</span>
+<span class="nc" id="L134">                throw new JwtException(e.getMessage());</span>
+<span class="fc" id="L135">            }</span>
+<span class="fc" id="L136">            return encodeAll(builder, signature);</span>
+        }
+
+        public String rsa256(PrivateKey privateKey) {
+<span class="fc" id="L140">            return sign(Algorithm.RS256, privateKey);</span>
+        }
+
+        public String rsa384(PrivateKey privateKey) {
+<span class="nc" id="L144">            return sign(Algorithm.RS384, privateKey);</span>
+        }
+
+        public String rsa512(PrivateKey privateKey) {
+<span class="nc" id="L148">            return sign(Algorithm.RS512, privateKey);</span>
+        }
+
+
+        public String hmac256(byte[] sharedSecret) {
+<span class="nc" id="L153">            StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L154">            byte[] data = marshalContent();</span>
+<span class="nc" id="L155">            encode(Algorithm.HS256, data, buffer);</span>
+<span class="nc" id="L156">            byte[] signature = null;</span>
+            try {
+<span class="nc" id="L158">                signature = HMACProvider.sign(buffer.toString().getBytes(&quot;UTF-8&quot;), Algorithm.HS256, sharedSecret);</span>
+<span class="nc" id="L159">            } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L160">                logger.error(&quot;UnsupportedEncodingException&quot;, e);</span>
+<span class="nc" id="L161">                throw new JwtException(e.getMessage(), e);</span>
+<span class="nc" id="L162">            }</span>
+<span class="nc" id="L163">            return encodeAll(buffer, signature);</span>
+        }
+
+        public String hmac384(byte[] sharedSecret) {
+<span class="nc" id="L167">            StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L168">            byte[] data = marshalContent();</span>
+<span class="nc" id="L169">            encode(Algorithm.HS384, data, buffer);</span>
+<span class="nc" id="L170">            byte[] signature = null;</span>
+            try {
+<span class="nc" id="L172">                signature = HMACProvider.sign(buffer.toString().getBytes(&quot;UTF-8&quot;), Algorithm.HS384, sharedSecret);</span>
+<span class="nc" id="L173">            } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L174">                logger.error(&quot;UnsupportedEncodingException&quot;, e);</span>
+<span class="nc" id="L175">                throw new JwtException(e.getMessage(), e);</span>
+<span class="nc" id="L176">            }</span>
+<span class="nc" id="L177">            return encodeAll(buffer, signature);</span>
+        }
+
+        public String hmac512(byte[] sharedSecret) {
+<span class="nc" id="L181">            StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L182">            byte[] data = marshalContent();</span>
+<span class="nc" id="L183">            encode(Algorithm.HS512, data, buffer);</span>
+<span class="nc" id="L184">            byte[] signature = null;</span>
+            try {
+<span class="nc" id="L186">                signature = HMACProvider.sign(buffer.toString().getBytes(&quot;UTF-8&quot;), Algorithm.HS512, sharedSecret);</span>
+<span class="nc" id="L187">            } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L188">                logger.error(&quot;UnsupportedEncodingException&quot;, e);</span>
+<span class="nc" id="L189">                throw new JwtException(e.getMessage(), e);</span>
+<span class="nc" id="L190">            }</span>
+<span class="nc" id="L191">            return encodeAll(buffer, signature);</span>
+        }
+
+        public String hmac256(SecretKey sharedSecret) {
+<span class="nc" id="L195">            StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L196">            byte[] data = marshalContent();</span>
+<span class="nc" id="L197">            encode(Algorithm.HS256, data, buffer);</span>
+<span class="nc" id="L198">            byte[] signature = null;</span>
+            try {
+<span class="nc" id="L200">                signature = HMACProvider.sign(buffer.toString().getBytes(&quot;UTF-8&quot;), Algorithm.HS256, sharedSecret);</span>
+<span class="nc" id="L201">            } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L202">                logger.error(&quot;UnsupportedEncodingException&quot;, e);</span>
+<span class="nc" id="L203">                throw new JwtException(e.getMessage(), e);</span>
+<span class="nc" id="L204">            }</span>
+<span class="nc" id="L205">            return encodeAll(buffer, signature);</span>
+        }
+
+        public String hmac384(SecretKey sharedSecret) {
+<span class="nc" id="L209">            StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L210">            byte[] data = marshalContent();</span>
+<span class="nc" id="L211">            encode(Algorithm.HS384, data, buffer);</span>
+<span class="nc" id="L212">            byte[] signature = null;</span>
+            try {
+<span class="nc" id="L214">                signature = HMACProvider.sign(buffer.toString().getBytes(&quot;UTF-8&quot;), Algorithm.HS384, sharedSecret);</span>
+<span class="nc" id="L215">            } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L216">                logger.error(&quot;UnsupportedEncodingException&quot;, e);</span>
+<span class="nc" id="L217">                throw new JwtException(e.getMessage(), e);</span>
+<span class="nc" id="L218">            }</span>
+<span class="nc" id="L219">            return encodeAll(buffer, signature);</span>
+        }
+
+        public String hmac512(SecretKey sharedSecret) {
+<span class="nc" id="L223">            StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L224">            byte[] data = marshalContent();</span>
+<span class="nc" id="L225">            encode(Algorithm.HS512, data, buffer);</span>
+<span class="nc" id="L226">            byte[] signature = null;</span>
+            try {
+<span class="nc" id="L228">                signature = HMACProvider.sign(buffer.toString().getBytes(&quot;UTF-8&quot;), Algorithm.HS512, sharedSecret);</span>
+<span class="nc" id="L229">            } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L230">                logger.error(&quot;UnsupportedEncodingException&quot;, e);</span>
+<span class="nc" id="L231">                throw new JwtException(e.getMessage(), e);</span>
+<span class="nc" id="L232">            }</span>
+<span class="nc" id="L233">            return encodeAll(buffer, signature);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

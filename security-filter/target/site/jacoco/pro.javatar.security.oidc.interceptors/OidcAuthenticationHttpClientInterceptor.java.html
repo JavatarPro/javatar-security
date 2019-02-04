@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>OidcAuthenticationHttpClientInterceptor.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">security-filter</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.oidc.interceptors</a> &gt; <span class="el_source">OidcAuthenticationHttpClientInterceptor.java</span></div><h1>OidcAuthenticationHttpClientInterceptor.java</h1><pre class="source lang-java linenums">package pro.javatar.security.oidc.interceptors;
+
+import pro.javatar.security.oidc.model.TokenDetails;
+import pro.javatar.security.oidc.SecurityConstants;
+import pro.javatar.security.oidc.filters.AuthorizationStubFilter;
+import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
+import pro.javatar.security.oidc.services.OidcConfiguration;
+import pro.javatar.security.oidc.services.TokenService;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.client.ClientHttpRequestExecution;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+
+/**
+ * interceptor logic: if we have user token use it, if no token provided get µService client token
+ */
+@Service
+public class OidcAuthenticationHttpClientInterceptor implements ClientHttpRequestInterceptor {
+
+<span class="fc" id="L28">    private static final Logger logger =</span>
+<span class="fc" id="L29">            LoggerFactory.getLogger(OidcAuthenticationHttpClientInterceptor.class);</span>
+
+    private OidcAuthenticationHelper oidcAuthenticationHelper;
+
+    private OidcConfiguration oidcConfiguration;
+
+    private TokenService tokenService;
+    // TODO (bzo) ask configuration about is filter enable/disable
+    private AuthorizationStubFilter authorizationStubFilter;
+
+    @Autowired
+    public OidcAuthenticationHttpClientInterceptor(TokenService tokenService,
+                                                   OidcConfiguration oidcConfiguration,
+                                                   OidcAuthenticationHelper oidcAuthenticationHelper,
+<span class="fc" id="L43">                                                   AuthorizationStubFilter authorizationStubFilter) {</span>
+<span class="fc" id="L44">        this.tokenService = tokenService;</span>
+<span class="fc" id="L45">        this.oidcConfiguration = oidcConfiguration;</span>
+<span class="fc" id="L46">        this.oidcAuthenticationHelper = oidcAuthenticationHelper;</span>
+<span class="fc" id="L47">        this.authorizationStubFilter = authorizationStubFilter;</span>
+<span class="fc" id="L48">    }</span>
+
+    @Override
+    public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
+            throws IOException {
+<span class="nc" id="L53">        boolean stubFilterEnable = authorizationStubFilter.isFilterEnable();</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">        logger.debug(&quot;{} is disabled. Dev mode is {}.&quot;, getClass().getCanonicalName(),</span>
+                stubFilterEnable ? &quot;on&quot; : &quot;off&quot;);
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        if (stubFilterEnable) {</span>
+<span class="nc" id="L57">            return execution.execute(request, body);</span>
+        }
+<span class="nc" id="L59">        logger.debug(&quot;request was intercepted by oidc authentication http client interceptor&quot;);</span>
+
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        String securityInterceptorStatus = oidcConfiguration.isSecurityInterceptorEnable() ? &quot;enabled&quot; : &quot;disabled&quot;;</span>
+<span class="nc" id="L62">        logger.debug(&quot;OidcAuthenticationHttpClientInterceptor is &quot; + securityInterceptorStatus);</span>
+
+<span class="nc" id="L64">        boolean shouldSkip = oidcConfiguration.getInterceptorUrlResolver().skip(request);</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        logger.debug(&quot;OidcAuthenticationHttpClientInterceptor is {} to {}&quot;, shouldSkip ? &quot;skipped&quot; : &quot;applied&quot;, request.getURI().getPath());</span>
+
+<span class="nc bnc" id="L67" title="All 4 branches missed.">        if (oidcConfiguration.isSecurityInterceptorEnable() &amp;&amp; !shouldSkip) {</span>
+<span class="nc" id="L68">            addAuthorizationHeader(request);</span>
+        }
+
+<span class="nc" id="L71">        return execution.execute(request, body);</span>
+    }
+
+    void addAuthorizationHeader(HttpRequest request) {
+<span class="nc" id="L75">        TokenDetails tokenDetails = tokenService.getTokenDetails();</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (!tokenDetails.isEmpty()) {</span>
+<span class="nc" id="L77">            logger.debug(&quot;token added to Authorization header, token: {}&quot;, tokenDetails.getMaskedAccessToken());</span>
+<span class="nc" id="L78">            request.getHeaders().add(HttpHeaders.AUTHORIZATION,</span>
+<span class="nc" id="L79">                    OidcAuthenticationHelper.AUTH_HEADER_VALUE_PREFIX + tokenDetails.getAccessToken());</span>
+<span class="nc" id="L80">            request.getHeaders().add(SecurityConstants.REFRESH_TOKEN_HEADER, tokenDetails.getRefreshToken());</span>
+        } else {
+<span class="nc" id="L82">            logger.warn(&quot;security enabled but request will be sent without any security headers&quot;);</span>
+        }
+<span class="nc" id="L84">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

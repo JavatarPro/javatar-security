@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>AuthenticationOAuth2RedirectAwareFilter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">security-filter</a> &gt; <a href="index.source.html" class="el_package">pro.javatar.security.oidc.filters</a> &gt; <span class="el_source">AuthenticationOAuth2RedirectAwareFilter.java</span></div><h1>AuthenticationOAuth2RedirectAwareFilter.java</h1><pre class="source lang-java linenums">package pro.javatar.security.oidc.filters;
+
+import pro.javatar.security.oidc.exceptions.BearerJwtTokenNotFoundAuthenticationException;
+import pro.javatar.security.oidc.exceptions.ExchangeTokenByCodeAuthenticationException;
+import pro.javatar.security.oidc.exceptions.RefreshTokenObsoleteAuthenticationException;
+import pro.javatar.security.oidc.services.FilterOptionConverter;
+import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
+import pro.javatar.security.oidc.services.OidcConfiguration;
+import pro.javatar.security.oidc.utils.UrlResolver;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.stereotype.Component;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * This filter should be used only by stateful services with UI inside like MVC.
+ * Do not enable this filter inside µServices.
+ * For µServices we recommend use 401 response status with WWW-Authenticate header with identity provider location.
+ */
+@Component
+public class AuthenticationOAuth2RedirectAwareFilter implements Filter {
+
+<span class="fc" id="L39">    private static final Logger logger = LoggerFactory.getLogger(AuthenticationOAuth2RedirectAwareFilter.class);</span>
+
+    private final AuthorizationStubFilter authorizationStubFilter;
+    private final OidcConfiguration oidcConfiguration;
+    private final OidcAuthenticationHelper oidcHelper;
+<span class="fc" id="L44">    private final FilterOptionConverter filterOptionConverter = new FilterOptionConverter();</span>
+<span class="fc" id="L45">    private final UrlResolver urlResolver = new UrlResolver();</span>
+
+<span class="fc" id="L47">    private boolean enableFilter = false;</span>
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+<span class="fc" id="L51">        logger.info(&quot;AuthenticationOAuth2RedirectAwareFilter initialized&quot;);</span>
+<span class="fc" id="L52">    }</span>
+
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
+            throws IOException, ServletException {
+
+<span class="fc" id="L58">        boolean stubFilterEnable = authorizationStubFilter.isFilterEnable();</span>
+<span class="fc bfc" id="L59" title="All 4 branches covered.">        if (!enableFilter || stubFilterEnable) {</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">            logger.info(&quot;{} is disabled. Dev mode is {}.&quot;, getClass().getCanonicalName(), stubFilterEnable ? &quot;on&quot; : &quot;off&quot;);</span>
+<span class="fc" id="L61">            filterChain.doFilter(servletRequest, servletResponse);</span>
+<span class="fc" id="L62">            return;</span>
+        }
+
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">        if (shouldSkip(servletRequest)) {</span>
+<span class="nc" id="L66">            logger.debug(&quot;Filter was skipped by filter condition.&quot;);</span>
+<span class="nc" id="L67">            filterChain.doFilter(servletRequest, servletResponse);</span>
+<span class="nc" id="L68">            return;</span>
+        }
+
+        try {
+<span class="fc" id="L72">            filterChain.doFilter(servletRequest, servletResponse);</span>
+<span class="fc" id="L73">        } catch (BearerJwtTokenNotFoundAuthenticationException e) {</span>
+<span class="fc" id="L74">            logger.warn(&quot;request without bearer was captured and will be redirected to identity provider&quot;, e);</span>
+<span class="fc" id="L75">            redirectToAuthorizationEndpoint(servletRequest, servletResponse);</span>
+<span class="nc" id="L76">        } catch (RefreshTokenObsoleteAuthenticationException e) {</span>
+<span class="nc" id="L77">            logger.error(&quot;Even refresh token was expired! Possible cases: delay was bigger that refresh token lifetime &quot; +</span>
+                    &quot;or UI does not receive token updates. Request will be redirected to identity provider&quot;, e);
+<span class="nc" id="L79">            redirectToAuthorizationEndpoint(servletRequest, servletResponse);</span>
+<span class="nc" id="L80">        } catch (ExchangeTokenByCodeAuthenticationException e) {</span>
+<span class="nc" id="L81">            logger.error(&quot;Danger! Can not exchange token. Token might be stolen and already exchanged &quot; +</span>
+                    &quot;or just identity provider unavailable at that moment&quot;, e);
+            // TODO (bzo) redirect without ?code=...
+<span class="nc" id="L84">            redirectToAuthorizationEndpoint(servletRequest, servletResponse);</span>
+<span class="pc" id="L85">        }</span>
+<span class="fc" id="L86">    }</span>
+
+    @Override
+    public void destroy() {
+<span class="fc" id="L90">        logger.info(&quot;AuthenticationOAuth2RedirectAwareFilter destroyed&quot;);</span>
+<span class="fc" id="L91">    }</span>
+
+    void redirectToAuthorizationEndpoint(ServletRequest servletRequest, ServletResponse servletResponse)
+            throws IOException {
+<span class="fc" id="L95">        HttpServletRequest request = (HttpServletRequest) servletRequest;</span>
+<span class="fc" id="L96">        String redirectUrl = oidcConfiguration.buildRedirectUrl(</span>
+<span class="fc" id="L97">                oidcHelper.getRealmForCurrentRequest(), oidcHelper.removeCodeFromUrl(request));</span>
+<span class="fc" id="L98">        ((HttpServletResponse) servletResponse).sendRedirect(redirectUrl);</span>
+<span class="fc" id="L99">    }</span>
+
+    boolean shouldSkip(ServletRequest request) {
+<span class="fc" id="L102">        return shouldSkip(new ServletServerHttpRequest((HttpServletRequest) request));</span>
+    }
+
+    /**
+     * If necessary, the method can be redefined
+     *
+     * @return &lt;code&gt;true&lt;/code&gt; filter is ignored
+     * @param request
+     */
+    boolean shouldSkip(HttpRequest request) {
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if (!urlResolver.isEmpty()) {</span>
+<span class="nc" id="L113">            return urlResolver.skip(request);</span>
+        }
+<span class="fc" id="L115">        return oidcHelper.shouldSkip(request);</span>
+    }
+
+    @Value(&quot;${security.oidc.AuthenticationOAuth2RedirectAwareFilter.enable:false}&quot;)
+    public void setEnableFilter(boolean enableFilter) {
+<span class="fc" id="L120">        this.enableFilter = enableFilter;</span>
+<span class="fc" id="L121">    }</span>
+
+    @Value(&quot;${security.oidc.AuthenticationOAuth2RedirectAwareFilter.filterApplyUrlRegex:}&quot;)
+    public void setFilterApplyUrlRegex(String filterApplyUrlRegex) {
+<span class="fc" id="L125">        urlResolver.setFilterApplyUrlRegex(filterApplyUrlRegex);</span>
+<span class="fc" id="L126">    }</span>
+
+    @Value(&quot;#{'${security.oidc.AuthenticationOAuth2RedirectAwareFilter.filterApplyUrlList:}'.split(',')}&quot;)
+    public void setFilterApplyUrlList(List&lt;String&gt; filterApplyUrlList) {
+<span class="fc" id="L130">        urlResolver.setFilterApplyUrls(filterOptionConverter.convertList(filterApplyUrlList));</span>
+<span class="fc" id="L131">    }</span>
+
+    @Value(&quot;#{'${security.oidc.AuthenticationOAuth2RedirectAwareFilter.filterIgnoreUrlList:}'.split(',')}&quot;)
+    public void setFilterIgnoreUrls(List&lt;String&gt; filterIgnoreUrlList) {
+<span class="fc" id="L135">        urlResolver.setFilterIgnoreUrls(filterOptionConverter.convertList(filterIgnoreUrlList));</span>
+<span class="fc" id="L136">    }</span>
+
+    @Autowired
+    public AuthenticationOAuth2RedirectAwareFilter(AuthorizationStubFilter authorizationStubFilter,
+<span class="fc" id="L140">                                                   OidcAuthenticationHelper oidcHelper, OidcConfiguration oidcConfiguration) {</span>
+<span class="fc" id="L141">        this.authorizationStubFilter = authorizationStubFilter;</span>
+<span class="fc" id="L142">        this.oidcHelper = oidcHelper;</span>
+<span class="fc" id="L143">        this.oidcConfiguration = oidcConfiguration;</span>
+<span class="fc" id="L144">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
