@@ -1,4 +1,0 @@
-GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-public-key-cache-redis-impl,pro.javatar.security,RealmPublicKeyCacheServiceImpl,5,103,0,2,1,20,1,6,1,5
-public-key-cache-redis-impl,pro.javatar.security,RealmPublicKeyCacheConfiguration,44,104,2,2,3,32,3,11,1,11
-public-key-cache-redis-impl,pro.javatar.security,RealmPublicKeyCacheServiceMap,24,0,0,0,7,0,4,0,4,0
