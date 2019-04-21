@@ -11,8 +11,8 @@ import pro.javatar.security.jwt.utils.JwtTokenGenerator;
 import pro.javatar.security.jwt.utils.Time;
 
 import org.junit.Test;
-import sun.security.provider.DSAPublicKey;
 
+import java.security.PublicKey;
 import java.util.Arrays;
 
 public class RSATokenVerifierTest {
@@ -81,7 +81,22 @@ public class RSATokenVerifierTest {
         RSATokenVerifier
                 .create(accessToken)
                 .checkRealm(true).realmUrl("test-realm")
-                .publicKey(new DSAPublicKey()) //incorrect public key
+                .publicKey(new PublicKey() { //incorrect public key
+                    @Override
+                    public String getAlgorithm() {
+                        return null;
+                    }
+
+                    @Override
+                    public String getFormat() {
+                        return null;
+                    }
+
+                    @Override
+                    public byte[] getEncoded() {
+                        return new byte[0];
+                    }
+                }) //incorrect public key
                 .verify()
                 .getToken();
     }
