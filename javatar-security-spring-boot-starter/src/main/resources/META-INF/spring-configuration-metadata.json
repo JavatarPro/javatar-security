@@ -1,0 +1,166 @@
+{
+  "properties": [
+    {
+      "name": "javatar.security.apply-urls",
+      "type": "java.util.List",
+      "description": "All urls that will require authentication"
+    },
+    {
+      "name": "javatar.security.ignore-urls",
+      "type": "java.util.List",
+      "description": "All urls that is captured by security, but must be whitelisted"
+    },
+    {
+      "name": "javatar.security.redirect-url",
+      "type": "java.lang.String",
+      "description": "If provided enables redirects to url with 302 status code when 401 is thrown"
+    },
+    {
+      "name": "javatar.security.identity-provider.url",
+      "type": "java.lang.String",
+      "description": "Identity provider uri (protocol, host and port), e.g. https://auth.javatar.pro, http://localhost:4660"
+    },
+    {
+      "name": "javatar.security.identity-provider.client",
+      "type": "java.lang.String",
+      "description": "Client id from identity provider of target realm"
+    },
+    {
+      "name": "javatar.security.identity-provider.secret",
+      "type": "java.lang.String",
+      "description": "Client's secret from identity provider of target realm"
+    },
+    {
+      "name": "javatar.security.identity-provider.realm",
+      "type": "java.lang.String",
+      "description": "Realm or tenant if you will, security boundary in scope of identity provider's variety."
+    },
+    {
+      "name": "javatar.security.identity-provider.default-realm",
+      "type": "java.lang.String",
+      "description": "Default realm for javatar security library",
+      "defaultValue": "mservice, TODO refactor use only realm and make it mandatory."
+    },
+    {
+      "name": "javatar.security.use-refer-as-redirect-uri",
+      "type": "java.lang.Boolean",
+      "description": "Instruction to get redirect url from browsers/http refer header, could be used in case you have different login pages and parameter redirect-url not fully satisfies your needs."
+    },
+    {
+      "name": "javatar.security.public-keys-storage",
+      "type": "java.lang.String",
+      "description": "Storage reference to where is public keys saved. We will need them to verify signature. They could be from different realms."
+    },
+    {
+      "name": "javatar.security.token-storage",
+      "type": "java.lang.String",
+      "description": "Storage for access & refresh tokens with random UUID key, that will be returned to browser as secured & http-only cookie."
+    },
+    {
+      "name": "javatar.security.storage.redis.host",
+      "type": "java.lang.String",
+      "description": "Redis storage host. Redis is for security needs, could be used as public-keys-storage or token-storage or both."
+    },
+    {
+      "name": "javatar.security.storage.redis.port",
+      "type": "java.lang.Integer",
+      "description": "Redis storage port. Redis is for security needs, could be used as public-keys-storage or token-storage or both."
+    },
+    {
+      "name": "javatar.security.storage.in-memory.public-keys",
+      "type": "java.util.Map",
+      "description": "Specify public keys directly as map. Where key is realm and value is public key of that realm."
+    },
+    {
+      "name": "javatar.security.storage.vault.url",
+      "type": "java.lang.String",
+      "description": "Vault url address to obtain connection. Vault is for security needs, could be used as public-keys-storage or token-storage or both."
+    },
+    {
+      "name": "javatar.security.storage.vault.client",
+      "type": "java.lang.String",
+      "description": "Vault client to obtain connection. Vault is for security needs, could be used as public-keys-storage or token-storage or both."
+    },
+    {
+      "name": "javatar.security.storage.vault.secret",
+      "type": "java.lang.String",
+      "description": "Vault secret to obtain connection. Vault is for security needs, could be used as public-keys-storage or token-storage or both."
+    },
+    {
+      "name": "javatar.security.logout-url",
+      "type": "java.lang.String",
+      "description": "Enables LogoutResource that will be responsible for deletion from token storage fro current user"
+    },
+    {
+      "name": "javatar.security.token-validation.check-toke-is-active",
+      "type": "java.lang.Boolean",
+      "description": "Validate whether token valid or expired"
+    },
+    {
+      "name": "javatar.security.token-validation.skip-referer-check",
+      "type": "java.lang.Boolean",
+      "description": "Validate whether token passed with referer header"
+    },
+    {
+      "name": "javatar.security.token-validation.check-token-type",
+      "type": "java.lang.Boolean",
+      "description": "Validate token type"
+    },
+    {
+      "name": "javatar.security.token-validation.realm-required",
+      "type": "java.lang.Boolean",
+      "description": "Validate realm that issued token matches requested realm with protected resources"
+    },
+    {
+      "name": "javatar.security.stub.access-token",
+      "type": "java.lang.String",
+      "description": "Provides access token that will be placed before all other filters applied. To stub security to speedup development. Token must be real token from Identity Provider for requested realm."
+    },
+    {
+      "name": "javatar.security.http-client.apply-urls",
+      "type": "java.util.List",
+      "description": "http client interceptor will pass access & refresh tokens to outbound http requests that match apply-urls pattern."
+    },
+    {
+      "name": "javatar.security.http-client.ignore-urls",
+      "type": "java.util.List",
+      "description": "http client interceptor will not pass access & refresh tokens to outbound http requests that match ignore-urls pattern."
+    },
+    {
+      "name": "javatar.security.application.user",
+      "type": "java.lang.String",
+      "description": "In case http client interceptor does not have any user's access & refresh tokens, it could be cron job that sends this request. At least we should send application token."
+    },
+    {
+      "name": "javatar.security.application.password",
+      "type": "java.lang.String",
+      "description": "Application user's password to obtain access & refresh tokens of application."
+    },
+    {
+      "name": "javatar.security.application.token-should-be-refreshed-period",
+      "type": "java.lang.String",
+      "description": "",
+      "default": "P1M15S"
+    },
+    {
+      "name": "javatar.security.application.allow-anonymous",
+      "type": "java.lang.Boolean",
+      "description": ""
+    },
+    {
+      "name": "javatar.security.application.realm.url-pattern",
+      "type": "java.lang.String",
+      "description": "HTTP url pattern that contains {realm}. The goal to retrieve realm from requested url. Has priority over header & request-param."
+    },
+    {
+      "name": "javatar.security.application.realm.header-name",
+      "type": "java.lang.String",
+      "description": "HTTP header name in which application or ui will pass requested realm's resources. Has priority over request-param"
+    },
+    {
+      "name": "javatar.security.application.realm.request-param-name",
+      "type": "java.lang.String",
+      "description": "Request param (http query param) name in which application or ui will pass requested realm's resources. Last priority to retrieve realm."
+    }
+  ]
+}
