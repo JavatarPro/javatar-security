@@ -1,5 +1,6 @@
 package pro.javatar.security.oidc.filters;
 
+import static org.mockito.Mockito.mock;
 import static pro.javatar.security.oidc.filters.AuthenticationRealmAwareFilter.BASE_REALM_REGEX;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -8,6 +9,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import pro.javatar.security.RealmPublicKeyCacheService;
 import pro.javatar.security.oidc.SecurityConstants;
 import pro.javatar.security.oidc.SecurityTestResource;
 import pro.javatar.security.oidc.exceptions.RealmNotFoundAuthenticationException;
@@ -406,10 +410,11 @@ public class AuthenticationRealmAwareFilterTest {
     @ComponentScan("pro.javatar.security")
     public static class SpringConfig {
 
-//        @Bean
-//        public RealmPublicKeyCacheService getRealmPublicKeyCacheService() {
-//            return mock(RealmPublicKeyCacheService.class);
-//        }
+        @Primary
+        @Bean
+        public RealmPublicKeyCacheService getRealmPublicKeyCacheService() {
+            return mock(RealmPublicKeyCacheService.class);
+        }
     }
 
 }
