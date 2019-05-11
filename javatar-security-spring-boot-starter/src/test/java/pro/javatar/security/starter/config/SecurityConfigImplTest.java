@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.starter.SpringBootApp;
 
+import java.time.Duration;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -111,14 +112,47 @@ class SecurityConfigImplTest {
 
     @Test
     void stub() {
+        SecurityConfig.Stub stub = config.stub();
+        assertThat(stub.enabled(), is(true));
+        assertThat(stub.accessToken(), is("adlfkjasd"));
     }
 
     @Test
     void httpClient() {
+        SecurityConfig.HttpClient httpClient = config.httpClient();
+
+        List<String> applyUrls = new ArrayList<>(httpClient.applyUrls());
+        List<String> expectedApplyUrls = new ArrayList<>();
+        expectedApplyUrls.add("/work/*");
+        expectedApplyUrls.add("/message/*");
+        expectedApplyUrls.add("/test/*");
+        Collections.sort(applyUrls);
+        Collections.sort(expectedApplyUrls);
+        assertThat(applyUrls, is(expectedApplyUrls));
+
+        List<String> ignoreUrls = new ArrayList<>(httpClient.ignoreUrls());
+        List<String> expectedIgnoreUrls = new ArrayList<>();
+        expectedIgnoreUrls.add("/message/channel/*");
+        expectedIgnoreUrls.add("/work/profile/*");
+        Collections.sort(ignoreUrls);
+        Collections.sort(expectedIgnoreUrls);
+        assertThat(ignoreUrls, is(expectedIgnoreUrls));
     }
 
     @Test
     void application() {
+        SecurityConfig.Application app = config.application();
+        assertThat(app.user(), is("admin"));
+        assertThat(app.password(), is("se(r@t"));
+        assertThat(app.tokenShouldBeRefreshedDuration(), is(Duration.parse("PT1M15S")));
+        assertThat(app.allowOtherAuthentication(), is(false));
+        assertThat(app.allowAnonymous(), is(true));
+
+        SecurityConfig.Application.Realm realm = app.realm();
+        assertThat(realm.urlPattern(), is("/{realm}/{service}/some/url"));
+        assertThat(realm.requestParamName(), is("realm"));
+        assertThat(realm.headerName(), is("X-REALM"));
+        assertThat(realm.refreshHeaderName(), is("X-REFRESH-TOKEN"));
     }
 
 }

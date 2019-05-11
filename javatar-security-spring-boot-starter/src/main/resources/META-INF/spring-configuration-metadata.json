@@ -117,6 +117,11 @@
       "description": "Validate realm that issued token matches requested realm with protected resources"
     },
     {
+      "name": "javatar.security.stub.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable/Disable security stub. All permissions should be provided via stub.access-token"
+    },
+    {
       "name": "javatar.security.stub.access-token",
       "type": "java.lang.String",
       "description": "Provides access token that will be placed before all other filters applied. To stub security to speedup development. Token must be real token from Identity Provider for requested realm."
@@ -142,15 +147,20 @@
       "description": "Application user's password to obtain access & refresh tokens of application."
     },
     {
-      "name": "javatar.security.application.token-should-be-refreshed-period",
+      "name": "javatar.security.application.token-should-be-refreshed-duration",
       "type": "java.lang.String",
       "description": "",
-      "default": "P1M15S"
+      "default": "PT1M15S"
+    },
+    {
+      "name": "javatar.security.application.allow-other-authentication",
+      "type": "java.lang.Boolean",
+      "description": "If true, that means some other framework could populate security context. TODO"
     },
     {
       "name": "javatar.security.application.allow-anonymous",
       "type": "java.lang.Boolean",
-      "description": ""
+      "description": "should filters fail or allow anonymous users to go though."
     },
     {
       "name": "javatar.security.application.realm.url-pattern",

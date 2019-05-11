@@ -1,6 +1,6 @@
 package pro.javatar.security.api.config;
 
-import java.time.Period;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -117,7 +117,7 @@ public interface SecurityConfig {
 
         String password();
 
-        Period tokenShouldBeRefreshedPeriod();
+        Duration tokenShouldBeRefreshedDuration();
 
         Boolean allowOtherAuthentication();
 

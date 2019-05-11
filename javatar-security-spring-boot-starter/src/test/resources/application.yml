@@ -38,16 +38,19 @@ javatar:
       enabled: true
       access-token: adlfkjasd
     http-client:
+      # TODO add enum to copy from filtered applied/ignored urls, copy one/both/none
       apply-urls:
         - /work/*
+        - /message/*
+        - /test/*
       ignore-urls:
         - /message/channel/*
+        - /work/profile/*
     application:
-      user: tests
-      password: asdfasd
-      token-should-be-refreshed-period: P1M15S
-      # allow-other-authentication: false
-      # TODO remove
+      user: admin
+      password: se(r@t
+      token-should-be-refreshed-duration: PT1M15S
+      allow-other-authentication: false
       allow-anonymous: true
       realm: # default order url, header, request-param
         url-pattern: /{realm}/{service}/some/url

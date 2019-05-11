@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import pro.javatar.security.api.config.SecurityConfig;
 
-import java.time.Period;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +36,12 @@ public class SecurityConfigImpl implements SecurityConfig {
     StorageImpl storage;
 
     TokenValidationImpl tokenValidation;
+
+    StubImpl stub;
+
+    HttpClientImpl httpClient;
+
+    ApplicationImpl application;
 
     @Override
     public String logoutUrl() {
@@ -89,17 +95,17 @@ public class SecurityConfigImpl implements SecurityConfig {
 
     @Override
     public Stub stub() {
-        return null;
+        return stub;
     }
 
     @Override
     public HttpClient httpClient() {
-        return null;
+        return httpClient;
     }
 
     @Override
     public Application application() {
-        return null;
+        return application;
     }
 
     public String getLogoutUrl() {
@@ -172,6 +178,18 @@ public class SecurityConfigImpl implements SecurityConfig {
 
     public void setTokenValidation(TokenValidationImpl tokenValidation) {
         this.tokenValidation = tokenValidation;
+    }
+
+    public void setStub(StubImpl stub) {
+        this.stub = stub;
+    }
+
+    public void setHttpClient(HttpClientImpl httpClient) {
+        this.httpClient = httpClient;
+    }
+
+    public void setApplication(ApplicationImpl application) {
+        this.application = application;
     }
 
     static class IdentityProviderImpl implements IdentityProvider {
@@ -438,13 +456,79 @@ public class SecurityConfigImpl implements SecurityConfig {
         }
     }
 
+    static class StubImpl implements Stub {
+
+        Boolean enabled;
+
+        String accessToken;
+
+        @Override
+        public Boolean enabled() {
+            return enabled;
+        }
+
+        @Override
+        public String accessToken() {
+            return accessToken;
+        }
+
+        public void setEnabled(Boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public void setAccessToken(String accessToken) {
+            this.accessToken = accessToken;
+        }
+
+        @Override
+        public String toString() {
+            return "StubImpl{" +
+                    "enabled=" + enabled +
+                    ", accessToken='" + accessToken + '\'' +
+                    '}';
+        }
+    }
+
+    static class HttpClientImpl implements HttpClient {
+
+        List<String> applyUrls;
+
+        List<String> ignoreUrls;
+
+        @Override
+        public List<String> applyUrls() {
+            return applyUrls;
+        }
+
+        @Override
+        public List<String> ignoreUrls() {
+            return ignoreUrls;
+        }
+
+        public void setApplyUrls(List<String> applyUrls) {
+            this.applyUrls = applyUrls;
+        }
+
+        public void setIgnoreUrls(List<String> ignoreUrls) {
+            this.ignoreUrls = ignoreUrls;
+        }
+
+        @Override
+        public String toString() {
+            return "HttpClientImpl{" +
+                    "applyUrls=" + applyUrls +
+                    ", ignoreUrls=" + ignoreUrls +
+                    '}';
+        }
+    }
+
     static class ApplicationImpl implements Application {
 
         String user;
 
         String password;
 
-        Period tokenShouldBeRefreshedPeriod;
+        Duration tokenShouldBeRefreshedDuration;
 
         Boolean allowOtherAuthentication;
 
@@ -463,8 +547,8 @@ public class SecurityConfigImpl implements SecurityConfig {
         }
 
         @Override
-        public Period tokenShouldBeRefreshedPeriod() {
-            return tokenShouldBeRefreshedPeriod;
+        public Duration tokenShouldBeRefreshedDuration() {
+            return tokenShouldBeRefreshedDuration;
         }
 
         @Override
@@ -490,8 +574,8 @@ public class SecurityConfigImpl implements SecurityConfig {
             this.password = password;
         }
 
-        public void setTokenShouldBeRefreshedPeriod(Period tokenShouldBeRefreshedPeriod) {
-            this.tokenShouldBeRefreshedPeriod = tokenShouldBeRefreshedPeriod;
+        public void setTokenShouldBeRefreshedDuration(Duration tokenShouldBeRefreshedDuration) {
+            this.tokenShouldBeRefreshedDuration = tokenShouldBeRefreshedDuration;
         }
 
         public void setAllowOtherAuthentication(Boolean allowOtherAuthentication) {
@@ -568,7 +652,7 @@ public class SecurityConfigImpl implements SecurityConfig {
             return "ApplicationImpl{" +
                     "user='" + user + '\'' +
                     ", password='" + password + '\'' +
-                    ", tokenShouldBeRefreshedPeriod=" + tokenShouldBeRefreshedPeriod +
+                    ", tokenShouldBeRefreshedDuration=" + tokenShouldBeRefreshedDuration +
                     ", allowOtherAuthentication=" + allowOtherAuthentication +
                     ", allowAnonymous=" + allowAnonymous +
                     ", realm=" + realm +
@@ -585,4 +669,5 @@ public class SecurityConfigImpl implements SecurityConfig {
                 ", redirectUrl='" + redirectUrl + '\'' +
                 '}';
     }
+
 }
