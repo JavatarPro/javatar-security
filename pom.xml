@@ -119,6 +119,8 @@
         <junit.version>4.12</junit.version>
         <mockito.version>2.27.0</mockito.version>
         <powermock.version>2.0.2</powermock.version>
+        <junit-jupiter.version>5.3.1</junit-jupiter.version>
+        <mockito-junit-jupiter.version>2.24.0</mockito-junit-jupiter.version>
 
         <sonar.coverage.exclusions>
             **/security/jwt/utils/Base64.java,

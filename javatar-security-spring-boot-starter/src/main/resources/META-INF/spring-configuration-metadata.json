@@ -67,6 +67,11 @@
       "description": "Redis storage port. Redis is for security needs, could be used as public-keys-storage or token-storage or both."
     },
     {
+      "name": "javatar.security.storage.redis.password",
+      "type": "java.lang.String",
+      "description": "Redis storage password. Redis is for security needs, could be used as public-keys-storage or token-storage or both."
+    },
+    {
       "name": "javatar.security.storage.in-memory.public-keys",
       "type": "java.util.Map",
       "description": "Specify public keys directly as map. Where key is realm and value is public key of that realm."
@@ -92,7 +97,7 @@
       "description": "Enables LogoutResource that will be responsible for deletion from token storage fro current user"
     },
     {
-      "name": "javatar.security.token-validation.check-toke-is-active",
+      "name": "javatar.security.token-validation.check-token-is-active",
       "type": "java.lang.Boolean",
       "description": "Validate whether token valid or expired"
     },
