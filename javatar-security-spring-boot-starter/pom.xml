@@ -7,7 +7,7 @@
     <parent>
         <groupId>pro.javatar.security</groupId>
         <artifactId>javatar-security</artifactId>
-        <version>0.0.5-SNAPSHOT</version>
+        <version>0.0.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>javatar-security-spring-boot-starter</artifactId>
@@ -55,6 +55,18 @@
         <dependency>
             <groupId>pro.javatar.security</groupId>
             <artifactId>public-key-cache-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>pro.javatar.security</groupId>
+            <artifactId>public-key-cache-redis-impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>pro.javatar.security</groupId>
+            <artifactId>secret-storage-service-redis-impl</artifactId>
             <version>${project.version}</version>
         </dependency>
 

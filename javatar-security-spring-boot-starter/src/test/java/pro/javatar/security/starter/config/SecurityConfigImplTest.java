@@ -86,6 +86,7 @@ class SecurityConfigImplTest {
         SecurityConfig.Redis redis = storage.getRedis();
         assertThat(redis.host(), is("localhost"));
         assertThat(redis.port(), is(6379));
+        assertThat(redis.expiration(), is(Duration.parse("PT1H30M")));
         assertThat(redis.password(), is("37339ebe-0593-4e6f-b88c-1d3898be6a75"));
 
         SecurityConfig.InMemory inMemory = storage.getInMemory();

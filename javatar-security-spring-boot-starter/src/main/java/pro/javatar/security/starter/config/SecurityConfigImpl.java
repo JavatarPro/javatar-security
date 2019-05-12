@@ -299,6 +299,8 @@ public class SecurityConfigImpl implements SecurityConfig {
 
         String password;
 
+        Duration expiration;
+
         @Override
         public String host() {
             return host;
@@ -314,6 +316,11 @@ public class SecurityConfigImpl implements SecurityConfig {
             return password;
         }
 
+        @Override
+        public Duration expiration() {
+            return expiration;
+        }
+
         public void setHost(String host) {
             this.host = host;
         }
@@ -326,11 +333,16 @@ public class SecurityConfigImpl implements SecurityConfig {
             this.password = password;
         }
 
+        public void setExpiration(Duration expiration) {
+            this.expiration = expiration;
+        }
+
         @Override
         public String toString() {
             return "RedisStorage{" +
                     "host='" + host + '\'' +
                     ", port=" + port +
+                    ", expiration=" + expiration +
                     ", password='****'" +
                     '}';
         }

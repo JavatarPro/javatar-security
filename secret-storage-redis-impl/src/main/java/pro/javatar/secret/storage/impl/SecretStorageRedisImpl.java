@@ -13,7 +13,7 @@ import org.springframework.util.StringUtils;
 import pro.javatar.secret.storage.api.SecretStorageService;
 import pro.javatar.secret.storage.api.model.SecretTokenDetails;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 public class SecretStorageRedisImpl implements SecretStorageService {
 
@@ -24,15 +24,15 @@ public class SecretStorageRedisImpl implements SecretStorageService {
 
     private ObjectMapper mapper;
 
-    private long keyExpirationHours;
+    private Duration keyExpiration;
 
     @Value("${secret.storage.name:pro.javatar.secret.storage}")
     private String storageName;
 
-    public SecretStorageRedisImpl(RedisTemplate<String, String> redisTemplate, long keyExpirationHours) {
+    public SecretStorageRedisImpl(RedisTemplate<String, String> redisTemplate, Duration keyExpiration) {
         this.redisTemplate = redisTemplate;
         mapper = new ObjectMapper();
-        this.keyExpirationHours = keyExpirationHours;
+        this.keyExpiration = keyExpiration;
     }
 
     @Override
@@ -41,7 +41,7 @@ public class SecretStorageRedisImpl implements SecretStorageService {
         try {
             String json = mapper.writeValueAsString(secretTokenDetails);
             String fullSecretKey = getFullSecretKey(secretKey);
-            redisTemplate.opsForValue().set(fullSecretKey, json, keyExpirationHours, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(fullSecretKey, json, keyExpiration);
         } catch (Exception e) {
             logger.error("Can't write token details as json. Token details is {}", secretTokenDetails, e);
         }

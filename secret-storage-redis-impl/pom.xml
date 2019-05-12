@@ -13,7 +13,7 @@
     <artifactId>secret-storage-service-redis-impl</artifactId>
 
     <properties>
-        <spring-data-redis.version>1.7.1.RELEASE</spring-data-redis.version>
+        <spring-data-redis.version>2.1.7.RELEASE</spring-data-redis.version>
     </properties>
 
     <dependencies>

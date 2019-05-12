@@ -65,6 +65,8 @@ public interface SecurityConfig {
 
         String password();
 
+        Duration expiration();
+
     }
 
     interface InMemory {

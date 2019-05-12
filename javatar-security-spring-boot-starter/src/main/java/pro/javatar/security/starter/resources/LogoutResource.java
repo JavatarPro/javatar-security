@@ -1,6 +1,7 @@
 package pro.javatar.security.starter.resources;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,12 +20,17 @@ import javax.servlet.http.HttpServletRequest;
  *
  * @version 2019-05-08
  */
+@ConditionalOnProperty(value = "javatar.security.logout-url",  matchIfMissing = false)
 @RestController
 @RequestMapping(value = "/logout", produces = MediaType.APPLICATION_JSON_VALUE)
 public class LogoutResource {
 
-    @Autowired
     private SecretStorageService secretService;
+
+    @Autowired
+    public LogoutResource(SecretStorageService secretService) {
+        this.secretService = secretService;
+    }
 
     @PostMapping
     public ResponseEntity logout(HttpServletRequest request) {
