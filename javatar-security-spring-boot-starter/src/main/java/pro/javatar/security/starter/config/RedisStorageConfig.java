@@ -23,7 +23,7 @@ import static pro.javatar.security.oidc.utils.StringUtils.isBlank;
  * @author Borys Zora
  * @version 2019-05-13
  */
-@ConditionalOnProperty(value = "javatar.security.storage.redis",  matchIfMissing = false)
+@ConditionalOnProperty(value = "javatar.security.token-storage", havingValue = "redis")
 @Configuration
 public class RedisStorageConfig implements ConfigValidationAware {
 
@@ -34,11 +34,12 @@ public class RedisStorageConfig implements ConfigValidationAware {
     @Autowired
     public RedisStorageConfig(SecurityConfig config) {
         this.config = config.storage().getRedis();
+        validateConfiguration();
     }
 
     @Override
     public void validateConfiguration() throws ConfigValidationException {
-        logger.debug("javatar.security.storage.redis.host={}", config.toString());
+        logger.debug("javatar.security.storage.redis.host={}", config.host());
         logger.debug("javatar.security.storage.redis.port={}", config.port());
         logger.debug("javatar.security.storage.redis.expiration={}", config.expiration());
         logger.debug("javatar.security.storage.redis.password={}", "*******");
@@ -53,7 +54,7 @@ public class RedisStorageConfig implements ConfigValidationAware {
         return new SecretStorageRedisImpl(createRedisTemplate(), config.expiration());
     }
 
-    RedisTemplate createRedisTemplate() {
+    private RedisTemplate createRedisTemplate() {
         JedisConnectionFactory jedisConnectionFactory = createJedisConnectionFactory();
         RedisTemplate redisTemplate = new StringRedisTemplate();
         redisTemplate.setConnectionFactory(jedisConnectionFactory);

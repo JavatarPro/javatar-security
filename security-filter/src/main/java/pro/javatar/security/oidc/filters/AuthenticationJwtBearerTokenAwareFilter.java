@@ -1,16 +1,11 @@
 package pro.javatar.security.oidc.filters;
 
-import static pro.javatar.security.oidc.model.OAuth2Constants.ACCESS_TOKEN;
-import static pro.javatar.security.oidc.model.OAuth2Constants.REFRESH_TOKEN;
-
 import pro.javatar.security.oidc.model.OAuth2Constants;
 import pro.javatar.security.jwt.TokenVerifier;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.SecurityConstants;
 import pro.javatar.security.oidc.exceptions.BearerJwtTokenNotFoundAuthenticationException;
 import pro.javatar.security.oidc.exceptions.ExchangeTokenByCodeAuthenticationException;
-import pro.javatar.security.oidc.exceptions.ExpiredAuthenticationSessionException;
-import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 import pro.javatar.security.oidc.services.OAuth2AuthorizationFlowService;
 import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 import pro.javatar.security.oidc.services.OidcConfiguration;
@@ -65,6 +60,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
                          FilterChain filterChain) throws IOException, ServletException {
+        // TODO remove stub
         boolean stubFilterEnable = authorizationStubFilter.isFilterEnable();
         if (!oidcConfiguration.isJwtBearerFilterEnable() || stubFilterEnable) {
             logger.info("{} is disabled. Dev mode is {}.", getClass().getCanonicalName(),

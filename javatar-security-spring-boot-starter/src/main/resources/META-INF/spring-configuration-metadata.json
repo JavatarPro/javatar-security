@@ -72,6 +72,11 @@
       "description": "Redis storage password. Redis is for security needs, could be used as public-keys-storage or token-storage or both."
     },
     {
+      "name": "javatar.security.storage.redis.expiration",
+      "type": "java.time.Duration",
+      "description": "Duration of redis token storage. Token will be expired after this duration"
+    },
+    {
       "name": "javatar.security.storage.in-memory.public-keys",
       "type": "java.util.Map",
       "description": "Specify public keys directly as map. Where key is realm and value is public key of that realm."
