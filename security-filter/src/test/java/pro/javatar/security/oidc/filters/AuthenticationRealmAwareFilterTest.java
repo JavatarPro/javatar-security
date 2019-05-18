@@ -41,6 +41,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import pro.javatar.security.oidc.utils.MockHttpRequest;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import javax.servlet.ServletException;
 
@@ -52,7 +53,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {AuthenticationRealmAwareFilterTest.SpringConfig.class})
+@ContextConfiguration(classes = {
+        SpringTestConfig.class,
+        AuthenticationRealmAwareFilterTest.SpringConfig.class
+})
 @WebAppConfiguration
 public class AuthenticationRealmAwareFilterTest {
 

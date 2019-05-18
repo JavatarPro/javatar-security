@@ -36,6 +36,8 @@ public interface SecurityConfig {
 
     Application application();
 
+    String errorDescriptionLink();
+
     interface IdentityProvider {
 
         String url();

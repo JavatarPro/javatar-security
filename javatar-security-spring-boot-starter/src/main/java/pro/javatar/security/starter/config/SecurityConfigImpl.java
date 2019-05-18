@@ -43,6 +43,8 @@ public class SecurityConfigImpl implements SecurityConfig {
 
     ApplicationImpl application;
 
+    String errorDescriptionLink;
+
     @Override
     public String logoutUrl() {
         return logoutUrl;
@@ -106,6 +108,11 @@ public class SecurityConfigImpl implements SecurityConfig {
     @Override
     public Application application() {
         return application;
+    }
+
+    @Override
+    public String errorDescriptionLink() {
+        return errorDescriptionLink;
     }
 
     public String getLogoutUrl() {
@@ -190,6 +197,10 @@ public class SecurityConfigImpl implements SecurityConfig {
 
     public void setApplication(ApplicationImpl application) {
         this.application = application;
+    }
+
+    public void setErrorDescriptionLink(String errorDescriptionLink) {
+        this.errorDescriptionLink = errorDescriptionLink;
     }
 
     static class IdentityProviderImpl implements IdentityProvider {

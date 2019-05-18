@@ -1,23 +1,32 @@
 package pro.javatar.security.oidc.utils;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
+import static pro.javatar.security.oidc.utils.StringUtils.isBlank;
 
 import pro.javatar.security.oidc.exceptions.AuthenticationException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
 public class JsonMessageBuilder {
+
+    private static final String DEFAULT_ERROR_DESCRIPTION_LINK = "http://jira.javatar.pro/confluence/x/TgZmAQ";
+
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    @Value("${error.description.link: http://jira.javatar.pro/confluence/x/TgZmAQ}")
+
     private String descriptionLink;
+
+    public JsonMessageBuilder(String descriptionLink) {
+        if (isBlank(descriptionLink)) {
+            this.descriptionLink = DEFAULT_ERROR_DESCRIPTION_LINK;
+        } else {
+            this.descriptionLink = descriptionLink;
+        }
+    }
 
     public String authenticationExceptionBodyJson(AuthenticationException ex) throws JsonProcessingException {
         return objectMapper.writeValueAsString(authenticationExceptionBody(ex));

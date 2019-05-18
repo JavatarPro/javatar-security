@@ -58,3 +58,4 @@ javatar:
         request-param-name: realm
         header-name: X-REALM
         refresh-header-name: X-REFRESH-TOKEN
+    error-description-link: http://jira.javatar.pro/confluence/x/TgZmAQ

@@ -156,4 +156,10 @@ class SecurityConfigImplTest {
         assertThat(realm.refreshHeaderName(), is("X-REFRESH-TOKEN"));
     }
 
+    @Test
+    void errorDescriptionLink() {
+        String expected = "http://jira.javatar.pro/confluence/x/TgZmAQ";
+        assertThat(config.errorDescriptionLink(), is(expected));
+    }
+
 }

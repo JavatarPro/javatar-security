@@ -18,6 +18,7 @@ import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 import pro.javatar.security.oidc.services.OidcConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 import pro.javatar.security.oidc.utils.TestHelper;
 import org.apache.http.HttpHeaders;
 import org.junit.After;
@@ -44,7 +45,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.UUID;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {AuthenticationJwtBearerTokenAwareFilterTest.SpringConfig.class})
+@ContextConfiguration(classes = {
+        SpringTestConfig.class,
+        AuthenticationJwtBearerTokenAwareFilterTest.SpringConfig.class
+})
 @WebAppConfiguration
 public class AuthenticationJwtBearerTokenAwareFilterTest {
 

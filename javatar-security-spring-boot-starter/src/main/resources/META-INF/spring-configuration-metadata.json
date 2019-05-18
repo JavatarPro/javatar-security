@@ -178,9 +178,19 @@
       "description": "HTTP header name in which application or ui will pass requested realm's resources. Has priority over request-param"
     },
     {
+      "name": "javatar.security.application.realm.refresh-header-name",
+      "type": "java.lang.String",
+      "description": "HTTP header name that contains refresh token. This token need to be send to obtain new pair access token & refresh token"
+    },
+    {
       "name": "javatar.security.application.realm.request-param-name",
       "type": "java.lang.String",
       "description": "Request param (http query param) name in which application or ui will pass requested realm's resources. Last priority to retrieve realm."
+    },
+    {
+      "name": "javatar.security.error-description-link",
+      "type": "java.lang.String",
+      "description": "url where you can find description for each error code that javatar security could send"
     }
   ]
 }
