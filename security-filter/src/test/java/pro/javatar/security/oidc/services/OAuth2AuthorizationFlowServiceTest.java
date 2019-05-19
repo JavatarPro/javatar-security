@@ -30,7 +30,8 @@ public class OAuth2AuthorizationFlowServiceTest {
 
         service = new OAuth2AuthorizationFlowService();
         service.setoAuthClient(authClient);
-        service.setOidcConfiguration(oidcConfiguration);
+        // TODO replace configs
+        // service.setOidcConfiguration(oidcConfiguration);
         service.setPublicKeyCacheService(publicKeyCacheService);
     }
 

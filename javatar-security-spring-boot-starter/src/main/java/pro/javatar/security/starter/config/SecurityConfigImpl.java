@@ -487,6 +487,9 @@ public class SecurityConfigImpl implements SecurityConfig {
 
         @Override
         public Boolean enabled() {
+            if (enabled == null) {
+                return false;
+            }
             return enabled;
         }
 

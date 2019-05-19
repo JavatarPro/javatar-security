@@ -54,7 +54,7 @@ public class AuthenticationOAuth2RedirectAwareFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
             throws IOException, ServletException {
-
+        // TODO remove stub
         boolean stubFilterEnable = authorizationStubFilter.isFilterEnable();
         if (!enableFilter || stubFilterEnable) {
             logger.info("{} is disabled. Dev mode is {}.", getClass().getCanonicalName(), stubFilterEnable ? "on" : "off");

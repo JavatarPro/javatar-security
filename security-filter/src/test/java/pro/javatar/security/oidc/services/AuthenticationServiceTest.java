@@ -39,7 +39,8 @@ public class AuthenticationServiceTest {
         OAuth2AuthorizationFlowService auth2AuthorizationFlowService =
                 new OAuth2AuthorizationFlowService();
         auth2AuthorizationFlowService.setPublicKeyCacheService(publicKeyCacheService);
-        auth2AuthorizationFlowService.setOidcConfiguration(oidcConfiguration);
+        // TODO replace configs
+        //auth2AuthorizationFlowService.setOidcConfiguration(oidcConfiguration);
 
         oidcAuthenticationHelper = new OidcAuthenticationHelper();
         oidcAuthenticationHelper.setOidcConfiguration(oidcConfiguration);

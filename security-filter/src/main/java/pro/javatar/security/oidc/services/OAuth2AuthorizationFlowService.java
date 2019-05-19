@@ -1,5 +1,6 @@
 package pro.javatar.security.oidc.services;
 
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.jwt.adapter.AdapterRSATokenVerifier;
 import pro.javatar.security.jwt.bean.representation.AccessToken;
 import pro.javatar.security.oidc.model.TokenDetails;
@@ -14,15 +15,26 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-@Service
+// TODO create bean
+//@Service
 public class OAuth2AuthorizationFlowService {
     private static final Logger logger = LoggerFactory.getLogger(OAuth2AuthorizationFlowService.class);
 
     private OAuthClient oAuthClient;
 
-    private OidcConfiguration oidcConfiguration;
-
     private PublicKeyCacheService publicKeyCacheService;
+
+    private SecurityConfig securityConfig;
+
+    public OAuth2AuthorizationFlowService() {}
+
+    public OAuth2AuthorizationFlowService(OAuthClient oAuthClient,
+                                          PublicKeyCacheService publicKeyCacheService,
+                                          SecurityConfig securityConfig) {
+        this.oAuthClient = oAuthClient;
+        this.publicKeyCacheService = publicKeyCacheService;
+        this.securityConfig = securityConfig;
+    }
 
     public TokenDetails getTokenDetailsByCode(String code, String redirectUrl)
             throws ExchangeTokenByCodeAuthenticationException {
@@ -52,7 +64,7 @@ public class OAuth2AuthorizationFlowService {
         logger.debug("Public key [{}] was retrieved by realm={}", publicKeyByRealm, realm);
         try {
             return getAccessToken(accessToken, realm, publicKeyByRealm);
-        } catch (Exception e) {
+        } catch (Exception e) { // TODO catch different exceptions
             logger.trace("The first attempt to get access token is invalid. Trying again with refreshed public key." , e);
             String publicKey = publicKeyCacheService.refreshPublicKey(realm);
             return getAccessToken(accessToken, realm, publicKey);
@@ -65,18 +77,13 @@ public class OAuth2AuthorizationFlowService {
                 publicKeyByRealm,
                 accessToken,
                 realm,
-                oidcConfiguration.isCheckIsActive(),
-                oidcConfiguration.isCheckTokenType());
+                securityConfig.tokenValidation().checkTokenIsActive(),
+                securityConfig.tokenValidation().checkTokenType());
     }
 
     @Autowired
     public void setoAuthClient(OAuthClient oAuthClient) {
         this.oAuthClient = oAuthClient;
-    }
-
-    @Autowired
-    public void setOidcConfiguration(OidcConfiguration oidcConfiguration) {
-        this.oidcConfiguration = oidcConfiguration;
     }
 
     @Autowired

@@ -2,6 +2,7 @@ package pro.javatar.security.oidc.exceptions;
 
 import org.springframework.http.HttpStatus;
 
+// TODO verify this exception sent for many use-cases that not much e.g. token expiration
 public class PublicKeyNotFoundAuthenticationException extends AuthenticationException {
 
     public PublicKeyNotFoundAuthenticationException() {

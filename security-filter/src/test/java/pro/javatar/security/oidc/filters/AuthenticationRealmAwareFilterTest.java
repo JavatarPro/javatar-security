@@ -93,8 +93,9 @@ public class AuthenticationRealmAwareFilterTest {
         authenticationRealmAwareFilter.setRealmParamName("realm");
         authenticationRealmAwareFilter.init(null);
         authenticationControllerAdviceFilter.init(null);
-        authorizationStubFilter.setEnableFilter(true);
-        authorizationStubFilter.setAuthorities(Arrays.asList("USER_READ", "USER_WRITE"));
+        // TODO add token with "USER_READ", "USER_WRITE" permissions
+//        authorizationStubFilter.setEnableFilter(true);
+//        authorizationStubFilter.setAuthorities(Arrays.asList("USER_READ", "USER_WRITE"));
         this.mockMvc = MockMvcBuilders
                 .standaloneSetup(this.securityTestResource)
                 .setMessageConverters(new MappingJackson2HttpMessageConverter()) // Important!

@@ -144,6 +144,11 @@ public class OidcAuthenticationHelper {
         return !shouldApplyUrl(request);
     }
 
+    public void authenticateCurrentThread(String accessToken, String refreshToken) {
+        TokenDetails tokenDetails = generateTokenDetails(accessToken, accessToken);
+        authenticateCurrentThread(tokenDetails);
+    }
+
     public void authenticateCurrentThread(TokenDetails tokenDetails) {
         logger.info("Start authenticate current thread");
         AccessToken accessToken = parseAccessToken(tokenDetails);
@@ -195,8 +200,7 @@ public class OidcAuthenticationHelper {
             return new TokenDetails();
         AccessToken token;
         try {
-            token =
-                    auth2AuthorizationFlowService.parseAccessToken(accessToken, getRealmFromToken(accessToken));
+            token = auth2AuthorizationFlowService.parseAccessToken(accessToken, getRealmFromToken(accessToken));
         } catch (VerificationException e) {
             logger.error("Malicious token: {}, realm: {}", accessToken, TokenVerifier.getRealm(accessToken), e);
             throw new MaliciousBearerJwtTokenAuthenticationException();
@@ -206,9 +210,9 @@ public class OidcAuthenticationHelper {
             String realmFromToken = getRealmFromToken(accessToken);
             try {
                 tokenDetails = auth2AuthorizationFlowService.getTokenByRefreshToken(refreshToken);
-                token =
-                        auth2AuthorizationFlowService.parseAccessToken(tokenDetails.getAccessToken(), realmFromToken);
-                return createTokenDetails(tokenDetails.getAccessToken(), tokenDetails.getRefreshToken(), token.getExpiration());
+                token = auth2AuthorizationFlowService.parseAccessToken(tokenDetails.getAccessToken(), realmFromToken);
+                return createTokenDetails(tokenDetails.getAccessToken(), tokenDetails.getRefreshToken(),
+                        token.getExpiration());
             } catch (Exception e1) {
                 logger.error("Refresh token is spoiled: {}, realm: {}", StringUtils.getMaskedString(refreshToken),
                         realmFromToken, e1);

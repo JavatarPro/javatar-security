@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import javax.servlet.ServletException;
 
@@ -39,9 +40,14 @@ import java.util.Arrays;
 import java.util.Collections;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {AuthenticationOAuth2RedirectAwareFilterTest.SpringConfig.class})
+@ContextConfiguration(classes = {
+        SpringTestConfig.class,
+        AuthenticationOAuth2RedirectAwareFilterTest.SpringConfig.class
+})
 @WebAppConfiguration
 public class AuthenticationOAuth2RedirectAwareFilterTest {
+
+    private static final String REALM = "javatar-security";
 
     @Autowired
     AuthenticationControllerAdviceFilter authenticationControllerAdviceFilter;
@@ -77,7 +83,9 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
         authenticationRealmAwareFilter.setEnableFilter(true);
         authenticationRealmAwareFilter.setRealmMandatory(true);
         oidcConfiguration.setAuthorizationEndpoint(AUTHORIZATION_ENDPOINT);
-        oidcConfiguration.setClientId("client_id");
+        // TODO token with user-management-service permissions
+        // oidcConfiguration.setClientId("client_id");
+        oidcConfiguration.setClientId("user-management-service");
         oidcAuthenticationHelper.setOidcConfiguration(oidcConfiguration);
         redirectAwareFilter = new AuthenticationOAuth2RedirectAwareFilter(
                 authorizationStubFilter,
@@ -85,8 +93,9 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
                 oidcConfiguration
         );
         redirectAwareFilter.init(null);
-        authorizationStubFilter.setEnableFilter(true);
-        authorizationStubFilter.setAuthorities(Arrays.asList("USER_READ", "USER_WRITE"));
+        // TODO add token with "USER_READ", "USER_WRITE" permissions
+//        authorizationStubFilter.setEnableFilter(true);
+//        authorizationStubFilter.setAuthorities(Arrays.asList("USER_READ", "USER_WRITE"));
         this.mockMvc = MockMvcBuilders
                 .standaloneSetup(this.securityTestResource)
                 .setMessageConverters(new MappingJackson2HttpMessageConverter()) // Important!
@@ -122,7 +131,7 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
         securityTestFilter.state = SecurityTestFilter.State.SKIP;
         mockMvc.perform(get("/security/realm/users/456")
                 .accept(MediaType.APPLICATION_JSON_VALUE)
-                .param("realm", "realm_sk")
+                .param("realm", REALM)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(getStub("security-users-test.json")))
                 .andDo(print()).andExpect(status().isOk()).andReturn();
@@ -132,10 +141,11 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
     public void redirectAwareFilterEnabled() throws Exception {
         redirectAwareFilter.setEnableFilter(true);
         securityTestFilter.state = SecurityTestFilter.State.BEARER_NOT_FOUND;
-        authorizationStubFilter.setEnableFilter(false);
+        // TODO disable filter
+        // authorizationStubFilter.setEnableFilter(false);
         mockMvc.perform(post("/security/realm/users")
                 .accept(MediaType.APPLICATION_JSON_VALUE)
-                .param("realm", "realm_sk")
+                .param("realm", "javatar-security")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(getStub("security-users-test.json")))
                 .andDo(print()).andExpect(status().isFound()).andReturn();
@@ -194,7 +204,7 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
         securityTestFilter.state = SecurityTestFilter.State.SKIP;
         mockMvc.perform(get("/security/realm/users/156")
                 .accept(MediaType.APPLICATION_JSON_VALUE)
-                .param("realm", "realm_sk")
+                .param("realm", REALM)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(getStub("security-users-test.json")))
                 .andDo(print()).andExpect(status().isOk()).andReturn();
@@ -213,7 +223,8 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
         oidcConfiguration.setClientId(clientId);
         oidcConfiguration.setIdentityProviderHost(identityProviderHost);
         securityTestFilter.state = SecurityTestFilter.State.BEARER_NOT_FOUND;
-        authorizationStubFilter.setEnableFilter(false);
+        // TODO disable filter
+        // authorizationStubFilter.setEnableFilter(false);
         MvcResult mvcResult = mockMvc.perform(get("/security/realm/users/156")
                 .accept(MediaType.APPLICATION_JSON_VALUE)
                 .param("realm", realm)

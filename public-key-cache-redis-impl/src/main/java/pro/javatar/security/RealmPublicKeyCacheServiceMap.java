@@ -3,6 +3,7 @@ package pro.javatar.security;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+// TODO in-memory on bean conditional
 public class RealmPublicKeyCacheServiceMap implements RealmPublicKeyCacheService {
 
     private Map<String, String> keys;
