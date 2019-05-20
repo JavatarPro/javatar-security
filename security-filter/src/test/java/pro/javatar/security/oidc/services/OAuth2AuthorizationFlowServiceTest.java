@@ -4,6 +4,7 @@ import static junit.framework.TestCase.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.utils.JwtTokenGenerator;
@@ -11,6 +12,7 @@ import pro.javatar.security.oidc.utils.KeyUtils;
 
 import org.junit.Before;
 import org.junit.Test;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -21,18 +23,17 @@ public class OAuth2AuthorizationFlowServiceTest {
     private OAuthClient authClient;
     private OidcConfiguration oidcConfiguration;
     private PublicKeyCacheService publicKeyCacheService;
+    private SecurityConfig securityConfig;
 
     @Before
     public void setUp() throws Exception {
+        securityConfig = new SpringTestConfig().securityConfig();
+
         authClient = mock(OAuthClient.class);
         oidcConfiguration = mock(OidcConfiguration.class);
         publicKeyCacheService = mock(PublicKeyCacheService.class);
 
-        service = new OAuth2AuthorizationFlowService();
-        service.setoAuthClient(authClient);
-        // TODO replace configs
-        // service.setOidcConfiguration(oidcConfiguration);
-        service.setPublicKeyCacheService(publicKeyCacheService);
+        service = new OAuth2AuthorizationFlowService(authClient, publicKeyCacheService, securityConfig);
     }
 
     @Test

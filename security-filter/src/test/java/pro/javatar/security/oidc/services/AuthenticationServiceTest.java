@@ -5,6 +5,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.utils.JwtTokenGenerator;
 import pro.javatar.security.oidc.utils.KeyUtils;
@@ -15,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,6 +27,7 @@ public class AuthenticationServiceTest {
     private OidcAuthenticationHelper oidcAuthenticationHelper;
     private PublicKeyCacheService publicKeyCacheService;
     private AuthenticationService service;
+    private SecurityConfig securityConfig;
 
     @Before
     public void setUp() throws Exception {
@@ -36,11 +39,9 @@ public class AuthenticationServiceTest {
         oidcConfiguration.setCheckTokenType(true);
         oidcConfiguration.setCheckIsActive(true);
 
+        securityConfig = new SpringTestConfig().securityConfig();
         OAuth2AuthorizationFlowService auth2AuthorizationFlowService =
-                new OAuth2AuthorizationFlowService();
-        auth2AuthorizationFlowService.setPublicKeyCacheService(publicKeyCacheService);
-        // TODO replace configs
-        //auth2AuthorizationFlowService.setOidcConfiguration(oidcConfiguration);
+                new OAuth2AuthorizationFlowService(null, publicKeyCacheService, securityConfig);
 
         oidcAuthenticationHelper = new OidcAuthenticationHelper();
         oidcAuthenticationHelper.setOidcConfiguration(oidcConfiguration);

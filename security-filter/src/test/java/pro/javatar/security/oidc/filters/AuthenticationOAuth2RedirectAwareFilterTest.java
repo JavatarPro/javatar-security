@@ -141,14 +141,15 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
     public void redirectAwareFilterEnabled() throws Exception {
         redirectAwareFilter.setEnableFilter(true);
         securityTestFilter.state = SecurityTestFilter.State.BEARER_NOT_FOUND;
-        // TODO disable filter
-        // authorizationStubFilter.setEnableFilter(false);
+        // TODO disable filter by not creating it
+        authorizationStubFilter.setEnableFilter(false);
         mockMvc.perform(post("/security/realm/users")
                 .accept(MediaType.APPLICATION_JSON_VALUE)
                 .param("realm", "javatar-security")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(getStub("security-users-test.json")))
                 .andDo(print()).andExpect(status().isFound()).andReturn();
+        authorizationStubFilter.setEnableFilter(true);
     }
 
     @Test
@@ -224,7 +225,7 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
         oidcConfiguration.setIdentityProviderHost(identityProviderHost);
         securityTestFilter.state = SecurityTestFilter.State.BEARER_NOT_FOUND;
         // TODO disable filter
-        // authorizationStubFilter.setEnableFilter(false);
+        authorizationStubFilter.setEnableFilter(false);
         MvcResult mvcResult = mockMvc.perform(get("/security/realm/users/156")
                 .accept(MediaType.APPLICATION_JSON_VALUE)
                 .param("realm", realm)
@@ -235,6 +236,7 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
         redirectUrl = redirectUrl.replace(OidcConfiguration.REDIRECT_URI_PLACEHOLDER,
                 URLEncoder.encode(mvcResult.getRequest().getRequestURL().toString(),  "UTF-8"));
         assertThat(expectedRedirectUrl, is(redirectUrl));
+        authorizationStubFilter.setEnableFilter(true);
     }
 
     private String getStub(String classpathFile) throws Exception {

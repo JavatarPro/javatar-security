@@ -57,6 +57,10 @@ public class AuthorizationStubFilter implements Filter {
         return enableFilter;
     }
 
+    public void setEnableFilter(boolean enableFilter) {
+        this.enableFilter = enableFilter;
+    }
+
     @Override
     public String toString() {
         return "AuthorizationStubFilter{" +

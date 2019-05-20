@@ -14,7 +14,6 @@ import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 import pro.javatar.security.oidc.services.OidcConfiguration;
 import pro.javatar.security.oidc.services.PublicKeyCacheService;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,13 +35,14 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import javax.servlet.ServletException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {AuthorizationFlowUsingSecurityFiltersTest.SpringConfig.class})
+@ContextConfiguration(classes = {SpringTestConfig.class, AuthorizationFlowUsingSecurityFiltersTest.SpringConfig.class})
 @WebAppConfiguration
 public class AuthorizationFlowUsingSecurityFiltersTest {
 
@@ -66,6 +66,9 @@ public class AuthorizationFlowUsingSecurityFiltersTest {
     @Autowired
     SecurityTestFilter securityTestFilter;
 
+    @Autowired
+    AuthorizationStubFilter authorizationStubFilter;
+
     private OidcAuthenticationHelper oidcAuthenticationHelper = new OidcAuthenticationHelper();
 
     @Autowired
@@ -79,7 +82,6 @@ public class AuthorizationFlowUsingSecurityFiltersTest {
 
     MockMvc mockMvc;
 
-    ObjectMapper objectMapper = new ObjectMapper();
     private String pem;
 
     @Before
@@ -94,6 +96,7 @@ public class AuthorizationFlowUsingSecurityFiltersTest {
         oidcConfiguration.setCheckIsActive(false);
         oidcConfiguration.setCheckTokenType(false);
         securityTestFilter.state = SecurityTestFilter.State.SKIP;
+        authorizationStubFilter.setEnableFilter(false);
         this.mockMvc = MockMvcBuilders
                 .standaloneSetup(this.securityTestResource)
                 .setMessageConverters(new MappingJackson2HttpMessageConverter()) // Important!
