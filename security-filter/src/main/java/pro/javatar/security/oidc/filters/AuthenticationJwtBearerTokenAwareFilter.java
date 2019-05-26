@@ -1,12 +1,12 @@
 package pro.javatar.security.oidc.filters;
 
+import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.OAuth2Constants;
 import pro.javatar.security.jwt.TokenVerifier;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.SecurityConstants;
 import pro.javatar.security.oidc.exceptions.BearerJwtTokenNotFoundAuthenticationException;
 import pro.javatar.security.oidc.exceptions.ExchangeTokenByCodeAuthenticationException;
-import pro.javatar.security.oidc.services.OAuth2AuthorizationFlowService;
 import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 import pro.javatar.security.oidc.services.OidcConfiguration;
 import pro.javatar.security.oidc.utils.StringUtils;
@@ -38,8 +38,9 @@ import java.io.IOException;
  */
 @Component
 public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
-    private static final Logger logger =
-            LoggerFactory.getLogger(AuthenticationJwtBearerTokenAwareFilter.class);
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationJwtBearerTokenAwareFilter.class);
+
     public static final String DIGEST_AUTHORIZATION_HEADER = "Digest";
     public static final String BASIC_AUTHORIZATION_HEADER = "Basic";
 
@@ -48,7 +49,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
     // TODO (bzo) ask configuration about is filter enable/disable
     private AuthorizationStubFilter authorizationStubFilter;
 
-    private OAuth2AuthorizationFlowService auth2AuthorizationFlowService;
+    private OAuthClient oAuthClient;
 
     private OidcAuthenticationHelper oidcHelper;
 
@@ -169,7 +170,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
                 redirectUrl = referer;
             }
             redirectUrl = oidcHelper.removeCodeFromUrl(redirectUrl, secureCode);
-            return auth2AuthorizationFlowService.getTokenDetailsByCode(secureCode, redirectUrl);
+            return oAuthClient.obtainTokenDetailsByAuthorizationCode(secureCode, redirectUrl);
         } catch (Exception e) {
             logger.error("Error during obtaining access token by authorization code:", e);
             ExchangeTokenByCodeAuthenticationException exchangeTokenByCodeAuthenticationException =
@@ -209,8 +210,8 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
     }
 
     @Autowired
-    public void setAuth2AuthorizationFlowService(OAuth2AuthorizationFlowService auth2AuthorizationFlowService) {
-        this.auth2AuthorizationFlowService = auth2AuthorizationFlowService;
+    public void setoAuthClient(OAuthClient oAuthClient) {
+        this.oAuthClient = oAuthClient;
     }
 
     @Autowired

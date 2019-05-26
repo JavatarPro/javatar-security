@@ -1,5 +1,6 @@
 package pro.javatar.security.oidc.services;
 
+import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 
@@ -17,15 +18,15 @@ public class TokenService {
 
     private ApplicationTokenService applicationTokenService;
 
-    private OAuth2AuthorizationFlowService auth2AuthorizationFlowService;
+    private OAuthClient oAuthClient;
 
     @Autowired
     public TokenService(UsersTokenService usersTokenService,
                         ApplicationTokenService applicationTokenService,
-                        OAuth2AuthorizationFlowService auth2AuthorizationFlowService) {
+                        OAuthClient oAuthClient) {
         this.usersTokenService = usersTokenService;
         this.applicationTokenService = applicationTokenService;
-        this.auth2AuthorizationFlowService = auth2AuthorizationFlowService;
+        this.oAuthClient = oAuthClient;
     }
 
     public TokenDetails getTokenDetails() {
@@ -43,6 +44,6 @@ public class TokenService {
     }
 
     public TokenDetails getTokenByRefreshToken(String refreshToken) throws ObtainRefreshTokenException {
-        return auth2AuthorizationFlowService.getTokenByRefreshToken(refreshToken);
+        return oAuthClient.obtainTokenDetailsByRefreshToken(refreshToken);
     }
 }

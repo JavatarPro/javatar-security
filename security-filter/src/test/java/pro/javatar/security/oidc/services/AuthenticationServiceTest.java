@@ -6,7 +6,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import pro.javatar.security.api.config.SecurityConfig;
+import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
+import pro.javatar.security.oidc.services.api.RealmService;
 import pro.javatar.security.oidc.utils.JwtTokenGenerator;
 import pro.javatar.security.oidc.utils.KeyUtils;
 
@@ -24,9 +26,13 @@ import java.util.Collection;
 public class AuthenticationServiceTest {
 
     private TokenService tokenService;
+
     private OidcAuthenticationHelper oidcAuthenticationHelper;
+
     private PublicKeyCacheService publicKeyCacheService;
+
     private AuthenticationService service;
+
     private SecurityConfig securityConfig;
 
     @Before
@@ -40,12 +46,12 @@ public class AuthenticationServiceTest {
         oidcConfiguration.setCheckIsActive(true);
 
         securityConfig = new SpringTestConfig().securityConfig();
-        OAuth2AuthorizationFlowService auth2AuthorizationFlowService =
-                new OAuth2AuthorizationFlowService(null, publicKeyCacheService, securityConfig);
+        RealmService realmService = mock(RealmService.class);
+        OAuthClient oAuthClient = new OAuthClient(oidcConfiguration, realmService, publicKeyCacheService, securityConfig);
 
         oidcAuthenticationHelper = new OidcAuthenticationHelper();
         oidcAuthenticationHelper.setOidcConfiguration(oidcConfiguration);
-        oidcAuthenticationHelper.setAuth2AuthorizationFlowService(auth2AuthorizationFlowService);
+        oidcAuthenticationHelper.setOAuthClient(oAuthClient);
 
         service = new AuthenticationService(this.tokenService, oidcAuthenticationHelper);
     }

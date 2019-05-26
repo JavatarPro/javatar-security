@@ -1,5 +1,8 @@
 package pro.javatar.security.oidc.services;
 
+import pro.javatar.security.api.config.SecurityConfig;
+import pro.javatar.security.jwt.adapter.AdapterRSATokenVerifier;
+import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.OAuth2Constants;
 import pro.javatar.security.jwt.TokenVerifier;
 import pro.javatar.security.jwt.bean.representation.AccessToken;
@@ -7,13 +10,12 @@ import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.jwt.exception.TokenExpirationException;
 import pro.javatar.security.jwt.exception.VerificationException;
 import pro.javatar.security.oidc.SecurityConstants;
-import pro.javatar.security.oidc.exceptions.AuthenticationException;
 import pro.javatar.security.oidc.exceptions.BearerJwtTokenNotFoundAuthenticationException;
 import pro.javatar.security.oidc.exceptions.MaliciousBearerJwtTokenAuthenticationException;
 import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 import pro.javatar.security.oidc.exceptions.RealmInJwtTokenNotFoundAuthenticationException;
 import pro.javatar.security.oidc.exceptions.RefreshTokenObsoleteAuthenticationException;
-import pro.javatar.security.oidc.exceptions.TokenSignedForOtherRealmAuthorizationException;
+import pro.javatar.security.oidc.services.api.RealmService;
 import pro.javatar.security.oidc.utils.SecurityContextUtils;
 import pro.javatar.security.oidc.utils.StringUtils;
 
@@ -50,11 +52,13 @@ public class OidcAuthenticationHelper {
 
     public static final String AUTH_HEADER_VALUE_PREFIX = "Bearer ";
 
-    public static final ThreadLocal<String> realms = new ThreadLocal<>();
-
     private OidcConfiguration oidcConfiguration;
 
-    private OAuth2AuthorizationFlowService auth2AuthorizationFlowService;
+    private OAuthClient oAuthClient;
+
+    private SecurityConfig config;
+
+    private RealmService realmService;
 
     /**
      * Get the bearer token from the HTTP request.
@@ -89,51 +93,23 @@ public class OidcAuthenticationHelper {
     }
 
     public void setRealmForCurrentRequest(String realm) {
-        if (StringUtils.isBlank(realm))
-            return;
-        logger.debug("setting up realm: {} for current request", realm);
-        realms.set(realm);
+        realmService.setRealmForCurrentRequest(realm);
     }
 
     public String getRealmForCurrentRequest() {
-        String realm = realms.get();
-        if (StringUtils.isBlank(realm))
-            return oidcConfiguration.getDefaultRealm();
-        return realm;
+        return realmService.getRealmForCurrentRequest();
     }
 
     public String getRealmForCurrentRequest(HttpServletResponse response) {
-        String realm = realms.get();
-        if (StringUtils.isNotBlank(realm)) {
-            return realm;
-        }
-        String responseHeaderRealm = response.getHeader(SecurityConstants.REALM_HEADER);
-        return StringUtils.isNotBlank(responseHeaderRealm) ?
-                responseHeaderRealm :
-                oidcConfiguration.getDefaultRealm();
+        return realmService.getRealmForCurrentRequest(response);
     }
 
     public void validateRealm(TokenDetails tokenDetails) {
-        logger.info("Start validate realm token");
-        String tokenRealm = tokenDetails.getRealm();
-        if (oidcConfiguration.getExcludeValidationRealm().equalsIgnoreCase(tokenRealm)) {
-            return;
-        }
-        String resourceAccessRealm = getRealmForCurrentRequest();
-        if (!tokenRealm.equalsIgnoreCase(resourceAccessRealm)) {
-            String devMessage =
-                    String.format("Token signed for %s realm, but user try to access %s realm",
-                            tokenRealm, resourceAccessRealm);
-            logger.error("Token signed for {} realm, but user try to access {} realm", tokenRealm, resourceAccessRealm);
-            AuthenticationException e = new TokenSignedForOtherRealmAuthorizationException();
-            e.setDevMessage(devMessage);
-            throw e;
-        }
-        logger.info("Realm token validation completed successfully");
+        realmService.validateRealm(tokenDetails);
     }
 
     public void removeRealmFromCurrentRequest() {
-        realms.remove();
+        realmService.removeRealmFromCurrentRequest();
     }
 
     public boolean shouldApplyUrl(HttpRequest request) {
@@ -162,11 +138,13 @@ public class OidcAuthenticationHelper {
         logger.info("Finish authenticate current thread");
     }
 
+    // TODO remove to not depend on oAuthClient
+    @Deprecated
     public AccessToken parseAccessToken(TokenDetails tokenDetails) {
         String accessToken = getAccessToken(tokenDetails);
         String realm = getRealmFromToken(accessToken);
         try {
-            return auth2AuthorizationFlowService.parseAccessToken(accessToken, realm);
+            return oAuthClient.parseAccessToken(accessToken, realm);
         } catch (TokenExpirationException e) {
             logger.debug("Access token is not active: {}, realm: {}", accessToken, realm, e);
             return changeRefreshToken(tokenDetails, accessToken, realm);
@@ -195,12 +173,15 @@ public class OidcAuthenticationHelper {
         return tokenDetails.getAccessTokenExpiration().isBefore(refreshDate);
     }
 
+    // TODO remove to not depend on oAuthClient
+    // use instead pro.javatar.security.oidc.client.OAuthClient.generateTokenDetails
+    @Deprecated
     public TokenDetails generateTokenDetails(String accessToken, String refreshToken) {
         if (StringUtils.isBlank(accessToken))
             return new TokenDetails();
         AccessToken token;
         try {
-            token = auth2AuthorizationFlowService.parseAccessToken(accessToken, getRealmFromToken(accessToken));
+            token = oAuthClient.parseAccessToken(accessToken, getRealmFromToken(accessToken));
         } catch (VerificationException e) {
             logger.error("Malicious token: {}, realm: {}", accessToken, TokenVerifier.getRealm(accessToken), e);
             throw new MaliciousBearerJwtTokenAuthenticationException();
@@ -209,8 +190,9 @@ public class OidcAuthenticationHelper {
             TokenDetails tokenDetails;
             String realmFromToken = getRealmFromToken(accessToken);
             try {
-                tokenDetails = auth2AuthorizationFlowService.getTokenByRefreshToken(refreshToken);
-                token = auth2AuthorizationFlowService.parseAccessToken(tokenDetails.getAccessToken(), realmFromToken);
+                // TODO
+                tokenDetails = oAuthClient.obtainTokenDetailsByRefreshToken(refreshToken);
+                token = oAuthClient.parseAccessToken(tokenDetails.getAccessToken(), realmFromToken);
                 return createTokenDetails(tokenDetails.getAccessToken(), tokenDetails.getRefreshToken(),
                         token.getExpiration());
             } catch (Exception e1) {
@@ -239,11 +221,23 @@ public class OidcAuthenticationHelper {
         }
     }
 
+    private AccessToken getAccessToken(String accessToken, String realm, String publicKeyByRealm)
+            throws TokenExpirationException, VerificationException {
+        return AdapterRSATokenVerifier.verifyToken(
+                publicKeyByRealm,
+                accessToken,
+                realm,
+                config.tokenValidation().checkTokenIsActive(),
+                config.tokenValidation().checkTokenType());
+    }
+
+    // TODO refactor to not depend on oAuthClient
+    @Deprecated
     private AccessToken changeRefreshToken(TokenDetails tokenDetails, String accessToken, String realm) {
         try {
             TokenDetails refreshedTokenDetails =
-                    auth2AuthorizationFlowService.getTokenByRefreshToken(tokenDetails.getRefreshToken());
-            return auth2AuthorizationFlowService.parseAccessToken(refreshedTokenDetails.getAccessToken(), realm);
+                    oAuthClient.obtainTokenDetailsByRefreshToken(tokenDetails.getRefreshToken());
+            return oAuthClient.parseAccessToken(refreshedTokenDetails.getAccessToken(), realm);
         } catch (VerificationException | TokenExpirationException e) {
             logger.error("Malicious token: {}, realm: {}", accessToken, realm, e);
             throw new MaliciousBearerJwtTokenAuthenticationException();
@@ -262,6 +256,8 @@ public class OidcAuthenticationHelper {
 
     }
 
+    // use instead pro.javatar.security.oidc.services.api.RealmService.getRealmFromToken
+    @Deprecated
     private String getRealmFromToken(String accessToken) {
         String realm = TokenVerifier.getRealm(accessToken);
         if (StringUtils.isBlank(realm)) {
@@ -293,12 +289,22 @@ public class OidcAuthenticationHelper {
     }
 
     @Autowired
-    public void setAuth2AuthorizationFlowService(OAuth2AuthorizationFlowService auth2AuthorizationFlowService) {
-        this.auth2AuthorizationFlowService = auth2AuthorizationFlowService;
+    public void setOidcConfiguration(OidcConfiguration oidcConfiguration) {
+        this.oidcConfiguration = oidcConfiguration;
     }
 
     @Autowired
-    public void setOidcConfiguration(OidcConfiguration oidcConfiguration) {
-        this.oidcConfiguration = oidcConfiguration;
+    public void setOAuthClient(OAuthClient oAuthClient) {
+        this.oAuthClient = oAuthClient;
+    }
+
+    @Autowired
+    public void setConfig(SecurityConfig config) {
+        this.config = config;
+    }
+
+    @Autowired
+    public void setRealmService(RealmService realmService) {
+        this.realmService = realmService;
     }
 }

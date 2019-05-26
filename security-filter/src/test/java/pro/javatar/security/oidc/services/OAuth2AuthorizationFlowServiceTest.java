@@ -19,7 +19,6 @@ import java.util.UUID;
 
 public class OAuth2AuthorizationFlowServiceTest {
 
-    private OAuth2AuthorizationFlowService service;
     private OAuthClient authClient;
     private OidcConfiguration oidcConfiguration;
     private PublicKeyCacheService publicKeyCacheService;
@@ -32,8 +31,6 @@ public class OAuth2AuthorizationFlowServiceTest {
         authClient = mock(OAuthClient.class);
         oidcConfiguration = mock(OidcConfiguration.class);
         publicKeyCacheService = mock(PublicKeyCacheService.class);
-
-        service = new OAuth2AuthorizationFlowService(authClient, publicKeyCacheService, securityConfig);
     }
 
     @Test
@@ -44,7 +41,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         TokenDetails tokenDetails = new TokenDetails();
         when(authClient.obtainTokenDetailsByAuthorizationCode(code, redirectUrl)).thenReturn(tokenDetails);
 
-        assertEquals(service.getTokenDetailsByCode(code, redirectUrl), tokenDetails);
+        assertEquals(authClient.obtainTokenDetailsByAuthorizationCode(code, redirectUrl), tokenDetails);
     }
 
     @Test
@@ -54,7 +51,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         TokenDetails tokenDetails = new TokenDetails();
         when(authClient.obtainTokenDetailsByRefreshToken(refreshToken)).thenReturn(tokenDetails);
 
-        assertEquals(service.getTokenByRefreshToken(refreshToken), tokenDetails);
+        assertEquals(authClient.obtainTokenDetailsByRefreshToken(refreshToken), tokenDetails);
     }
 
     @Test
@@ -62,7 +59,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         TokenDetails tokenDetails = new TokenDetails();
         when(authClient.obtainTokenDetailsByApplicationCredentials()).thenReturn(tokenDetails);
 
-        assertEquals(service.obtainTokenByApplicationCredentials(), tokenDetails);
+        assertEquals(authClient.obtainTokenDetailsByApplicationCredentials(), tokenDetails);
     }
 
     @Test
@@ -70,7 +67,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         TokenDetails tokenDetails = new TokenDetails();
         when(authClient.obtainTokenDetailsByRunOnBehalfOfUserCredentials("user1", "realm1")).thenReturn(tokenDetails);
 
-        assertEquals(service.obtainTokenByRunOnBehalfOfUserCredentials("user1", "realm1"), tokenDetails);
+        assertEquals(authClient.obtainTokenDetailsByRunOnBehalfOfUserCredentials("user1", "realm1"), tokenDetails);
     }
 
     @Test
@@ -84,7 +81,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         when(oidcConfiguration.isCheckIsActive()).thenReturn(true);
         when(oidcConfiguration.isCheckTokenType()).thenReturn(true);
 
-        service.parseAccessToken(accessToken, "test-realm");
+        authClient.parseAccessToken(accessToken, "test-realm");
     }
 
     @Test
@@ -101,7 +98,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         when(oidcConfiguration.isCheckIsActive()).thenReturn(true);
         when(oidcConfiguration.isCheckTokenType()).thenReturn(true);
 
-        service.parseAccessToken(accessToken, "test-realm");
+        authClient.parseAccessToken(accessToken, "test-realm");
     }
 
     @Test
@@ -109,6 +106,6 @@ public class OAuth2AuthorizationFlowServiceTest {
         TokenDetails tokenDetails = new TokenDetails();
         when(authClient.obtainTokenDetailsByApplicationCredentials("user2", "password2", "realm2")).thenReturn(tokenDetails);
 
-        assertEquals(service.obtainTokenDetailsByApplicationCredentials("user2", "password2", "realm2"), tokenDetails);
+        assertEquals(authClient.obtainTokenDetailsByApplicationCredentials("user2", "password2", "realm2"), tokenDetails);
     }
 }

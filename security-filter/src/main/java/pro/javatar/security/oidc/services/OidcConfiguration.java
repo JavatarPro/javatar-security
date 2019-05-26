@@ -195,11 +195,15 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
         this.jwtBearerTokenRequired = jwtBearerTokenRequired;
     }
 
+    // use SecurityConfig
+    @Deprecated
     @Override
     public String getIdentityProviderHost() {
         return identityProviderHost;
     }
 
+    // use SecurityConfig
+    @Deprecated
     @Override
     public void setIdentityProviderHost(String identityProviderHost) {
         this.identityProviderHost = identityProviderHost;
@@ -225,21 +229,29 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
         this.tokenEndpoint = tokenEndpoint;
     }
 
+    // use SecurityConfig
+    @Deprecated
     @Override
     public String getClientId() {
         return clientId;
     }
 
+    // use SecurityConfig
+    @Deprecated
     @Override
     public void setClientId(String clientId) {
         this.clientId = clientId;
     }
 
+    // use SecurityConfig
+    @Deprecated
     @Override
     public String getClientSecret() {
         return clientSecret;
     }
 
+    // use SecurityConfig
+    @Deprecated
     @Override
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;

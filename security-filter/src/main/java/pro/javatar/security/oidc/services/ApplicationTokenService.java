@@ -1,5 +1,6 @@
 package pro.javatar.security.oidc.services;
 
+import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 import pro.javatar.security.oidc.model.UserKey;
@@ -13,7 +14,7 @@ public class ApplicationTokenService {
 
     private static final Logger logger = LoggerFactory.getLogger(ApplicationTokenService.class);
 
-    private OAuth2AuthorizationFlowService auth2AuthorizationFlowService;
+    private OAuthClient oAuthClient;
 
     private OidcAuthenticationHelper oidcAuthenticationHelper;
 
@@ -24,12 +25,12 @@ public class ApplicationTokenService {
     private OidcConfiguration oidcConfiguration;
 
     @Autowired
-    public ApplicationTokenService(OAuth2AuthorizationFlowService auth2AuthorizationFlowService,
+    public ApplicationTokenService(OAuthClient oAuthClient,
                                    OidcAuthenticationHelper oidcAuthenticationHelper,
                                    OnBehalfOfUsernameHolder onBehalfOfUsernameHolder,
                                    ApplicationTokenHolder applicationTokenHolder,
                                    OidcConfiguration oidcConfiguration) {
-        this.auth2AuthorizationFlowService = auth2AuthorizationFlowService;
+        this.oAuthClient = oAuthClient;
         this.oidcAuthenticationHelper = oidcAuthenticationHelper;
         this.onBehalfOfUsernameHolder = onBehalfOfUsernameHolder;
         this.applicationTokenHolder = applicationTokenHolder;
@@ -56,7 +57,7 @@ public class ApplicationTokenService {
         TokenDetails tokenDetails = applicationTokenHolder.getTokenDetails(user);
         if (tokenDetails == null || tokenDetails.isEmpty()) {
             logger.info("run on behalf of user: {}, it's token is empty in application token holder", user);
-            tokenDetails = auth2AuthorizationFlowService.obtainTokenByRunOnBehalfOfUserCredentials(user.getLogin(),
+            tokenDetails = oAuthClient.obtainTokenDetailsByRunOnBehalfOfUserCredentials(user.getLogin(),
                     user.getRealm());
         } else if (oidcAuthenticationHelper.isTokenExpiredOrShouldBeRefreshed(tokenDetails)) {
             logger.info("run on behalf of user: {}, it's token should be updated using refresh token", user);
@@ -70,7 +71,7 @@ public class ApplicationTokenService {
     synchronized TokenDetails retrieveUpdatedUsersTokenDetails(UserKey user, TokenDetails tokenDetails) {
         try {
             String refreshToken = tokenDetails.getRefreshToken();
-            TokenDetails updatedTokenDetails = auth2AuthorizationFlowService.getTokenByRefreshToken(refreshToken);
+            TokenDetails updatedTokenDetails = oAuthClient.obtainTokenDetailsByRefreshToken(refreshToken);
             applicationTokenHolder.setTokenDetails(user, tokenDetails);
             return updatedTokenDetails;
         } catch (ObtainRefreshTokenException e) {

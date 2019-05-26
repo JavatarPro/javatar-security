@@ -6,6 +6,7 @@ import pro.javatar.security.oidc.exceptions.RefreshTokenObsoleteAuthenticationEx
 import pro.javatar.security.oidc.services.FilterOptionConverter;
 import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 import pro.javatar.security.oidc.services.OidcConfiguration;
+import pro.javatar.security.oidc.services.api.RealmService;
 import pro.javatar.security.oidc.utils.UrlResolver;
 
 import org.slf4j.Logger;
@@ -43,6 +44,15 @@ public class AuthenticationOAuth2RedirectAwareFilter implements Filter {
     private final OidcAuthenticationHelper oidcHelper;
     private final FilterOptionConverter filterOptionConverter = new FilterOptionConverter();
     private final UrlResolver urlResolver = new UrlResolver();
+
+    @Autowired
+    public AuthenticationOAuth2RedirectAwareFilter(AuthorizationStubFilter authorizationStubFilter,
+                                                   OidcAuthenticationHelper oidcHelper,
+                                                   OidcConfiguration oidcConfiguration) {
+        this.authorizationStubFilter = authorizationStubFilter;
+        this.oidcHelper = oidcHelper;
+        this.oidcConfiguration = oidcConfiguration;
+    }
 
     private boolean enableFilter = false;
 
@@ -135,11 +145,4 @@ public class AuthenticationOAuth2RedirectAwareFilter implements Filter {
         urlResolver.setFilterIgnoreUrls(filterOptionConverter.convertList(filterIgnoreUrlList));
     }
 
-    @Autowired
-    public AuthenticationOAuth2RedirectAwareFilter(AuthorizationStubFilter authorizationStubFilter,
-                                                   OidcAuthenticationHelper oidcHelper, OidcConfiguration oidcConfiguration) {
-        this.authorizationStubFilter = authorizationStubFilter;
-        this.oidcHelper = oidcHelper;
-        this.oidcConfiguration = oidcConfiguration;
-    }
 }

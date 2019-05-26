@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * All security configuration should be provided by this interface to any filter
+ *
  * @author Borys Zora
  * @version 2019-05-08
  */

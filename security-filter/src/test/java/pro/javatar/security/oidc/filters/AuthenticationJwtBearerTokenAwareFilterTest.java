@@ -13,7 +13,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import pro.javatar.security.oidc.model.OAuth2Constants;
 import pro.javatar.security.oidc.SecurityTestFilter;
 import pro.javatar.security.oidc.SecurityTestResource;
-import pro.javatar.security.oidc.services.OAuth2AuthorizationFlowService;
 import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 import pro.javatar.security.oidc.services.OidcConfiguration;
 
@@ -38,7 +37,6 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
-import pro.javatar.security.oidc.utils.TestHelper;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -76,9 +74,6 @@ public class AuthenticationJwtBearerTokenAwareFilterTest {
 
     @Autowired
     private OidcConfiguration oidcConfiguration;
-
-    @Autowired
-    private OAuth2AuthorizationFlowService auth2AuthorizationFlowService;
 
     @Autowired
     private AuthorizationStubFilter authorizationStubFilter;
@@ -156,10 +151,6 @@ public class AuthenticationJwtBearerTokenAwareFilterTest {
     @ComponentScan("pro.javatar.security")
     public static class SpringConfig {
 
-//        @Bean
-//        public OAuth2AuthorizationFlowService getOAuth2AuthorizationFlowService(){
-//            return mock(OAuth2AuthorizationFlowService.class);
-//        }
     }
 
 }

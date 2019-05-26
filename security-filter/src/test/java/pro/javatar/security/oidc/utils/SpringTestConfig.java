@@ -5,12 +5,12 @@ import org.springframework.context.annotation.Configuration;
 import pro.javatar.security.RealmPublicKeyCacheService;
 import pro.javatar.security.RealmPublicKeyCacheServiceMap;
 import pro.javatar.security.api.config.SecurityConfig;
-import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.filters.AuthorizationStubFilter;
-import pro.javatar.security.oidc.services.OAuth2AuthorizationFlowService;
 import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
-import pro.javatar.security.oidc.services.PublicKeyCacheService;
+import pro.javatar.security.oidc.services.api.RealmService;
+import pro.javatar.security.oidc.services.impl.RealmServiceImpl;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,9 +44,8 @@ public class SpringTestConfig {
     }
 
     @Bean
-    public OAuth2AuthorizationFlowService oAuth2AuthorizationFlowService(OAuthClient oAuthClient,
-                                                                         PublicKeyCacheService publicKeyCacheService) {
-        return new OAuth2AuthorizationFlowService(oAuthClient, publicKeyCacheService, securityConfig());
+    public RealmService realmService() {
+        return new RealmServiceImpl(securityConfig());
     }
 
     @Bean
@@ -74,7 +73,27 @@ public class SpringTestConfig {
 
             @Override
             public IdentityProvider identityProvider() {
-                return null;
+                return new IdentityProvider() {
+                    @Override
+                    public String url() {
+                        return "http://195.201.110.123:48666";
+                    }
+
+                    @Override
+                    public String client() {
+                        return "user-management-service";
+                    }
+
+                    @Override
+                    public String secret() {
+                        return "86ff8f97-04b5-43f0-9c2f-6031d4e11aac";
+                    }
+
+                    @Override
+                    public String realm() {
+                        return "javatar-security";
+                    }
+                };
             }
 
             @Override
@@ -163,7 +182,37 @@ public class SpringTestConfig {
 
             @Override
             public Application application() {
-                return null;
+                return new Application() {
+                    @Override
+                    public String user() {
+                        return "jenkins";
+                    }
+
+                    @Override
+                    public String password() {
+                        return "se(ur3";
+                    }
+
+                    @Override
+                    public Duration tokenShouldBeRefreshedDuration() {
+                        return null;
+                    }
+
+                    @Override
+                    public Boolean allowOtherAuthentication() {
+                        return null;
+                    }
+
+                    @Override
+                    public Boolean allowAnonymous() {
+                        return null;
+                    }
+
+                    @Override
+                    public Realm realm() {
+                        return null;
+                    }
+                };
             }
 
             @Override

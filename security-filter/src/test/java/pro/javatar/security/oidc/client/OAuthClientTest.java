@@ -9,6 +9,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
+import org.junit.Before;
+import org.mockito.junit.MockitoJUnitRunner;
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.model.OAuth2Constants;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.exceptions.ExchangeTokenByCodeAuthenticationException;
@@ -25,8 +28,9 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import pro.javatar.security.oidc.services.api.RealmService;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,22 +45,31 @@ public class OAuthClientTest {
     @Spy
     @InjectMocks
     private OAuthClient client;
+
     @Mock
     private OidcConfiguration oidcConfiguration;
-    @Mock
-    private OidcAuthenticationHelper oidcAuthenticationHelper;
+
     @Captor
     private ArgumentCaptor<ArrayList<BasicNameValuePair>> paramsCaptor;
     private String code = UUID.randomUUID().toString();
     private String redirectUrl = "/some/redirect/url";
-    private String clientSecret = UUID.randomUUID().toString();
+    String clientId = "user-management-service";
+    String clientSecret = "86ff8f97-04b5-43f0-9c2f-6031d4e11aac";
+
+    SecurityConfig config = new SpringTestConfig().securityConfig();
+
+    @Mock
+    RealmService realmService;
+
+    @Before
+    public void setUp() throws Exception {
+        client.setConfig(config);
+        client.setRealmService(realmService);
+    }
 
     @Test
     public void obtainTokenDetailsByAuthorizationCode() throws Exception {
-        when(oidcConfiguration.getClientId()).thenReturn("user-service");
-        when(oidcConfiguration.getClientSecret()).thenReturn(clientSecret);
-
-        when(oidcAuthenticationHelper.getRealmForCurrentRequest()).thenReturn("realm2");
+        when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         TokenDetails expectedTokenDetails = new TokenDetails();
         doReturn(expectedTokenDetails).when(client).obtainTokenDetails(eq("realm2"), paramsCaptor.capture());
@@ -67,17 +80,14 @@ public class OAuthClientTest {
         assertThat(params.size(), is(5));
         assertThat(params.get(OAuth2Constants.GRANT_TYPE), is(OAuth2Constants.AUTHORIZATION_CODE));
         assertThat(params.get(OAuth2Constants.CODE), is(code));
-        assertThat(params.get(OAuth2Constants.CLIENT_ID), is("user-service"));
+        assertThat(params.get(OAuth2Constants.CLIENT_ID), is("user-management-service"));
         assertThat(params.get(OAuth2Constants.CLIENT_SECRET), is(clientSecret));
         assertThat(params.get(OAuth2Constants.REDIRECT_URI), is(redirectUrl));
     }
 
     @Test(expected = ExchangeTokenByCodeAuthenticationException.class)
     public void obtainTokenDetailsByAuthorizationCodeException() throws Exception {
-        when(oidcConfiguration.getClientId()).thenReturn("user-service");
-        when(oidcConfiguration.getClientSecret()).thenReturn(clientSecret);
-
-        when(oidcAuthenticationHelper.getRealmForCurrentRequest()).thenReturn("realm2");
+        when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         doThrow(new RuntimeException()).when(client).obtainTokenDetails(any(), any());
 
@@ -87,10 +97,7 @@ public class OAuthClientTest {
     @Test
     public void obtainTokenDetailsByRefreshToken() throws Exception {
         String refreshToken = "refresh token";
-        when(oidcConfiguration.getClientId()).thenReturn("producer-service");
-        when(oidcConfiguration.getClientSecret()).thenReturn(clientSecret);
-
-        when(oidcAuthenticationHelper.getRealmForCurrentRequest()).thenReturn("realm2");
+        when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         TokenDetails expectedTokenDetails = new TokenDetails();
         doReturn(expectedTokenDetails).when(client).obtainTokenDetails(eq("realm2"), paramsCaptor.capture());
@@ -101,17 +108,14 @@ public class OAuthClientTest {
         assertThat(params.size(), is(4));
         assertThat(params.get(OAuth2Constants.GRANT_TYPE), is(OAuth2Constants.REFRESH_TOKEN));
         assertThat(params.get(OAuth2Constants.REFRESH_TOKEN), is(refreshToken));
-        assertThat(params.get(OAuth2Constants.CLIENT_ID), is("producer-service"));
+        assertThat(params.get(OAuth2Constants.CLIENT_ID), is(clientId));
         assertThat(params.get(OAuth2Constants.CLIENT_SECRET), is(clientSecret));
     }
 
     @Test(expected = ObtainRefreshTokenException.class)
     public void obtainTokenDetailsByRefreshTokenException() throws Exception {
         String refreshToken = "refresh token";
-        when(oidcConfiguration.getClientId()).thenReturn("producer-service");
-        when(oidcConfiguration.getClientSecret()).thenReturn(clientSecret);
-
-        when(oidcAuthenticationHelper.getRealmForCurrentRequest()).thenReturn("realm2");
+        when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         doThrow(new RuntimeException()).when(client).obtainTokenDetails(any(), any());
 
@@ -120,13 +124,7 @@ public class OAuthClientTest {
 
     @Test
     public void obtainTokenDetailsByApplicationCredentialsByConfiguration() throws Exception {
-        when(oidcConfiguration.getUsername()).thenReturn("pupkin1");
-        when(oidcConfiguration.getUserPassword()).thenReturn("pupkin1-password");
-
-        when(oidcAuthenticationHelper.getRealmForCurrentRequest()).thenReturn("realm2");
-
-        when(oidcConfiguration.getClientId()).thenReturn("consumer-service");
-        when(oidcConfiguration.getClientSecret()).thenReturn(clientSecret);
+        when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         TokenDetails expectedTokenDetails = new TokenDetails();
         doReturn(expectedTokenDetails).when(client).obtainTokenDetails(eq("realm2"), paramsCaptor.capture());
@@ -136,21 +134,15 @@ public class OAuthClientTest {
         Map<String, String> params = convertParamsToMap(paramsCaptor.getValue());
         assertThat(params.size(), is(5));
         assertThat(params.get(OAuth2Constants.GRANT_TYPE), is(OAuth2Constants.PASSWORD));
-        assertThat(params.get(OAuth2Constants.USERNAME), is("pupkin1"));
-        assertThat(params.get(OAuth2Constants.PASSWORD), is("pupkin1-password"));
-        assertThat(params.get(OAuth2Constants.CLIENT_ID), is("consumer-service"));
+        assertThat(params.get(OAuth2Constants.USERNAME), is("jenkins"));
+        assertThat(params.get(OAuth2Constants.PASSWORD), is("se(ur3"));
+        assertThat(params.get(OAuth2Constants.CLIENT_ID), is(clientId));
         assertThat(params.get(OAuth2Constants.CLIENT_SECRET), is(clientSecret));
     }
 
     @Test(expected = ObtainTokenByUserCredentialAuthenticationException.class)
     public void obtainTokenDetailsByApplicationCredentialsByConfigurationException() throws Exception {
-        when(oidcConfiguration.getUsername()).thenReturn("pupkin1");
-        when(oidcConfiguration.getUserPassword()).thenReturn("pupkin1-password");
-
-        when(oidcAuthenticationHelper.getRealmForCurrentRequest()).thenReturn("realm2");
-
-        when(oidcConfiguration.getClientId()).thenReturn("consumer-service");
-        when(oidcConfiguration.getClientSecret()).thenReturn(clientSecret);
+        when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         doThrow(new RuntimeException()).when(client).obtainTokenDetails(any(), any());
 
@@ -165,9 +157,6 @@ public class OAuthClientTest {
 
         when(oidcConfiguration.getRunOnBehalfOfUserPassword(username, realm)).thenReturn(userPassword);
 
-        when(oidcConfiguration.getClientId()).thenReturn("work-service");
-        when(oidcConfiguration.getClientSecret()).thenReturn(clientSecret);
-
         TokenDetails expectedTokenDetails = new TokenDetails();
         doReturn(expectedTokenDetails).when(client).obtainTokenDetails(eq(realm), paramsCaptor.capture());
 
@@ -179,7 +168,7 @@ public class OAuthClientTest {
         assertThat(params.get(OAuth2Constants.GRANT_TYPE), is(OAuth2Constants.PASSWORD));
         assertThat(params.get(OAuth2Constants.USERNAME), is(username));
         assertThat(params.get(OAuth2Constants.PASSWORD), is(userPassword));
-        assertThat(params.get(OAuth2Constants.CLIENT_ID), is("work-service"));
+        assertThat(params.get(OAuth2Constants.CLIENT_ID), is(clientId));
         assertThat(params.get(OAuth2Constants.CLIENT_SECRET), is(clientSecret));
     }
 
@@ -189,10 +178,7 @@ public class OAuthClientTest {
         String userPassword = "pupkin3-password";
         String realm = "some_realm";
 
-        when(oidcAuthenticationHelper.getRealmForCurrentRequest()).thenReturn(realm);
-
-        when(oidcConfiguration.getClientId()).thenReturn("work-service");
-        when(oidcConfiguration.getClientSecret()).thenReturn(clientSecret);
+        when(realmService.getRealmForCurrentRequest()).thenReturn(realm);
 
         TokenDetails expectedTokenDetails = new TokenDetails();
         doReturn(expectedTokenDetails).when(client).obtainTokenDetails(eq(realm), paramsCaptor.capture());
@@ -204,7 +190,7 @@ public class OAuthClientTest {
         assertThat(params.get(OAuth2Constants.GRANT_TYPE), is(OAuth2Constants.PASSWORD));
         assertThat(params.get(OAuth2Constants.USERNAME), is(username));
         assertThat(params.get(OAuth2Constants.PASSWORD), is(userPassword));
-        assertThat(params.get(OAuth2Constants.CLIENT_ID), is("work-service"));
+        assertThat(params.get(OAuth2Constants.CLIENT_ID), is(clientId));
         assertThat(params.get(OAuth2Constants.CLIENT_SECRET), is(clientSecret));
     }
 
@@ -212,11 +198,10 @@ public class OAuthClientTest {
     public void prepareTokenEndpointUrl() throws Exception {
         String realm = "test-realm";
 
-        when(oidcConfiguration.getIdentityProviderHost()).thenReturn("identity-provider.host");
         when(oidcConfiguration.getTokenEndpoint()).thenReturn("/{realm}/path");
 
         String tokenEndpointUrl = client.prepareTokenEndpointUrl(realm);
-        assertThat(tokenEndpointUrl, is("identity-provider.host/test-realm/path"));
+        assertThat(tokenEndpointUrl, is("http://195.201.110.123:48666/test-realm/path"));
     }
 
     private Map<String, String> convertParamsToMap(List<BasicNameValuePair> basicNameValuePairs) {

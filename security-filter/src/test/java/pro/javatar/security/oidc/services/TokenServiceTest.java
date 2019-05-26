@@ -5,6 +5,7 @@ import static junit.framework.TestCase.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 
@@ -18,15 +19,14 @@ public class TokenServiceTest {
     private TokenService service;
     private UsersTokenService usersTokenService;
     private ApplicationTokenService applicationTokenService;
-    private OAuth2AuthorizationFlowService auth2AuthorizationFlowService;
+    private OAuthClient oAuthClient;
 
     @Before
     public void setUp() throws Exception {
         usersTokenService = mock(UsersTokenService.class);
         applicationTokenService = mock(ApplicationTokenService.class);
-        auth2AuthorizationFlowService = mock(OAuth2AuthorizationFlowService.class);
-        service =
-                new TokenService(usersTokenService, applicationTokenService, auth2AuthorizationFlowService);
+        oAuthClient = mock(OAuthClient.class);
+        service = new TokenService(usersTokenService, applicationTokenService, oAuthClient);
     }
 
     @Test
@@ -53,7 +53,7 @@ public class TokenServiceTest {
     public void getTokenByRefreshToken() throws Exception {
         String refreshToken = "refresh-token333";
         TokenDetails tokenDetails = new TokenDetails();
-        when(auth2AuthorizationFlowService.getTokenByRefreshToken(refreshToken)).thenReturn(tokenDetails);
+        when(oAuthClient.obtainTokenDetailsByRefreshToken(refreshToken)).thenReturn(tokenDetails);
 
         assertSame(service.getTokenByRefreshToken(refreshToken), tokenDetails);
     }
@@ -61,7 +61,7 @@ public class TokenServiceTest {
     @Test(expected = ObtainRefreshTokenException.class)
     public void getTokenByRefreshTokenException() throws Exception {
         String refreshToken = "refresh-token333";
-        when(auth2AuthorizationFlowService.getTokenByRefreshToken(refreshToken))
+        when(oAuthClient.obtainTokenDetailsByRefreshToken(refreshToken))
                 .thenThrow(new ObtainRefreshTokenException());
 
         service.getTokenByRefreshToken(refreshToken);

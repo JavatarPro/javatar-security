@@ -69,7 +69,8 @@ public class AuthorizationFlowUsingSecurityFiltersTest {
     @Autowired
     AuthorizationStubFilter authorizationStubFilter;
 
-    private OidcAuthenticationHelper oidcAuthenticationHelper = new OidcAuthenticationHelper();
+    @Autowired
+    OidcAuthenticationHelper oidcAuthenticationHelper;
 
     @Autowired
     private OidcConfiguration oidcConfiguration;

@@ -1,5 +1,6 @@
 package pro.javatar.security.oidc.services;
 
+import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 import org.slf4j.Logger;
@@ -16,13 +17,13 @@ public class UsersTokenService {
 
     private OidcAuthenticationHelper oidcAuthenticationHelper;
 
-    private OAuth2AuthorizationFlowService oAuth2AuthorizationFlowService;
+    private OAuthClient oAuthClient;
 
     @Autowired
     public UsersTokenService(OidcAuthenticationHelper oidcAuthenticationHelper,
-                             OAuth2AuthorizationFlowService oAuth2AuthorizationFlowService) {
+                             OAuthClient oAuthClient) {
         this.oidcAuthenticationHelper = oidcAuthenticationHelper;
-        this.oAuth2AuthorizationFlowService = oAuth2AuthorizationFlowService;
+        this.oAuthClient = oAuthClient;
     }
 
     public TokenDetails retrieveUsersTokenDetails() {
@@ -45,7 +46,7 @@ public class UsersTokenService {
     TokenDetails retrieveUpdatedUsersTokenDetails(TokenDetails tokenDetails) {
         try {
             String refreshToken = tokenDetails.getRefreshToken();
-            TokenDetails updatedTokenDetails = oAuth2AuthorizationFlowService.getTokenByRefreshToken(refreshToken);
+            TokenDetails updatedTokenDetails = oAuthClient.obtainTokenDetailsByRefreshToken(refreshToken);
             // we need to update with new token details current thread,
             // because requester needs it in response to update tokens on ui
             oidcAuthenticationHelper.authenticateCurrentThread(updatedTokenDetails);
