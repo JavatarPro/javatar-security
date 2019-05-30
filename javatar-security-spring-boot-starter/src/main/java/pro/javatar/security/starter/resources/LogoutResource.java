@@ -14,6 +14,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 /**
+ * TODO move to security-api-gateway module
  * @author Borys Zora
  * @author Andrii Murashkin
  * @author Serhii Petrychenko
