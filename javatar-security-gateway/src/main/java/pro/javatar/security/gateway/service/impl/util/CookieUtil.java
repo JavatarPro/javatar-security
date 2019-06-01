@@ -1,4 +1,4 @@
-package pro.javatar.security.starter.util;
+package pro.javatar.security.gateway.service.impl.util;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;

@@ -12,8 +12,6 @@ import java.util.Map;
  */
 public interface SecurityConfig {
 
-    String logoutUrl();
-
     List<String> applyUrls();
 
     List<String> ignoreUrls();

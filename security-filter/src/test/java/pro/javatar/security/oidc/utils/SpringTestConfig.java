@@ -51,10 +51,6 @@ public class SpringTestConfig {
     @Bean
     public SecurityConfig securityConfig() {
         return new SecurityConfig() {
-            @Override
-            public String logoutUrl() {
-                return null;
-            }
 
             @Override
             public List<String> applyUrls() {

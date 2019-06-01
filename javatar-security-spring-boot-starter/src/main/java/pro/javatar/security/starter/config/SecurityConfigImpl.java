@@ -17,8 +17,6 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "javatar.security")
 public class SecurityConfigImpl implements SecurityConfig {
 
-    String logoutUrl;
-
     List<String> applyUrls;
 
     List<String> ignoreUrls;
@@ -44,11 +42,6 @@ public class SecurityConfigImpl implements SecurityConfig {
     ApplicationImpl application;
 
     String errorDescriptionLink;
-
-    @Override
-    public String logoutUrl() {
-        return logoutUrl;
-    }
 
     @Override
     public List<String> applyUrls() {
@@ -113,14 +106,6 @@ public class SecurityConfigImpl implements SecurityConfig {
     @Override
     public String errorDescriptionLink() {
         return errorDescriptionLink;
-    }
-
-    public String getLogoutUrl() {
-        return logoutUrl;
-    }
-
-    public void setLogoutUrl(String logoutUrl) {
-        this.logoutUrl = logoutUrl;
     }
 
     public List<String> getApplyUrls() {
@@ -202,6 +187,8 @@ public class SecurityConfigImpl implements SecurityConfig {
     public void setErrorDescriptionLink(String errorDescriptionLink) {
         this.errorDescriptionLink = errorDescriptionLink;
     }
+
+    // classes
 
     static class IdentityProviderImpl implements IdentityProvider {
 
@@ -689,10 +676,19 @@ public class SecurityConfigImpl implements SecurityConfig {
     @Override
     public String toString() {
         return "SecurityConfigImpl{" +
-                "logoutUrl='" + logoutUrl + '\'' +
-                ", applyUrls=" + applyUrls +
+                "applyUrls=" + applyUrls +
                 ", ignoreUrls=" + ignoreUrls +
                 ", redirectUrl='" + redirectUrl + '\'' +
+                ", identityProvider=" + identityProvider +
+                ", useReferAsRedirectUri=" + useReferAsRedirectUri +
+                ", publicKeysStorage='" + publicKeysStorage + '\'' +
+                ", tokenStorage='" + tokenStorage + '\'' +
+                ", storage=" + storage +
+                ", tokenValidation=" + tokenValidation +
+                ", stub=" + stub +
+                ", httpClient=" + httpClient +
+                ", application=" + application +
+                ", errorDescriptionLink='" + errorDescriptionLink + '\'' +
                 '}';
     }
 

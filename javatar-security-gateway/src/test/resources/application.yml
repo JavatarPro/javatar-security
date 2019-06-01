@@ -1,0 +1,5 @@
+javatar:
+  security:
+    gateway:
+      login:
+        enabled: true
