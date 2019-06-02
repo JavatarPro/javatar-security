@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
  * @version 2019-05-08
  */
 public class CookieUtil {
+
     public static String getCookie(String cookieName, Cookie[] cookies) {
         if(cookies == null){
             return "";
@@ -24,7 +25,7 @@ public class CookieUtil {
         return "";
     }
 
-    public static Cookie createCookie(String key, String value) {
+    public static Cookie createSecureCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
         cookie.setPath("/");
         cookie.setHttpOnly(true);

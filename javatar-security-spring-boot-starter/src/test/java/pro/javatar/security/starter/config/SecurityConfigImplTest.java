@@ -24,11 +24,6 @@ class SecurityConfigImplTest {
     SecurityConfig config;
 
     @Test
-    void logoutUrl() {
-        assertThat(config.logoutUrl(), is("/logout"));
-    }
-
-    @Test
     void applyUrls() {
         List<String> actual = new ArrayList<>(config.applyUrls());
         List<String> expected = new ArrayList<>();

@@ -45,8 +45,10 @@ public class LoginResource {
                                 HttpServletResponse response) {
         logger.info("received login request: {}", loginRequest);
         AuthRequestBO authRequestBO = converter.toAuthRequestBO(loginRequest);
-        gatewaySecurityService.login(authRequestBO, response);
-        return ResponseEntity.created(null).body(null);
+        String rootToken = gatewaySecurityService.login(authRequestBO, request, response);
+        logger.info("rootToken: {} was issued for loginRequest: {}", rootToken, loginRequest);
+        return ResponseEntity.created(null)
+                .body("{'login': 'success'}"); // TODO add more info about session expiration
     }
 
 }

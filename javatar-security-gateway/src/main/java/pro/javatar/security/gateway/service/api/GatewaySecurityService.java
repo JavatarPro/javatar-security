@@ -16,7 +16,17 @@ import javax.servlet.http.HttpServletResponse;
  */
 public interface GatewaySecurityService {
 
-    String login(AuthRequestBO request, HttpServletResponse response) throws LoginException;
+    /**
+     * User login to specific realm by user email & password.
+     * Cookies will be added to response with HTTPOnly & Secured flags
+     *
+     * @param request - login request
+     * @param response - HttpServletResponse to add cookies in it
+     * @return rootToken that means session fro all user requests
+     * @throws LoginException
+     */
+    String login(AuthRequestBO authRequest, HttpServletRequest request, HttpServletResponse response)
+            throws LoginException;
 
     String exchangeToken(HttpServletResponse response);
 
