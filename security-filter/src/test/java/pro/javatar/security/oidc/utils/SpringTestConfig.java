@@ -33,6 +33,11 @@ public class SpringTestConfig {
     }
 
     @Bean
+    public OidcAuthenticationHelper oidcAuthenticationHelper() {
+        return new OidcAuthenticationHelper();
+    }
+
+    @Bean
     public RealmPublicKeyCacheService  realmPublicKeyCacheService() {
         if ("in-memory".equalsIgnoreCase(securityConfig().publicKeysStorage())) {
             RealmPublicKeyCacheService result = new RealmPublicKeyCacheServiceMap();

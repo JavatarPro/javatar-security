@@ -16,7 +16,7 @@ public class AuthorizationStubFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationStubFilter.class);
 
-    private boolean enableFilter;
+    private boolean enableFilter = false;
 
     private String accessToken;
 
@@ -24,6 +24,9 @@ public class AuthorizationStubFilter implements Filter {
 
     public AuthorizationStubFilter(OidcAuthenticationHelper oidcHelper, SecurityConfig securityConfig) {
         this.oidcHelper = oidcHelper;
+        if (securityConfig.stub() == null) {
+            return;
+        }
         this.enableFilter = securityConfig.stub().enabled();
         this.accessToken = securityConfig.stub().accessToken();
     }

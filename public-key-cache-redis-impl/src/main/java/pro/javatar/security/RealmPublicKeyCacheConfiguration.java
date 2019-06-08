@@ -46,7 +46,7 @@ public class RealmPublicKeyCacheConfiguration implements InitializingBean {
     }
 
     // TODO create conditional on property
-    // @Bean
+    @Bean
     public RealmPublicKeyCacheService getPublicKeyCacheServiceImpl() {
         logger.debug("security.realm.cache.enable={}", isEnabled);
         logger.debug("security.realm.cache.keyPattern={}", keyPattern);

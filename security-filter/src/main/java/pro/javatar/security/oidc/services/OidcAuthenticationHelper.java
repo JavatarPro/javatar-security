@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-@Service
 public class OidcAuthenticationHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(OidcAuthenticationHelper.class);
@@ -59,6 +58,18 @@ public class OidcAuthenticationHelper {
     private SecurityConfig config;
 
     private RealmService realmService;
+
+    public OidcAuthenticationHelper() {}
+
+    public OidcAuthenticationHelper(OidcConfiguration oidcConfiguration,
+                                    OAuthClient oAuthClient,
+                                    SecurityConfig config,
+                                    RealmService realmService) {
+        this.oidcConfiguration = oidcConfiguration;
+        this.oAuthClient = oAuthClient;
+        this.config = config;
+        this.realmService = realmService;
+    }
 
     /**
      * Get the bearer token from the HTTP request.
