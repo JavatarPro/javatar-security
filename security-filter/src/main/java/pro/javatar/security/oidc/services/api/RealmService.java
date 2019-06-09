@@ -16,6 +16,7 @@ public interface RealmService {
 
     String getRealmForCurrentRequest();
 
+    // TODO name is confusing, get from request but parameter passed response
     String getRealmForCurrentRequest(HttpServletResponse response);
 
     void validateRealm(TokenDetails tokenDetails) throws TokenSignedForOtherRealmAuthorizationException;
