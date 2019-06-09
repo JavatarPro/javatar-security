@@ -3,6 +3,7 @@ package pro.javatar.security.oidc.services.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.jwt.TokenVerifier;
 import pro.javatar.security.oidc.SecurityConstants;
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Borys Zora
  * @version 2019-05-25
  */
+@Service
 public class RealmServiceImpl implements RealmService {
 
     private static final Logger logger = LoggerFactory.getLogger(RealmServiceImpl.class);

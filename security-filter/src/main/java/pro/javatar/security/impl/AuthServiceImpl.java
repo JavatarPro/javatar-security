@@ -7,6 +7,7 @@ package pro.javatar.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import pro.javatar.security.api.AuthService;
 import pro.javatar.security.api.exception.IssueTokensException;
 import pro.javatar.security.api.model.AuthRequestBO;
@@ -21,6 +22,7 @@ import pro.javatar.security.oidc.model.TokenDetails;
  * @author Andrii Murashkin / Javatar LLC
  * @version 06-03-2019
  */
+@Service
 public class AuthServiceImpl implements AuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);

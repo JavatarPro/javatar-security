@@ -3,6 +3,9 @@ package pro.javatar.security.oidc.utils;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static pro.javatar.security.oidc.utils.StringUtils.isBlank;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.exceptions.AuthenticationException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -12,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Service
 public class JsonMessageBuilder {
 
     private static final String DEFAULT_ERROR_DESCRIPTION_LINK = "http://jira.javatar.pro/confluence/x/TgZmAQ";
@@ -20,7 +24,9 @@ public class JsonMessageBuilder {
 
     private String descriptionLink;
 
-    public JsonMessageBuilder(String descriptionLink) {
+    @Autowired
+    public JsonMessageBuilder(SecurityConfig securityConfig) {
+        String descriptionLink = securityConfig.errorDescriptionLink();
         if (isBlank(descriptionLink)) {
             this.descriptionLink = DEFAULT_ERROR_DESCRIPTION_LINK;
         } else {

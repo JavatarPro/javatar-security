@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.jwt.TokenVerifier;
 import pro.javatar.security.jwt.adapter.AdapterRSATokenVerifier;
@@ -41,11 +41,13 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Service
 public class OAuthClient {
 
     private static final Logger logger = LoggerFactory.getLogger(OAuthClient.class);
 
+    // TODO remove this field
+    @Deprecated
     private OidcConfiguration oidcConfiguration;
 
     private RealmService realmService;

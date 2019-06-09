@@ -3,6 +3,7 @@ package pro.javatar.security.gateway.service.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import pro.javatar.secret.storage.api.SecretStorageService;
 import pro.javatar.secret.storage.api.model.SecretTokenDetails;
 import pro.javatar.security.api.AuthService;
@@ -22,6 +23,7 @@ import java.util.UUID;
  * @author Borys Zora
  * @version 2019-06-01
  */
+@Service
 public class GatewaySecurityServiceImpl implements GatewaySecurityService {
 
     public static final String TOKEN_ID = "tokenID";
@@ -33,8 +35,10 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
     private SecretStorageService secretService;
 
     @Autowired
-    public GatewaySecurityServiceImpl(AuthService authService) {
+    public GatewaySecurityServiceImpl(AuthService authService,
+                                      SecretStorageService secretService) {
         this.authService = authService;
+        this.secretService = secretService;
     }
 
     @Override

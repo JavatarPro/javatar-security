@@ -18,12 +18,4 @@ import pro.javatar.security.gateway.service.impl.GatewaySecurityServiceImpl;
 @ComponentScan("pro.javatar.security.gateway")
 public class GatewaySpringConfig {
 
-    @Autowired
-    AuthService authService;
-
-    @Bean
-    GatewaySecurityService gatewaySecurityService() {
-        return new GatewaySecurityServiceImpl(authService);
-    }
-
 }

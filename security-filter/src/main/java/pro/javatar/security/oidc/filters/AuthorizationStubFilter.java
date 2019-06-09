@@ -2,6 +2,7 @@ package pro.javatar.security.oidc.filters;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 
@@ -12,6 +13,7 @@ import java.io.IOException;
  * For dev purposes to hard-code security authorities
  * to develop without any identity provider dependency
  */
+@Service
 public class AuthorizationStubFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationStubFilter.class);

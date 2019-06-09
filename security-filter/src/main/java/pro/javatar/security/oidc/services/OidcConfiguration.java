@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+// TODO rename OidcEndpoints
 @Service
 public class OidcConfiguration implements OAuth2Configuration, InitializingBean {
 
@@ -379,6 +380,8 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
         return jwtBearerTokenOtherAuthenticationAllowed;
     }
 
+    // TODO move it security config
+    @Deprecated
     public String getRunOnBehalfOfUserPassword(String username, String realm) {
         UserKey userKey = new UserKey(username, realm);
         return runOnBehalfOfUsers.get(userKey);

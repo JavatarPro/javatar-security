@@ -23,11 +23,6 @@ import java.util.Map;
 public class SpringTestConfig {
 
     @Bean
-    public JsonMessageBuilder messageBuilder() {
-        return new JsonMessageBuilder("http://jira.javatar.pro/confluence/x/TgZmAQ");
-    }
-
-    @Bean
     public AuthorizationStubFilter authorizationStubFilter(OidcAuthenticationHelper oidcHelper) {
         return new AuthorizationStubFilter(oidcHelper, securityConfig());
     }

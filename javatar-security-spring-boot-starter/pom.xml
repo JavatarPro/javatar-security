@@ -58,11 +58,11 @@
             <version>${project.version}</version>
         </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>pro.javatar.security</groupId>
             <artifactId>public-key-cache-redis-impl</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>pro.javatar.security</groupId>

@@ -45,6 +45,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+@Service
 public class OidcAuthenticationHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(OidcAuthenticationHelper.class);
