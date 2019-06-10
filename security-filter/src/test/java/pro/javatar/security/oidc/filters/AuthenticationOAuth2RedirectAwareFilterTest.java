@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.junit.Ignore;
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.SecurityTestFilter;
 import pro.javatar.security.oidc.SecurityTestResource;
 import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
@@ -73,6 +75,9 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
     OidcConfiguration oidcConfiguration;
 
     @Autowired
+    SecurityConfig securityConfig;
+
+    @Autowired
     WebApplicationContext wac;
 
     MockMvc mockMvc;
@@ -90,7 +95,8 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
         redirectAwareFilter = new AuthenticationOAuth2RedirectAwareFilter(
                 authorizationStubFilter,
                 oidcAuthenticationHelper,
-                oidcConfiguration
+                oidcConfiguration,
+                securityConfig
         );
         redirectAwareFilter.init(null);
         // TODO add token with "USER_READ", "USER_WRITE" permissions
@@ -152,11 +158,12 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
         authorizationStubFilter.setEnableFilter(true);
     }
 
+    @Ignore // we do not support regex any more
     @Test
     public void redirectAwareFilterShouldSkipScenario() throws Exception {
 //        oidcConfiguration.setFilterApplyUrlRegex("/some-other-url");
         redirectAwareFilter.setEnableFilter(true);
-        redirectAwareFilter.setFilterApplyUrlRegex("\\/wrong-url-pattern\\/realm\\/.*");
+        // redirectAwareFilter.setFilterApplyUrlRegex("\\/wrong-url-pattern\\/realm\\/.*");
         securityTestFilter.state = SecurityTestFilter.State.FAIL;
         mockMvc.perform(post("/security/realm/users")
                 .accept(MediaType.APPLICATION_JSON_VALUE)
@@ -166,10 +173,11 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
                 .andDo(print()).andExpect(status().isUnauthorized()).andReturn();
     }
 
+    @Ignore // we do not support regex any more
     @Test
     public void redirectAwareFilterShouldListSkipScenario() throws Exception {
         redirectAwareFilter.setEnableFilter(true);
-        redirectAwareFilter.setFilterApplyUrlList(Collections.singletonList("/realm/users"));
+        // redirectAwareFilter.setFilterApplyUrlList(Collections.singletonList("/realm/users"));
         securityTestFilter.state = SecurityTestFilter.State.FAIL;
         mockMvc.perform(post("/security/realm/users")
                 .accept(MediaType.APPLICATION_JSON_VALUE)

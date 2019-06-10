@@ -63,8 +63,18 @@ public class SpringTestConfig {
             }
 
             @Override
-            public String redirectUrl() {
-                return null;
+            public Redirect redirect() {
+                return new Redirect() {
+                    @Override
+                    public boolean enabled() {
+                        return false;
+                    }
+
+                    @Override
+                    public String redirectUrl() {
+                        return null;
+                    }
+                };
             }
 
             @Override

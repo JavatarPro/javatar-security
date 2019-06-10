@@ -21,7 +21,7 @@ public class SecurityConfigImpl implements SecurityConfig {
 
     List<String> ignoreUrls;
 
-    String redirectUrl;
+    RedirectImpl redirect;
 
     IdentityProviderImpl identityProvider;
 
@@ -54,8 +54,11 @@ public class SecurityConfigImpl implements SecurityConfig {
     }
 
     @Override
-    public String redirectUrl() {
-        return redirectUrl;
+    public Redirect redirect() {
+        if (redirect == null) {
+            return new RedirectImpl();
+        }
+        return redirect;
     }
 
     @Override
@@ -124,14 +127,6 @@ public class SecurityConfigImpl implements SecurityConfig {
         this.ignoreUrls = ignoreUrls;
     }
 
-    public String getRedirectUrl() {
-        return redirectUrl;
-    }
-
-    public void setRedirectUrl(String redirectUrl) {
-        this.redirectUrl = redirectUrl;
-    }
-
     public IdentityProviderImpl getIdentityProvider() {
         return identityProvider;
     }
@@ -189,6 +184,31 @@ public class SecurityConfigImpl implements SecurityConfig {
     }
 
     // classes
+
+    static class RedirectImpl implements Redirect {
+
+        boolean enabled;
+
+        String redirectUrl;
+
+        @Override
+        public boolean enabled() {
+            return enabled;
+        }
+
+        @Override
+        public String redirectUrl() {
+            return redirectUrl;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public void setRedirectUrl(String redirectUrl) {
+            this.redirectUrl = redirectUrl;
+        }
+    }
 
     static class IdentityProviderImpl implements IdentityProvider {
 
@@ -678,7 +698,7 @@ public class SecurityConfigImpl implements SecurityConfig {
         return "SecurityConfigImpl{" +
                 "applyUrls=" + applyUrls +
                 ", ignoreUrls=" + ignoreUrls +
-                ", redirectUrl='" + redirectUrl + '\'' +
+                ", redirect='" + redirect + '\'' +
                 ", identityProvider=" + identityProvider +
                 ", useReferAsRedirectUri=" + useReferAsRedirectUri +
                 ", publicKeysStorage='" + publicKeysStorage + '\'' +

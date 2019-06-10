@@ -16,7 +16,7 @@ public interface SecurityConfig {
 
     List<String> ignoreUrls();
 
-    String redirectUrl();
+    Redirect redirect();
 
     IdentityProvider identityProvider();
 
@@ -37,6 +37,14 @@ public interface SecurityConfig {
     Application application();
 
     String errorDescriptionLink();
+
+    interface Redirect {
+
+        boolean enabled();
+
+        String redirectUrl();
+
+    }
 
     interface IdentityProvider {
 

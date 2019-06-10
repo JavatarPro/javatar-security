@@ -88,6 +88,8 @@ public class UrlResolver {
         return !apply(request);
     }
 
+    // Do not use regex in future, use simple construction
+    @Deprecated
     public void setFilterApplyUrlRegex(String filterApplyUrlRegex) {
         this.applyPattern = null;
         if (StringUtils.isNotBlank(filterApplyUrlRegex)) {

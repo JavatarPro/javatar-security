@@ -47,7 +47,7 @@ class SecurityConfigImplTest {
 
     @Test
     void redirectUrl() {
-        assertThat(config.redirectUrl(), is("/login.html"));
+        assertThat(config.redirect().redirectUrl(), is("/login.html"));
     }
 
     @Test
