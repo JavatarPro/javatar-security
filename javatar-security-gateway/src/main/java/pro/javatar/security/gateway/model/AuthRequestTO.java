@@ -10,11 +10,11 @@ package pro.javatar.security.gateway.model;
  */
 public class AuthRequestTO {
 
-    protected String email;
+    private String email;
 
-    protected String password;
+    private String password;
 
-    protected String realm;
+    private String realm;
 
     public String getEmail() {
         return email;

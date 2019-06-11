@@ -58,6 +58,7 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
             addCookies(correlationId, response);
             return correlationId;
         } catch (IssueTokensException e) {
+            logger.error(e.getMessage(), e);
             throw new LoginException(e.getMessage());
         }
     }
