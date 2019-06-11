@@ -1,5 +1,7 @@
 package pro.javatar.security.oidc.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.model.UserKey;
 import pro.javatar.security.oidc.utils.StringUtils;
 import pro.javatar.security.oidc.utils.UrlResolver;
@@ -96,12 +98,22 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
     private final UrlResolver interceptorUrlResolver = new UrlResolver();
     private final UrlResolver urlResolver = new UrlResolver();
 
-    @Value("${security.oidc.OidcAuthenticationHttpClientInterceptor.applyUrlRegex:/.*}")
+    public OidcConfiguration() {}
+
+    @Autowired
+    public OidcConfiguration(SecurityConfig config) {
+        interceptorUrlResolver.setFilterApplyUrls(filterOptionConverter.convertList(config.applyUrls()));
+        urlResolver.setFilterApplyUrls(filterOptionConverter.convertList(config.applyUrls()));
+        urlResolver.setFilterIgnoreUrls(filterOptionConverter.convertList(config.ignoreUrls()));
+    }
+
+    @Deprecated
+    // @Value("${security.oidc.OidcAuthenticationHttpClientInterceptor.applyUrlRegex:/.*}")
     public void setSecurityInterceptorApplyUrlRegex(String applyUrlRegex) {
         interceptorUrlResolver.setFilterApplyUrlRegex(applyUrlRegex);
     }
 
-    @Value("#{'${security.oidc.OidcAuthenticationHttpClientInterceptor.filterApplyUrlList:}'.split(',')}")
+    // @Value("#{'${security.oidc.OidcAuthenticationHttpClientInterceptor.filterApplyUrlList:}'.split(',')}")
     public void setSecurityInterceptorApplyUrlList(List<String> filterApplyUrlList) {
         this.interceptorUrlResolver.setFilterApplyUrls(filterOptionConverter.convertList(filterApplyUrlList));
     }
@@ -124,7 +136,7 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
     }
 
     @Override
-    @Value("#{'${security.oidc.filterApplyUrlList:}'.split(',')}")
+    // @Value("#{'${security.oidc.filterApplyUrlList:}'.split(',')}")
     public void setFilterApplyUrlList(List<String> filterApplyUrlList) {
         urlResolver.setFilterApplyUrls(filterOptionConverter.convertList(filterApplyUrlList));
     }

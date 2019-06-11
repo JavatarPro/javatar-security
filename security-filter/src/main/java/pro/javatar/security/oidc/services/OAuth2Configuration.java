@@ -5,6 +5,7 @@ import pro.javatar.security.oidc.utils.UrlResolver;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 
+@Deprecated
 public interface OAuth2Configuration {
 
     boolean isJwtBearerFilterEnable();
