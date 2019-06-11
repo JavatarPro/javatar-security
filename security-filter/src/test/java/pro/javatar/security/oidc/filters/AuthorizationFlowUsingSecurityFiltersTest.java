@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import pro.javatar.security.RealmPublicKeyCacheService;
+import pro.javatar.security.public_key.api.RealmPublicKeyCacheService;
 import pro.javatar.security.oidc.SecurityConstants;
 import pro.javatar.security.oidc.SecurityTestFilter;
 import pro.javatar.security.oidc.SecurityTestResource;

@@ -368,7 +368,7 @@ public class SecurityConfigImpl implements SecurityConfig {
 
     static class InMemoryStorage implements InMemory {
 
-        HashMap<String, String> publicKeys;
+        HashMap<String, String> publicKeys = new HashMap<>();
 
         @Override
         public Map<String, String> publicKeys() {

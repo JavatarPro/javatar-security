@@ -1,5 +1,7 @@
 package pro.javatar.security;
 
+import pro.javatar.security.public_key.api.RealmPublicKeyCacheService;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,7 +24,6 @@ public class RealmPublicKeyCacheServiceMap implements RealmPublicKeyCacheService
         return keys;
     }
 
-    @Override
     public void put(String realm, String publicKey) {
         keys.put(realm, publicKey);
     }

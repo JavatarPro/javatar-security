@@ -71,15 +71,6 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
 
     private String scope;
 
-    /**
-     * All public keys are stored in redis db.
-     * <p>
-     * See {@link PublicKeyCacheService} for more details.
-     */
-    @Deprecated
-    @Value("${security.oauth2.publicKey:}")
-    private String publicKey;
-
     @Value("${security.oidc.checkTokenIsActive:true}")
     public boolean checkIsActive;
 
@@ -125,8 +116,9 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
         return urlResolver;
     }
 
+    @Deprecated // Do not use regex in future, use simple construction
     @Override
-    @Value("${security.oidc.filterApplyUrlRegex:\\/.*}")
+    // @Value("${security.oidc.filterApplyUrlRegex:\\/.*}")
     public void setFilterApplyUrlRegex(String filterApplyUrlRegex) {
         urlResolver.setFilterApplyUrlRegex(filterApplyUrlRegex);
     }

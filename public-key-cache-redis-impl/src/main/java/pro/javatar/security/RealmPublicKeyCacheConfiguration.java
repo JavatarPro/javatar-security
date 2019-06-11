@@ -9,8 +9,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import pro.javatar.security.public_key.api.RealmPublicKeyCacheService;
 
-@Configuration
+@Deprecated
+//@Configuration
 public class RealmPublicKeyCacheConfiguration implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(RealmPublicKeyCacheConfiguration.class);
 
@@ -46,14 +48,14 @@ public class RealmPublicKeyCacheConfiguration implements InitializingBean {
     }
 
     // TODO create conditional on property
-    @Bean
+    // @Bean
     public RealmPublicKeyCacheService getPublicKeyCacheServiceImpl() {
         logger.debug("security.realm.cache.enable={}", isEnabled);
         logger.debug("security.realm.cache.keyPattern={}", keyPattern);
 
-        if (!isEnabled) {
-            return new RealmPublicKeyCacheServiceMap();
-        }
+//        if (!isEnabled) {
+//            return new RealmPublicKeyCacheServiceMap();
+//        }
 
         logger.debug("security.realm.cache.host={}", host);
         logger.debug("security.realm.cache.port={}", port);

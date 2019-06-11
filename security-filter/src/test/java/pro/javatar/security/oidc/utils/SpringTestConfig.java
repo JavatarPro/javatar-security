@@ -2,7 +2,7 @@ package pro.javatar.security.oidc.utils;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import pro.javatar.security.RealmPublicKeyCacheService;
+import pro.javatar.security.public_key.api.RealmPublicKeyCacheService;
 import pro.javatar.security.RealmPublicKeyCacheServiceMap;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.filters.AuthorizationStubFilter;
@@ -35,7 +35,8 @@ public class SpringTestConfig {
     @Bean
     public RealmPublicKeyCacheService  realmPublicKeyCacheService() {
         if ("in-memory".equalsIgnoreCase(securityConfig().publicKeysStorage())) {
-            RealmPublicKeyCacheService result = new RealmPublicKeyCacheServiceMap();
+            // TODO change to reference impl
+            RealmPublicKeyCacheServiceMap result = new RealmPublicKeyCacheServiceMap();
             Map<String, String> map = securityConfig().storage().getInMemory().publicKeys();
             map.forEach(result::put);
             return result;
