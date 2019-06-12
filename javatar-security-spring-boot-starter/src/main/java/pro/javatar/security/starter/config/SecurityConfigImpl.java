@@ -17,6 +17,8 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "javatar.security")
 public class SecurityConfigImpl implements SecurityConfig {
 
+    private static TokenValidation defaultTokenValidation = new TokenValidationImpl();
+
     List<String> applyUrls;
 
     List<String> ignoreUrls;
@@ -88,6 +90,9 @@ public class SecurityConfigImpl implements SecurityConfig {
 
     @Override
     public TokenValidation tokenValidation() {
+        if (tokenValidation == null) {
+            return defaultTokenValidation;
+        }
         return tokenValidation;
     }
 
@@ -434,10 +439,10 @@ public class SecurityConfigImpl implements SecurityConfig {
 
     static class TokenValidationImpl implements TokenValidation {
 
-        Boolean checkTokenIsActive;
-        Boolean skipRefererCheck;
-        Boolean checkTokenType;
-        Boolean realmRequired;
+        Boolean checkTokenIsActive = true;
+        Boolean skipRefererCheck = true;
+        Boolean checkTokenType = true;
+        Boolean realmRequired = true;
 
         @Override
         public Boolean checkTokenIsActive() {

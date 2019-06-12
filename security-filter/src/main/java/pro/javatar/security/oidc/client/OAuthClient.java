@@ -209,6 +209,7 @@ public class OAuthClient {
         JSONParser jsonParser = new JSONParser();
         Object parsed = null;
         try {
+            // TODO parse & validation token should be separate things, we just receive token
             parsed = jsonParser.parse(responseJsonString);
         } catch (ParseException e) {
             String message = "Could not parse json token to convert it to token details";

@@ -13,7 +13,8 @@
     <artifactId>secret-storage-service-redis-impl</artifactId>
 
     <properties>
-        <spring-data-redis.version>2.1.7.RELEASE</spring-data-redis.version>
+        <!--<spring-data-redis.version>2.1.8.RELEASE</spring-data-redis.version>-->
+        <spring-data-redis.version>1.7.1.RELEASE</spring-data-redis.version>
     </properties>
 
     <dependencies>
@@ -46,7 +47,7 @@
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
-            <version>2.8.1</version>
+            <version>3.0.1</version>
         </dependency>
 
 

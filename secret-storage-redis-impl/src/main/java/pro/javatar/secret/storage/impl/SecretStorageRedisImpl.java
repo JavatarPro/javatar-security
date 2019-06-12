@@ -14,6 +14,7 @@ import pro.javatar.secret.storage.api.SecretStorageService;
 import pro.javatar.secret.storage.api.model.SecretTokenDetails;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 public class SecretStorageRedisImpl implements SecretStorageService {
 
@@ -41,7 +42,8 @@ public class SecretStorageRedisImpl implements SecretStorageService {
         try {
             String json = mapper.writeValueAsString(secretTokenDetails);
             String fullSecretKey = getFullSecretKey(secretKey);
-            redisTemplate.opsForValue().set(fullSecretKey, json, keyExpiration);
+            // redisTemplate.opsForValue().set(fullSecretKey, json, keyExpiration); does not work, because some version conflict
+            redisTemplate.opsForValue().set(fullSecretKey, json, keyExpiration.toMillis(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             logger.error("Can't write token details as json. Token details is {}", secretTokenDetails, e);
         }
