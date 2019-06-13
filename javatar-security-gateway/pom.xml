@@ -73,7 +73,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
             <scope>compile</scope>
-            <!--<version></version>-->
         </dependency>
 
         <!-- security dependencies -->

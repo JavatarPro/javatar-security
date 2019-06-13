@@ -242,7 +242,6 @@ public class OAuthClient {
             TokenDetails tokenDetails;
             String realmFromToken = realmService.getRealmFromToken(accessToken);
             try {
-                // TODO
                 tokenDetails = obtainTokenDetailsByRefreshToken(refreshToken);
                 token = parseAccessToken(tokenDetails.getAccessToken(), realmFromToken);
                 return createTokenDetails(tokenDetails.getAccessToken(), tokenDetails.getRefreshToken(),

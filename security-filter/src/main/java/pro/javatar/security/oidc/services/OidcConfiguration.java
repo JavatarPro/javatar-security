@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-// TODO rename OidcEndpoints
+// TODO rename OidcEndpoints when all configuration is removed
 @Service
-public class OidcConfiguration implements OAuth2Configuration, InitializingBean {
+public class OidcConfiguration implements InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(OidcConfiguration.class);
 
@@ -118,30 +118,25 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
         this.interceptorUrlResolver.setFilterApplyUrls(filterOptionConverter.convertList(filterApplyUrlList));
     }
 
-    @Override
     public UrlResolver getInterceptorUrlResolver() {
         return interceptorUrlResolver;
     }
 
-    @Override
     public UrlResolver getUrlResolver() {
         return urlResolver;
     }
 
     @Deprecated // Do not use regex in future, use simple construction
-    @Override
     // @Value("${security.oidc.filterApplyUrlRegex:\\/.*}")
     public void setFilterApplyUrlRegex(String filterApplyUrlRegex) {
         urlResolver.setFilterApplyUrlRegex(filterApplyUrlRegex);
     }
 
-    @Override
     // @Value("#{'${security.oidc.filterApplyUrlList:}'.split(',')}")
     public void setFilterApplyUrlList(List<String> filterApplyUrlList) {
         urlResolver.setFilterApplyUrls(filterOptionConverter.convertList(filterApplyUrlList));
     }
 
-    @Override
     @Value("#{'${security.oidc.filterIgnoreUrlList:}'.split(',')}")
     public void setFilterIgnoreUrlList(List<String> filterIgnoreUrlList) {
         urlResolver.setFilterIgnoreUrls(filterOptionConverter.convertList(filterIgnoreUrlList));
@@ -167,7 +162,7 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
         this.corsFilterEnable = corsFilterEnable;
     }
 
-    @Override
+
     public void afterPropertiesSet() throws Exception {
         if (StringUtils.isBlank(username)) {
             logger.warn("default username must be specified for cases when you run on behalf of application user");
@@ -180,89 +175,74 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
         }
     }
 
-    @Override
     public boolean isJwtBearerFilterEnable() {
         return jwtBearerFilterEnable;
     }
 
-    @Override
     public void setJwtBearerFilterEnable(boolean jwtBearerFilterEnable) {
         this.jwtBearerFilterEnable = jwtBearerFilterEnable;
     }
 
-    @Override
     public boolean isJwtBearerTokenRequired() {
         return jwtBearerTokenRequired;
     }
 
-    @Override
     public void setJwtBearerTokenRequired(boolean jwtBearerTokenRequired) {
         this.jwtBearerTokenRequired = jwtBearerTokenRequired;
     }
 
     // use SecurityConfig
     @Deprecated
-    @Override
     public String getIdentityProviderHost() {
         return identityProviderHost;
     }
 
     // use SecurityConfig
     @Deprecated
-    @Override
     public void setIdentityProviderHost(String identityProviderHost) {
         this.identityProviderHost = identityProviderHost;
     }
 
-    @Override
     public String getAuthorizationEndpoint() {
         return authorizationEndpoint;
     }
 
-    @Override
     public void setAuthorizationEndpoint(String authorizationEndpoint) {
         this.authorizationEndpoint = authorizationEndpoint;
     }
 
-    @Override
     public String getTokenEndpoint() {
         return tokenEndpoint;
     }
 
-    @Override
     public void setTokenEndpoint(String tokenEndpoint) {
         this.tokenEndpoint = tokenEndpoint;
     }
 
     // use SecurityConfig
     @Deprecated
-    @Override
     public String getClientId() {
         return clientId;
     }
 
     // use SecurityConfig
     @Deprecated
-    @Override
     public void setClientId(String clientId) {
         this.clientId = clientId;
     }
 
     // use SecurityConfig
     @Deprecated
-    @Override
     public String getClientSecret() {
         return clientSecret;
     }
 
     // use SecurityConfig
     @Deprecated
-    @Override
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
     }
 
-    @Override
     public String buildRedirectUrl(String realm, String redirectUrl) throws UnsupportedEncodingException {
         String redirectUri =
                 encodeRedirectUri ? URLEncoder.encode(redirectUrl, "UTF-8") : redirectUrl;
@@ -283,62 +263,50 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
         return identityProviderHost + logoutUri;
     }
 
-    @Override
     public String getScope() {
         return scope;
     }
 
-    @Override
     public void setScope(String scope) {
         this.scope = scope;
     }
 
-    @Override
     public String getUsername() {
         return username;
     }
 
-    @Override
     public void setUsername(String username) {
         this.username = username;
     }
 
-    @Override
     public String getUserPassword() {
         return userPassword;
     }
 
-    @Override
     public void setUserPassword(String userPassword) {
         this.userPassword = userPassword;
     }
 
-    @Override
     public boolean isCheckIsActive() {
         return checkIsActive;
     }
 
-    @Override
     public void setCheckIsActive(boolean checkIsActive) {
         this.checkIsActive = checkIsActive;
     }
 
-    @Override
     public boolean isCheckTokenType() {
         return checkTokenType;
     }
 
-    @Override
     public void setCheckTokenType(boolean checkTokenType) {
         this.checkTokenType = checkTokenType;
     }
 
-    @Override
     public String getDefaultRealm() {
         return this.defaultRealm;
     }
 
-    @Override
     public void setDefaultRealm(String defaultRealm) {
         this.defaultRealm = defaultRealm;
     }
@@ -405,7 +373,6 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
      * Sets runOnBehalf user for exact realm
      * @param credentials format login:password@realm (e.g. admin:wtqwerty@test-qa-rc)
      */
-    @Override
     @Value("${security.oauth2.runOnBehalfOfUser:}")
     public void setRunOnBehalfOfUsers(String credentials) {
         if (StringUtils.isBlank(credentials)) {
@@ -450,7 +417,6 @@ public class OidcConfiguration implements OAuth2Configuration, InitializingBean 
         this.skipRefererCheck = skipRefererCheck;
     }
 
-    @Override
     public String toString() {
         return "OidcConfiguration{" +
                 "identityProviderHost='" + identityProviderHost + '\'' +

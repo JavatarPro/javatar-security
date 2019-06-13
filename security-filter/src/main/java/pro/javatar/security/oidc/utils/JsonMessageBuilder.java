@@ -1,7 +1,7 @@
 package pro.javatar.security.oidc.utils;
 
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
-import static pro.javatar.security.oidc.utils.StringUtils.isBlank;
+import static pro.javatar.security.oidc.utils.StringUtils.defaultIfBlank;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,13 +25,8 @@ public class JsonMessageBuilder {
     private String descriptionLink;
 
     @Autowired
-    public JsonMessageBuilder(SecurityConfig securityConfig) {
-        String descriptionLink = securityConfig.errorDescriptionLink();
-        if (isBlank(descriptionLink)) {
-            this.descriptionLink = DEFAULT_ERROR_DESCRIPTION_LINK;
-        } else {
-            this.descriptionLink = descriptionLink;
-        }
+    public JsonMessageBuilder(SecurityConfig config) {
+        this.descriptionLink = defaultIfBlank(config.errorDescriptionLink(), DEFAULT_ERROR_DESCRIPTION_LINK);
     }
 
     public String authenticationExceptionBodyJson(AuthenticationException ex) throws JsonProcessingException {

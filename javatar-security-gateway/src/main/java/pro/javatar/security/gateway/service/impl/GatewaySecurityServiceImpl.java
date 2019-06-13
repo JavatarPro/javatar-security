@@ -82,7 +82,7 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
-        String secretKey = CookieUtil.getCookie("tokenID", cookies);
+        String secretKey = CookieUtil.getCookie(TOKEN_ID, cookies);
         // TODO remove parent vault key, rotate keys more frequently
         secretService.delete(secretKey);
         // TODO response send empty cookies for our token

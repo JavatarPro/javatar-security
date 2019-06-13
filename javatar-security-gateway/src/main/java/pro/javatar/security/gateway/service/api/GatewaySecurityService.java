@@ -20,9 +20,11 @@ public interface GatewaySecurityService {
      * User login to specific realm by user email & password.
      * Cookies will be added to response with HTTPOnly & Secured flags
      *
-     * @param request - login request
-     * @param response - HttpServletResponse to add cookies in it
-     * @return rootToken that means session fro all user requests
+     * @param authRequest {@link AuthRequestBO} - actual user's login request, with data provided by him,
+     *                                         except realm could be used as default for api-gateway
+     * @param request {@link HttpServletRequest} - whole servlet request to retrieve more data about request
+     * @param response {@link HttpServletResponse} - to add cookies in it
+     * @return rootToken {@link String} that means session fro all user requests
      * @throws LoginException
      */
     String login(AuthRequestBO authRequest, HttpServletRequest request, HttpServletResponse response)

@@ -202,7 +202,6 @@ public class OidcAuthenticationHelper {
             TokenDetails tokenDetails;
             String realmFromToken = getRealmFromToken(accessToken);
             try {
-                // TODO
                 tokenDetails = oAuthClient.obtainTokenDetailsByRefreshToken(refreshToken);
                 token = oAuthClient.parseAccessToken(tokenDetails.getAccessToken(), realmFromToken);
                 return createTokenDetails(tokenDetails.getAccessToken(), tokenDetails.getRefreshToken(),

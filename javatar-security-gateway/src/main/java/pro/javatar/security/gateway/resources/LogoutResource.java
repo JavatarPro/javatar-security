@@ -7,11 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import pro.javatar.secret.storage.api.SecretStorageService;
 import pro.javatar.security.gateway.service.api.GatewaySecurityService;
-import pro.javatar.security.gateway.service.impl.util.CookieUtil;
-
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -28,8 +24,6 @@ import javax.servlet.http.HttpServletResponse;
 public class LogoutResource {
 
     private GatewaySecurityService gatewaySecurityService;
-
-    private SecretStorageService secretService;
 
     @Autowired
     public LogoutResource(GatewaySecurityService gatewaySecurityService) {
