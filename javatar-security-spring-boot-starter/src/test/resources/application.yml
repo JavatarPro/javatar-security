@@ -1,0 +1,62 @@
+javatar:
+  security:
+    logout-url: /logout
+    apply-urls:
+      - /work/*
+      - /message/*
+    ignore-urls:
+      - /work/profile/*
+      - /message/channel/*
+    # TODO redirect enable disable & url
+    redirect-url: /login.html
+    identity-provider:
+      url: https://some-host:8080
+      client: api-gateway-service
+      secret: a78f09a1-ac49-4855-b3a4-dca4ce6e4cb8
+      realm: dev
+    use-refer-as-redirect-uri: true
+    public-keys-storage: in-memeory
+    token-storage: redis
+    storage:
+      redis: # public-keys & tokens
+        host: localhost
+        port: 6379
+        expiration: PT1H30M
+        password: 37339ebe-0593-4e6f-b88c-1d3898be6a75
+      in-memory:
+        public-keys:
+          dev: aldkfjasdlfjalsdfkjasl
+          qa: klkmlkjlksdfglkmdflsakdf
+      vault:
+        url: http://localhost:8200
+        client: vault-client
+        secret: some-vault-secret
+    token-validation:
+      check-token-is-active: true
+      skip-referer-check: true
+      check-token-type: true
+      realm-required: true
+    stub:
+      enabled: true
+      access-token: adlfkjasd
+    http-client:
+      # TODO add enum to copy from filtered applied/ignored urls, copy one/both/none
+      apply-urls:
+        - /work/*
+        - /message/*
+        - /test/*
+      ignore-urls:
+        - /message/channel/*
+        - /work/profile/*
+    application:
+      user: admin
+      password: se(r@t
+      token-should-be-refreshed-duration: PT1M15S
+      allow-other-authentication: false
+      allow-anonymous: true
+      realm: # default order url, header, request-param
+        url-pattern: /{realm}/{service}/some/url
+        request-param-name: realm
+        header-name: X-REALM
+        refresh-header-name: X-REFRESH-TOKEN
+    error-description-link: http://jira.javatar.pro/confluence/x/TgZmAQ

@@ -5,7 +5,10 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import pro.javatar.security.api.config.SecurityConfig;
+import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
+import pro.javatar.security.oidc.services.api.RealmService;
 import pro.javatar.security.oidc.utils.JwtTokenGenerator;
 import pro.javatar.security.oidc.utils.KeyUtils;
 
@@ -15,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,9 +26,14 @@ import java.util.Collection;
 public class AuthenticationServiceTest {
 
     private TokenService tokenService;
+
     private OidcAuthenticationHelper oidcAuthenticationHelper;
+
     private PublicKeyCacheService publicKeyCacheService;
+
     private AuthenticationService service;
+
+    private SecurityConfig securityConfig;
 
     @Before
     public void setUp() throws Exception {
@@ -36,14 +45,13 @@ public class AuthenticationServiceTest {
         oidcConfiguration.setCheckTokenType(true);
         oidcConfiguration.setCheckIsActive(true);
 
-        OAuth2AuthorizationFlowService auth2AuthorizationFlowService =
-                new OAuth2AuthorizationFlowService();
-        auth2AuthorizationFlowService.setPublicKeyCacheService(publicKeyCacheService);
-        auth2AuthorizationFlowService.setOidcConfiguration(oidcConfiguration);
+        securityConfig = new SpringTestConfig().securityConfig();
+        RealmService realmService = mock(RealmService.class);
+        OAuthClient oAuthClient = new OAuthClient(oidcConfiguration, realmService, publicKeyCacheService, securityConfig);
 
         oidcAuthenticationHelper = new OidcAuthenticationHelper();
         oidcAuthenticationHelper.setOidcConfiguration(oidcConfiguration);
-        oidcAuthenticationHelper.setAuth2AuthorizationFlowService(auth2AuthorizationFlowService);
+        oidcAuthenticationHelper.setOAuthClient(oAuthClient);
 
         service = new AuthenticationService(this.tokenService, oidcAuthenticationHelper);
     }

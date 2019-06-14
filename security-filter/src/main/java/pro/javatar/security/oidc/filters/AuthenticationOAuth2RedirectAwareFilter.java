@@ -1,5 +1,6 @@
 package pro.javatar.security.oidc.filters;
 
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.exceptions.BearerJwtTokenNotFoundAuthenticationException;
 import pro.javatar.security.oidc.exceptions.ExchangeTokenByCodeAuthenticationException;
 import pro.javatar.security.oidc.exceptions.RefreshTokenObsoleteAuthenticationException;
@@ -43,8 +44,18 @@ public class AuthenticationOAuth2RedirectAwareFilter implements Filter {
     private final OidcAuthenticationHelper oidcHelper;
     private final FilterOptionConverter filterOptionConverter = new FilterOptionConverter();
     private final UrlResolver urlResolver = new UrlResolver();
-
     private boolean enableFilter = false;
+
+    @Autowired
+    public AuthenticationOAuth2RedirectAwareFilter(AuthorizationStubFilter authorizationStubFilter,
+                                                   OidcAuthenticationHelper oidcHelper,
+                                                   OidcConfiguration oidcConfiguration,
+                                                   SecurityConfig securityConfig) {
+        this.authorizationStubFilter = authorizationStubFilter;
+        this.oidcHelper = oidcHelper;
+        this.oidcConfiguration = oidcConfiguration;
+        setUpFilters(securityConfig);
+    }
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -54,7 +65,7 @@ public class AuthenticationOAuth2RedirectAwareFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
             throws IOException, ServletException {
-
+        // TODO remove stub
         boolean stubFilterEnable = authorizationStubFilter.isFilterEnable();
         if (!enableFilter || stubFilterEnable) {
             logger.info("{} is disabled. Dev mode is {}.", getClass().getCanonicalName(), stubFilterEnable ? "on" : "off");
@@ -115,31 +126,13 @@ public class AuthenticationOAuth2RedirectAwareFilter implements Filter {
         return oidcHelper.shouldSkip(request);
     }
 
-    @Value("${security.oidc.AuthenticationOAuth2RedirectAwareFilter.enable:false}")
-    public void setEnableFilter(boolean enableFilter) {
-        this.enableFilter = enableFilter;
+    void setUpFilters(SecurityConfig config) {
+        this.enableFilter = config.redirect().enabled();
+        urlResolver.setFilterApplyUrls(filterOptionConverter.convertList(config.applyUrls()));
+        urlResolver.setFilterIgnoreUrls(filterOptionConverter.convertList(config.ignoreUrls()));
     }
 
-    @Value("${security.oidc.AuthenticationOAuth2RedirectAwareFilter.filterApplyUrlRegex:}")
-    public void setFilterApplyUrlRegex(String filterApplyUrlRegex) {
-        urlResolver.setFilterApplyUrlRegex(filterApplyUrlRegex);
-    }
-
-    @Value("#{'${security.oidc.AuthenticationOAuth2RedirectAwareFilter.filterApplyUrlList:}'.split(',')}")
-    public void setFilterApplyUrlList(List<String> filterApplyUrlList) {
-        urlResolver.setFilterApplyUrls(filterOptionConverter.convertList(filterApplyUrlList));
-    }
-
-    @Value("#{'${security.oidc.AuthenticationOAuth2RedirectAwareFilter.filterIgnoreUrlList:}'.split(',')}")
-    public void setFilterIgnoreUrls(List<String> filterIgnoreUrlList) {
-        urlResolver.setFilterIgnoreUrls(filterOptionConverter.convertList(filterIgnoreUrlList));
-    }
-
-    @Autowired
-    public AuthenticationOAuth2RedirectAwareFilter(AuthorizationStubFilter authorizationStubFilter,
-                                                   OidcAuthenticationHelper oidcHelper, OidcConfiguration oidcConfiguration) {
-        this.authorizationStubFilter = authorizationStubFilter;
-        this.oidcHelper = oidcHelper;
-        this.oidcConfiguration = oidcConfiguration;
+    public void setEnableFilter(boolean enabled) {
+        this.enableFilter = enabled;
     }
 }

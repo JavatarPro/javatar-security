@@ -3,12 +3,14 @@ package pro.javatar.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import pro.javatar.security.public_key.api.RealmPublicKeyCacheService;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RealmPublicKeyCacheServiceImpl implements RealmPublicKeyCacheService {
+
     private static final Logger logger = LoggerFactory.getLogger(RealmPublicKeyCacheServiceImpl.class);
 
     private String keyPattern;

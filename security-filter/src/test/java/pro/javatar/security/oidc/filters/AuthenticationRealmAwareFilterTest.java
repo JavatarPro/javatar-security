@@ -1,13 +1,15 @@
 package pro.javatar.security.oidc.filters;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static pro.javatar.security.oidc.filters.AuthenticationRealmAwareFilter.BASE_REALM_REGEX;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.SecurityConstants;
 import pro.javatar.security.oidc.SecurityTestResource;
 import pro.javatar.security.oidc.exceptions.RealmNotFoundAuthenticationException;
@@ -36,19 +38,22 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import pro.javatar.security.oidc.services.api.RealmService;
+import pro.javatar.security.oidc.services.impl.RealmServiceImpl;
 import pro.javatar.security.oidc.utils.MockHttpRequest;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import javax.servlet.ServletException;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {AuthenticationRealmAwareFilterTest.SpringConfig.class})
+@ContextConfiguration(classes = {
+        SpringTestConfig.class,
+        AuthenticationRealmAwareFilterTest.SpringConfig.class
+})
 @WebAppConfiguration
 public class AuthenticationRealmAwareFilterTest {
 
@@ -68,7 +73,11 @@ public class AuthenticationRealmAwareFilterTest {
 
     OidcConfiguration oidcConfiguration = new OidcConfiguration();
 
-    private OidcAuthenticationHelper oidcAuthenticationHelper = new OidcAuthenticationHelper();
+    @Autowired
+    OidcAuthenticationHelper oidcAuthenticationHelper;
+
+    @Autowired
+    RealmService realmService;
 
     @Autowired
     WebApplicationContext wac;
@@ -81,12 +90,14 @@ public class AuthenticationRealmAwareFilterTest {
     public void setup() throws ServletException {
         MockitoAnnotations.initMocks(this);
         authenticationRealmAwareFilter = new AuthenticationRealmAwareFilter(oidcAuthenticationHelper);
+        oidcConfiguration.setClientId("user-management-service");
         oidcAuthenticationHelper.setOidcConfiguration(oidcConfiguration);
         authenticationRealmAwareFilter.setRealmParamName("realm");
         authenticationRealmAwareFilter.init(null);
         authenticationControllerAdviceFilter.init(null);
-        authorizationStubFilter.setEnableFilter(true);
-        authorizationStubFilter.setAuthorities(Arrays.asList("USER_READ", "USER_WRITE"));
+        // TODO add token with "USER_READ", "USER_WRITE" permissions
+//        authorizationStubFilter.setEnableFilter(true);
+//        authorizationStubFilter.setAuthorities(Arrays.asList("USER_READ", "USER_WRITE"));
         this.mockMvc = MockMvcBuilders
                 .standaloneSetup(this.securityTestResource)
                 .setMessageConverters(new MappingJackson2HttpMessageConverter()) // Important!
@@ -142,6 +153,7 @@ public class AuthenticationRealmAwareFilterTest {
     public void filterSetupRealmFromHeaderUnauthorizedFlow() throws Exception {
         authenticationRealmAwareFilter.setEnableFilter(true);
         authenticationRealmAwareFilter.setRealmMandatory(true);
+//        authorizationStubFilter.setEnableFilter(false);
         MvcResult result = mockMvc.perform(post("/security/realm/users")
                 .accept(MediaType.APPLICATION_JSON_VALUE)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
@@ -171,16 +183,16 @@ public class AuthenticationRealmAwareFilterTest {
     public void setupRealmFromParamsMockMvc() throws Exception {
         authenticationRealmAwareFilter.setEnableFilter(true);
         authenticationRealmAwareFilter.setRealmMandatory(true);
-        MvcResult result = mockMvc.perform(post("/security/realm/users")
+        MvcResult result = mockMvc.perform(post("/security/javatar-security/users")
                 .accept(MediaType.APPLICATION_JSON_VALUE)
-                .param("realm", "realm_sk")
+                .param("realm", "javatar-security")
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(getStub("security-users-test.json")))
                 .andDo(print()).andExpect(status().isCreated()).andReturn();
         String content = result.getResponse().getContentAsString();
         Map<String, String> resultMap = objectMapper.readValue(content, HashMap.class);
         String realm = result.getResponse().getHeader(SecurityConstants.REALM_HEADER);
-        assertThat(realm, is("realm_sk"));
+        assertThat(realm, is("javatar-security"));
         assertThat(resultMap.get("name"), is("Chuck"));
         assertThat(resultMap.get("lastName"), is("Norris"));
     }
@@ -299,7 +311,9 @@ public class AuthenticationRealmAwareFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         authenticationRealmAwareFilter.setupRealmFromParams(request);
         String actualRealm = oidcAuthenticationHelper.getRealmForCurrentRequest();
-        assertThat(actualRealm, is(nullValue()));
+//         assertThat(actualRealm, is(nullValue()));
+        // TODO verify why need this behaviour with default realm
+        assertThat(actualRealm, is("javatar-security")); // default realm is provided
 
         request.addParameter("realm", "realm");
         authenticationRealmAwareFilter.setupRealmFromParams(request);
@@ -358,12 +372,14 @@ public class AuthenticationRealmAwareFilterTest {
 
     @Test
     public void validateRealmSetupRealmNotMandatory() throws Exception {
+        unsetDefaultRealm();
         authenticationRealmAwareFilter.setRealmMandatory(false);
         authenticationRealmAwareFilter.validateRealmSetup();
     }
 
     @Test(expected = RealmNotFoundAuthenticationException.class)
     public void validateRealmSetupWithException() throws Exception {
+        unsetDefaultRealm();
         authenticationRealmAwareFilter.setRealmMandatory(true);
         authenticationRealmAwareFilter.validateRealmSetup();
     }
@@ -403,13 +419,96 @@ public class AuthenticationRealmAwareFilterTest {
         assertThat(filter.shouldSkip(MockHttpRequest.mockMethodAndUri(HttpMethod.PATCH, "/security/rest/users/id")), is(false));
     }
 
+    void unsetDefaultRealm() {
+        SecurityConfig tmpConfig = mock(SecurityConfig.class);
+        SecurityConfig.IdentityProvider identityProvider = mock(SecurityConfig.IdentityProvider.class);
+        when(tmpConfig.identityProvider()).thenReturn(identityProvider);
+        //when(identityProvider.realm()).thenReturn(null);
+        ((RealmServiceImpl)realmService).setConfig(tmpConfig);
+    }
+
     @ComponentScan("pro.javatar.security")
     public static class SpringConfig {
 
-//        @Bean
-//        public RealmPublicKeyCacheService getRealmPublicKeyCacheService() {
-//            return mock(RealmPublicKeyCacheService.class);
-//        }
+        public SecurityConfig securityConfig() {
+            return new SecurityConfig() {
+
+                @Override
+                public List<String> applyUrls() {
+                    return null;
+                }
+
+                @Override
+                public List<String> ignoreUrls() {
+                    return null;
+                }
+
+                @Override
+                public Redirect redirect() {
+                    return new Redirect() {
+                        @Override
+                        public boolean enabled() {
+                            return false;
+                        }
+
+                        @Override
+                        public String redirectUrl() {
+                            return null;
+                        }
+                    };
+                }
+
+                @Override
+                public IdentityProvider identityProvider() {
+                    return null;
+                }
+
+                @Override
+                public Boolean useReferAsRedirectUri() {
+                    return null;
+                }
+
+                @Override
+                public String publicKeysStorage() {
+                    return null;
+                }
+
+                @Override
+                public String tokenStorage() {
+                    return null;
+                }
+
+                @Override
+                public Storage storage() {
+                    return null;
+                }
+
+                @Override
+                public TokenValidation tokenValidation() {
+                    return null;
+                }
+
+                @Override
+                public Stub stub() {
+                    return null;
+                }
+
+                @Override
+                public HttpClient httpClient() {
+                    return null;
+                }
+
+                @Override
+                public Application application() {
+                    return null;
+                }
+
+                @Override
+                public String errorDescriptionLink() {
+                    return null;
+                }
+            };
+        }
     }
 
 }

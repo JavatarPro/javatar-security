@@ -125,8 +125,10 @@ public class AuthenticationRealmAwareFilter implements Filter {
     }
 
     void validateRealmSetup() {
-        if (!realmMandatory)
+        if (!realmMandatory) {
             return;
+        }
+
         String realm = oidcAuthenticationHelper.getRealmForCurrentRequest();
         if (StringUtils.isBlank(realm)) {
             logger.warn("validate realm fails, it is mandatory");

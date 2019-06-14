@@ -10,6 +10,10 @@ public class SecretTokenDetails {
 
     private String realm;
 
+    private String sessionId;
+
+    private String ipAddress;
+
     public String getAccessToken() {
         if (isBlank(accessToken)) return EMPTY_STRING;
         return accessToken;
@@ -73,12 +77,30 @@ public class SecretTokenDetails {
         }
     }
 
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
     @Override
     public String toString() {
         return "SecretTokenDetails{" +
                 "accessToken='" + accessToken + '\'' +
                 ", refreshToken='" + refreshToken + '\'' +
                 ", realm='" + realm + '\'' +
+                ", sessionId='" + sessionId + '\'' +
+                ", ipAddress='" + ipAddress + '\'' +
                 '}';
     }
 }

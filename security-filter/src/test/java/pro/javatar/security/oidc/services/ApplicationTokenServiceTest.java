@@ -4,6 +4,7 @@ import static junit.framework.TestCase.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.model.UserKey;
 
@@ -12,7 +13,7 @@ import org.junit.Test;
 
 public class ApplicationTokenServiceTest {
 
-    private OAuth2AuthorizationFlowService auth2AuthorizationFlowService;
+    private OAuthClient oAuthClient;
     private OidcAuthenticationHelper oidcAuthenticationHelper;
     private OnBehalfOfUsernameHolder onBehalfOfUsernameHolder;
     private ApplicationTokenHolder applicationTokenHolder;
@@ -21,14 +22,13 @@ public class ApplicationTokenServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        auth2AuthorizationFlowService = mock(OAuth2AuthorizationFlowService.class);
+        oAuthClient = mock(OAuthClient.class);
         oidcAuthenticationHelper = mock(OidcAuthenticationHelper.class);
         oidcConfiguration = new OidcConfiguration();
         onBehalfOfUsernameHolder = new OnBehalfOfUsernameHolder();
         applicationTokenHolder = new ApplicationTokenHolder();
 
-        service =
-                new ApplicationTokenService(auth2AuthorizationFlowService, oidcAuthenticationHelper,
+        service = new ApplicationTokenService(oAuthClient, oidcAuthenticationHelper,
                         onBehalfOfUsernameHolder, applicationTokenHolder, oidcConfiguration);
     }
 
@@ -40,7 +40,7 @@ public class ApplicationTokenServiceTest {
 
         TokenDetails tokenDetails = new TokenDetails();
         applicationTokenHolder.setTokenDetails(userKey1, tokenDetails);
-        when(auth2AuthorizationFlowService.obtainTokenByRunOnBehalfOfUserCredentials(
+        when(oAuthClient.obtainTokenDetailsByRunOnBehalfOfUserCredentials(
                 userKey1.getLogin(), userKey1.getRealm()))
                 .thenReturn(tokenDetails);
 
@@ -73,13 +73,13 @@ public class ApplicationTokenServiceTest {
         tokenDetails.setAccessToken("access-token123");
         tokenDetails.setRefreshToken("refresh-token123");
         applicationTokenHolder.setTokenDetails(userKey1, tokenDetails);
-        when(auth2AuthorizationFlowService.obtainTokenByRunOnBehalfOfUserCredentials(
+        when(oAuthClient.obtainTokenDetailsByRunOnBehalfOfUserCredentials(
                 userKey1.getLogin(), userKey1.getRealm()))
                 .thenReturn(tokenDetails);
         when(oidcAuthenticationHelper.isTokenExpiredOrShouldBeRefreshed(tokenDetails)).thenReturn(true);
 
         TokenDetails refreshedTokenDetails = new TokenDetails();
-        when(auth2AuthorizationFlowService.getTokenByRefreshToken(tokenDetails.getRefreshToken()))
+        when(oAuthClient.obtainTokenDetailsByRefreshToken(tokenDetails.getRefreshToken()))
                 .thenReturn(refreshedTokenDetails);
 
         TokenDetails applicationTokenDetails = service.getApplicationTokenDetails();

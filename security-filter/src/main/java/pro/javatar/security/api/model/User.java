@@ -3,6 +3,7 @@ package pro.javatar.security.api.model;
 import java.util.Objects;
 
 /**
+ * User object from jwt token
  * @author Borys Zora
  * @version 2019-04-21
  */

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 
@@ -22,14 +23,14 @@ public class UsersTokenServiceTest {
 
     private UsersTokenService service;
     private OidcAuthenticationHelper oidcAuthenticationHelper;
-    private OAuth2AuthorizationFlowService oAuth2AuthorizationFlowService;
+    private OAuthClient oAuthClient;
     private TokenDetails tokenDetails;
 
     @Before
     public void setUp() throws Exception {
         this.oidcAuthenticationHelper = mock(OidcAuthenticationHelper.class);
-        this.oAuth2AuthorizationFlowService = mock(OAuth2AuthorizationFlowService.class);
-        service = new UsersTokenService(oidcAuthenticationHelper, oAuth2AuthorizationFlowService);
+        this.oAuthClient = mock(OAuthClient.class);
+        service = new UsersTokenService(oidcAuthenticationHelper, oAuthClient);
 
         tokenDetails = new TokenDetails("accessToken111", "refreshToken111", LocalDateTime.now());
     }
@@ -50,7 +51,7 @@ public class UsersTokenServiceTest {
         when(oidcAuthenticationHelper.isTokenExpiredOrShouldBeRefreshed(tokenDetails)).thenReturn(true);
 
         TokenDetails updatedTokenDetails = new TokenDetails();
-        when(oAuth2AuthorizationFlowService.getTokenByRefreshToken(tokenDetails.getRefreshToken()))
+        when(oAuthClient.obtainTokenDetailsByRefreshToken((tokenDetails.getRefreshToken())))
                 .thenReturn(updatedTokenDetails);
         doNothing().when(oidcAuthenticationHelper).authenticateCurrentThread(updatedTokenDetails);
 
@@ -63,7 +64,7 @@ public class UsersTokenServiceTest {
                 new UsernamePasswordAuthenticationToken("login", tokenDetails, new ArrayList<>()));
         when(oidcAuthenticationHelper.isTokenExpiredOrShouldBeRefreshed(tokenDetails)).thenReturn(true);
 
-        when(oAuth2AuthorizationFlowService.getTokenByRefreshToken(tokenDetails.getRefreshToken()))
+        when(oAuthClient.obtainTokenDetailsByRefreshToken(tokenDetails.getRefreshToken()))
                 .thenThrow(new ObtainRefreshTokenException());
 
         assertEquals(service.retrieveUsersTokenDetails(), tokenDetails);
