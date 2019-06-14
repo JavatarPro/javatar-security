@@ -4,6 +4,7 @@ import static junit.framework.TestCase.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.utils.JwtTokenGenerator;
@@ -11,27 +12,25 @@ import pro.javatar.security.oidc.utils.KeyUtils;
 
 import org.junit.Before;
 import org.junit.Test;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import java.util.Arrays;
 import java.util.UUID;
 
 public class OAuth2AuthorizationFlowServiceTest {
 
-    private OAuth2AuthorizationFlowService service;
     private OAuthClient authClient;
     private OidcConfiguration oidcConfiguration;
     private PublicKeyCacheService publicKeyCacheService;
+    private SecurityConfig securityConfig;
 
     @Before
     public void setUp() throws Exception {
+        securityConfig = new SpringTestConfig().securityConfig();
+
         authClient = mock(OAuthClient.class);
         oidcConfiguration = mock(OidcConfiguration.class);
         publicKeyCacheService = mock(PublicKeyCacheService.class);
-
-        service = new OAuth2AuthorizationFlowService();
-        service.setoAuthClient(authClient);
-        service.setOidcConfiguration(oidcConfiguration);
-        service.setPublicKeyCacheService(publicKeyCacheService);
     }
 
     @Test
@@ -42,7 +41,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         TokenDetails tokenDetails = new TokenDetails();
         when(authClient.obtainTokenDetailsByAuthorizationCode(code, redirectUrl)).thenReturn(tokenDetails);
 
-        assertEquals(service.getTokenDetailsByCode(code, redirectUrl), tokenDetails);
+        assertEquals(authClient.obtainTokenDetailsByAuthorizationCode(code, redirectUrl), tokenDetails);
     }
 
     @Test
@@ -52,7 +51,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         TokenDetails tokenDetails = new TokenDetails();
         when(authClient.obtainTokenDetailsByRefreshToken(refreshToken)).thenReturn(tokenDetails);
 
-        assertEquals(service.getTokenByRefreshToken(refreshToken), tokenDetails);
+        assertEquals(authClient.obtainTokenDetailsByRefreshToken(refreshToken), tokenDetails);
     }
 
     @Test
@@ -60,7 +59,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         TokenDetails tokenDetails = new TokenDetails();
         when(authClient.obtainTokenDetailsByApplicationCredentials()).thenReturn(tokenDetails);
 
-        assertEquals(service.obtainTokenByApplicationCredentials(), tokenDetails);
+        assertEquals(authClient.obtainTokenDetailsByApplicationCredentials(), tokenDetails);
     }
 
     @Test
@@ -68,7 +67,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         TokenDetails tokenDetails = new TokenDetails();
         when(authClient.obtainTokenDetailsByRunOnBehalfOfUserCredentials("user1", "realm1")).thenReturn(tokenDetails);
 
-        assertEquals(service.obtainTokenByRunOnBehalfOfUserCredentials("user1", "realm1"), tokenDetails);
+        assertEquals(authClient.obtainTokenDetailsByRunOnBehalfOfUserCredentials("user1", "realm1"), tokenDetails);
     }
 
     @Test
@@ -82,7 +81,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         when(oidcConfiguration.isCheckIsActive()).thenReturn(true);
         when(oidcConfiguration.isCheckTokenType()).thenReturn(true);
 
-        service.parseAccessToken(accessToken, "test-realm");
+        authClient.parseAccessToken(accessToken, "test-realm");
     }
 
     @Test
@@ -99,7 +98,7 @@ public class OAuth2AuthorizationFlowServiceTest {
         when(oidcConfiguration.isCheckIsActive()).thenReturn(true);
         when(oidcConfiguration.isCheckTokenType()).thenReturn(true);
 
-        service.parseAccessToken(accessToken, "test-realm");
+        authClient.parseAccessToken(accessToken, "test-realm");
     }
 
     @Test
@@ -107,6 +106,6 @@ public class OAuth2AuthorizationFlowServiceTest {
         TokenDetails tokenDetails = new TokenDetails();
         when(authClient.obtainTokenDetailsByApplicationCredentials("user2", "password2", "realm2")).thenReturn(tokenDetails);
 
-        assertEquals(service.obtainTokenDetailsByApplicationCredentials("user2", "password2", "realm2"), tokenDetails);
+        assertEquals(authClient.obtainTokenDetailsByApplicationCredentials("user2", "password2", "realm2"), tokenDetails);
     }
 }

@@ -17,35 +17,62 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import pro.javatar.security.api.config.SecurityConfig;
+import pro.javatar.security.jwt.TokenVerifier;
+import pro.javatar.security.jwt.adapter.AdapterRSATokenVerifier;
+import pro.javatar.security.jwt.bean.representation.AccessToken;
+import pro.javatar.security.jwt.exception.TokenExpirationException;
+import pro.javatar.security.jwt.exception.VerificationException;
 import pro.javatar.security.oidc.model.OAuth2Constants;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.SecurityConstants;
 import pro.javatar.security.oidc.exceptions.*;
-import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 import pro.javatar.security.oidc.services.OidcConfiguration;
+import pro.javatar.security.oidc.services.PublicKeyCacheService;
+import pro.javatar.security.oidc.services.api.RealmService;
+import pro.javatar.security.oidc.utils.StringUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Service
 public class OAuthClient {
+
     private static final Logger logger = LoggerFactory.getLogger(OAuthClient.class);
 
-    @Autowired
+    // TODO remove this field
+    @Deprecated
     private OidcConfiguration oidcConfiguration;
 
+    private RealmService realmService;
+
+    private PublicKeyCacheService publicKeyCacheService;
+
+    private SecurityConfig config;
+
     @Autowired
-    private OidcAuthenticationHelper oidcAuthenticationHelper;
+    public OAuthClient(OidcConfiguration oidcConfiguration,
+                       RealmService realmService,
+                       PublicKeyCacheService publicKeyCacheService,
+                       SecurityConfig config) {
+        this.oidcConfiguration = oidcConfiguration;
+        this.realmService = realmService;
+        this.publicKeyCacheService = publicKeyCacheService;
+        this.config = config;
+    }
 
     public TokenDetails obtainTokenDetailsByAuthorizationCode(String code, String redirectUrl) {
         List<BasicNameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair(OAuth2Constants.GRANT_TYPE, OAuth2Constants.AUTHORIZATION_CODE));
         params.add(new BasicNameValuePair(OAuth2Constants.CODE, code));
-        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ID, oidcConfiguration.getClientId()));
-        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_SECRET, oidcConfiguration.getClientSecret()));
+        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ID, config.identityProvider().client()));
+        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_SECRET, config.identityProvider().secret()));
         params.add(new BasicNameValuePair(OAuth2Constants.REDIRECT_URI, redirectUrl));
         logger.debug("Redirect URI is {}", redirectUrl);
 
@@ -61,8 +88,8 @@ public class OAuthClient {
         List<BasicNameValuePair> params = new ArrayList<>();
         params.add(new BasicNameValuePair(OAuth2Constants.GRANT_TYPE, OAuth2Constants.REFRESH_TOKEN));
         params.add(new BasicNameValuePair(OAuth2Constants.REFRESH_TOKEN, refreshToken));
-        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ID, oidcConfiguration.getClientId()));
-        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_SECRET, oidcConfiguration.getClientSecret()));
+        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ID, config.identityProvider().client()));
+        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_SECRET, config.identityProvider().secret()));
 
         try {
             return obtainTokenDetails(params);
@@ -73,8 +100,8 @@ public class OAuthClient {
     }
 
     public TokenDetails obtainTokenDetailsByApplicationCredentials() {
-        String username = oidcConfiguration.getUsername();
-        String password = oidcConfiguration.getUserPassword();
+        String username = config.application().user();
+        String password = config.application().password();
 
         return obtainTokenDetailsByApplicationCredentials(username, password);
     }
@@ -85,7 +112,7 @@ public class OAuthClient {
     }
 
     public TokenDetails obtainTokenDetailsByApplicationCredentials(String username, String password) {
-        String realm = oidcAuthenticationHelper.getRealmForCurrentRequest();
+        String realm = realmService.getRealmForCurrentRequest();
         return obtainTokenDetailsByApplicationCredentials(username, password, realm);
     }
 
@@ -94,8 +121,8 @@ public class OAuthClient {
         params.add(new BasicNameValuePair(OAuth2Constants.GRANT_TYPE, OAuth2Constants.PASSWORD));
         params.add(new BasicNameValuePair(OAuth2Constants.USERNAME, username));
         params.add(new BasicNameValuePair(OAuth2Constants.PASSWORD, password));
-        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ID, oidcConfiguration.getClientId()));
-        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_SECRET, oidcConfiguration.getClientSecret()));
+        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ID, config.identityProvider().client()));
+        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_SECRET, config.identityProvider().secret()));
         logger.debug("Trying to obtain token details for realm {} with authentication {}", realm, maskedParams(params));
 
         try {
@@ -114,7 +141,7 @@ public class OAuthClient {
 
     private TokenDetails obtainTokenDetails(List<BasicNameValuePair> params)
             throws URISyntaxException, IOException {
-        String realm = oidcAuthenticationHelper.getRealmForCurrentRequest();
+        String realm = realmService.getRealmForCurrentRequest();
         return obtainTokenDetails(realm, params);
     }
 
@@ -174,7 +201,7 @@ public class OAuthClient {
     }
 
     String prepareTokenEndpointUrl(String realm) {
-        return oidcConfiguration.getIdentityProviderHost() +
+        return config.identityProvider().url() +
                 oidcConfiguration.getTokenEndpoint().replace("{realm}", realm);
     }
 
@@ -182,6 +209,7 @@ public class OAuthClient {
         JSONParser jsonParser = new JSONParser();
         Object parsed = null;
         try {
+            // TODO parse & validation token should be separate things, we just receive token
             parsed = jsonParser.parse(responseJsonString);
         } catch (ParseException e) {
             String message = "Could not parse json token to convert it to token details";
@@ -194,19 +222,43 @@ public class OAuthClient {
         JSONObject responseJson = (JSONObject) parsed;
         String accessToken = (String) responseJson.get(OAuth2Constants.ACCESS_TOKEN);
         String refreshToken = (String) responseJson.get(OAuth2Constants.REFRESH_TOKEN);
-        TokenDetails tokenDetails =
-                oidcAuthenticationHelper.generateTokenDetails(accessToken, refreshToken);
+        TokenDetails tokenDetails = generateTokenDetails(accessToken, refreshToken);
         tokenDetails.setAccessExpiredIn(String.valueOf(responseJson.get(OAuth2Constants.EXPIRES_IN)));
         tokenDetails.setRefreshExpiredIn(String.valueOf(responseJson.get(OAuth2Constants.REFRESH_EXPIRES_IN)));
         return tokenDetails;
     }
 
-    public void setOidcConfiguration(OidcConfiguration oidcConfiguration) {
-        this.oidcConfiguration = oidcConfiguration;
+    public TokenDetails generateTokenDetails(String accessToken, String refreshToken) {
+        if (StringUtils.isBlank(accessToken))
+            return new TokenDetails();
+        AccessToken token;
+        try {
+            token = parseAccessToken(accessToken, realmService.getRealmFromToken(accessToken));
+        } catch (VerificationException e) {
+            logger.error("Malicious token: {}, realm: {}", accessToken, TokenVerifier.getRealm(accessToken), e);
+            throw new MaliciousBearerJwtTokenAuthenticationException();
+        } catch (TokenExpirationException e) {
+            logger.debug("Access token is expired trying to refresh one...", e);
+            TokenDetails tokenDetails;
+            String realmFromToken = realmService.getRealmFromToken(accessToken);
+            try {
+                tokenDetails = obtainTokenDetailsByRefreshToken(refreshToken);
+                token = parseAccessToken(tokenDetails.getAccessToken(), realmFromToken);
+                return createTokenDetails(tokenDetails.getAccessToken(), tokenDetails.getRefreshToken(),
+                        token.getExpiration());
+            } catch (Exception e1) {
+                logger.error("Refresh token is spoiled: {}, realm: {}", StringUtils.getMaskedString(refreshToken),
+                        realmFromToken, e1);
+                throw new RefreshTokenObsoleteAuthenticationException();
+            }
+        }
+        return createTokenDetails(accessToken, refreshToken, token.getExpiration());
     }
 
-    public void setOidcAuthenticationHelper(OidcAuthenticationHelper oidcAuthenticationHelper) {
-        this.oidcAuthenticationHelper = oidcAuthenticationHelper;
+    private TokenDetails createTokenDetails(String accessToken, String refreshToken, int expiration){
+        LocalDateTime accessTokenExpiration =
+                LocalDateTime.ofInstant(Instant.ofEpochSecond(expiration), ZoneId.systemDefault());
+        return new TokenDetails(accessToken, refreshToken, accessTokenExpiration);
     }
 
     private List<BasicNameValuePair> maskedParams(List<BasicNameValuePair> params) {
@@ -218,5 +270,41 @@ public class OAuthClient {
             }
         }
         return maskedParam;
+    }
+
+    public AccessToken parseAccessToken(String accessToken, String realm) throws VerificationException,
+            TokenExpirationException {
+        logger.debug("Token realm is {}", realm);
+        String publicKeyByRealm = publicKeyCacheService.getPublicKeyByRealm(realm);
+        logger.debug("Public key [{}] was retrieved by realm={}", publicKeyByRealm, realm);
+        try {
+            return getAccessToken(accessToken, realm, publicKeyByRealm);
+        } catch (Exception e) { // TODO catch different exceptions
+            logger.trace("The first attempt to get access token is invalid. Trying again with refreshed public key." , e);
+            String publicKey = publicKeyCacheService.refreshPublicKey(realm);
+            return getAccessToken(accessToken, realm, publicKey);
+        }
+    }
+
+    private AccessToken getAccessToken(String accessToken, String realm, String publicKeyByRealm)
+            throws TokenExpirationException, VerificationException {
+        return AdapterRSATokenVerifier.verifyToken(
+                publicKeyByRealm,
+                accessToken,
+                realm,
+                config.tokenValidation().checkTokenIsActive(),
+                config.tokenValidation().checkTokenType());
+    }
+
+    public void setConfig(SecurityConfig config) {
+        this.config = config;
+    }
+
+    public void setRealmService(RealmService realmService) {
+        this.realmService = realmService;
+    }
+
+    public void setPublicKeyCacheService(PublicKeyCacheService publicKeyCacheService) {
+        this.publicKeyCacheService = publicKeyCacheService;
     }
 }

@@ -60,4 +60,11 @@ public class StringUtils {
     public static String getMaskedString(String secret) {
         return getMaskedString(secret, 7);
     }
+
+    public static String defaultIfBlank(String value, String defaultValue) {
+        if (isBlank(value)) {
+            return defaultValue;
+        }
+        return value;
+    }
 }

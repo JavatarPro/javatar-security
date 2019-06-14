@@ -38,6 +38,8 @@ public class UserConverter {
         }
     }
 
+    // TODO Read json as object, ignore missing values
+    // TODO (bzo, amur) move/reuse jwt-lib
     public User toUserFromAccessTokenMap(Map<String, Object> accessTokenMap) {
         User user = new User();
         user.setId((String) accessTokenMap.get("sub"));

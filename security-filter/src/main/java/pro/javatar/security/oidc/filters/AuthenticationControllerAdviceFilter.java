@@ -2,8 +2,8 @@ package pro.javatar.security.oidc.filters;
 
 import pro.javatar.security.oidc.SecurityConstants;
 import pro.javatar.security.oidc.exceptions.AuthenticationException;
-import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 import pro.javatar.security.oidc.services.OidcConfiguration;
+import pro.javatar.security.oidc.services.api.RealmService;
 import pro.javatar.security.oidc.utils.JsonMessageBuilder;
 import pro.javatar.security.oidc.utils.StringUtils;
 
@@ -31,16 +31,17 @@ public class AuthenticationControllerAdviceFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationControllerAdviceFilter.class);
 
-    private OidcAuthenticationHelper authenticationHelper;
+    private RealmService realmService;
 
     private OidcConfiguration oidcConfiguration;
+
     private JsonMessageBuilder messageBuilder;
 
     @Autowired
-    public AuthenticationControllerAdviceFilter(OidcAuthenticationHelper authenticationHelper,
+    public AuthenticationControllerAdviceFilter(RealmService realmService,
                                                 OidcConfiguration oidcConfiguration,
                                                 JsonMessageBuilder messageBuilder) {
-        this.authenticationHelper = authenticationHelper;
+        this.realmService = realmService;
         this.oidcConfiguration = oidcConfiguration;
         this.messageBuilder = messageBuilder;
     }
@@ -95,7 +96,7 @@ public class AuthenticationControllerAdviceFilter implements Filter {
     void setupResponseHeaders(HttpServletResponse response, AuthenticationException e, String url)
             throws UnsupportedEncodingException {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        String realm = authenticationHelper.getRealmForCurrentRequest(response);
+        String realm = realmService.getRealmForCurrentRequest(response);
         String location = oidcConfiguration.getIdentityProviderHost();
         String wwwAuthenticateHeader = getWwwAuthenticateHeader(
                 realm,

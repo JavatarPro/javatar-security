@@ -1,6 +1,6 @@
 package pro.javatar.security.oidc.services;
 
-import pro.javatar.security.RealmPublicKeyCacheService;
+import pro.javatar.security.public_key.api.RealmPublicKeyCacheService;
 import pro.javatar.security.oidc.exceptions.PublicKeyNotFoundAuthenticationException;
 import pro.javatar.security.oidc.utils.StringUtils;
 
@@ -20,6 +20,11 @@ public class PublicKeyCacheService {
     private Map<String, String> publicKeys = new ConcurrentHashMap<>();
 
     private RealmPublicKeyCacheService realmPublicKeyCacheService;
+
+    @Autowired
+    public PublicKeyCacheService(RealmPublicKeyCacheService realmPublicKeyCacheService) {
+        this.realmPublicKeyCacheService = realmPublicKeyCacheService;
+    }
 
     /**
      * @param realm incoming realm
@@ -50,7 +55,6 @@ public class PublicKeyCacheService {
         return publicKey;
     }
 
-    @Autowired
     public void setRealmPublicKeyCacheService(RealmPublicKeyCacheService realmPublicKeyCacheService) {
         this.realmPublicKeyCacheService = realmPublicKeyCacheService;
     }

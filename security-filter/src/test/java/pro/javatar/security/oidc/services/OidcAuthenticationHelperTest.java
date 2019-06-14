@@ -9,9 +9,9 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.model.OAuth2Constants;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.SecurityConstants;
@@ -25,6 +25,9 @@ import org.mockito.Mockito;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import pro.javatar.security.oidc.services.api.RealmService;
+import pro.javatar.security.oidc.services.impl.RealmServiceImpl;
+import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,7 +39,11 @@ public class OidcAuthenticationHelperTest {
 
     @Before
     public void setUp() throws Exception {
+        SecurityConfig config = new SpringTestConfig().securityConfig();
+        RealmService realmService = new RealmServiceImpl(config);
         helper = new OidcAuthenticationHelper();
+        helper.setConfig(config);
+        helper.setRealmService(realmService);
     }
 
     @Test
@@ -94,16 +101,15 @@ public class OidcAuthenticationHelperTest {
     @Test
     public void realmForCurrentRequest() throws Exception {
         OidcConfiguration oidcConfiguration = new OidcConfiguration();
-        oidcConfiguration.setDefaultRealm("default realm");
         helper.setOidcConfiguration(oidcConfiguration);
         //if realm is not set it will be got as default
-        assertThat(helper.getRealmForCurrentRequest(), is("default realm"));
+        assertThat(helper.getRealmForCurrentRequest(), is("javatar-security"));
 
         helper.setRealmForCurrentRequest("realm2");
         assertThat(helper.getRealmForCurrentRequest(), is("realm2"));
 
         helper.removeRealmFromCurrentRequest();
-        assertThat(helper.getRealmForCurrentRequest(), is("default realm"));
+        assertThat(helper.getRealmForCurrentRequest(), is("javatar-security"));
     }
 
     @Test
@@ -158,10 +164,10 @@ public class OidcAuthenticationHelperTest {
         helper.setOidcConfiguration(oidcConfiguration);
 
         TokenDetails tokenDetails = new TokenDetails();
-        tokenDetails.setRealm("mservice");
+        tokenDetails.setRealm("javatar-security");
         helper.validateRealm(tokenDetails);
 
-        tokenDetails.setRealm("realm");
+        tokenDetails.setRealm("javatar-security");
         helper.validateRealm(tokenDetails);
     }
 

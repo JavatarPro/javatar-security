@@ -12,8 +12,9 @@ public class OidcSecurityDetailsServiceImpl implements OidcSecurityDetailsServic
     @Override
     public String getTokenRealm() {
         Authentication authentication = getAuthentication();
-        if (authentication == null)
+        if (authentication == null) {
             return null;
+        }
         TokenDetails tokenDetails = (TokenDetails) authentication.getCredentials();
         return tokenDetails.getRealm();
     }
