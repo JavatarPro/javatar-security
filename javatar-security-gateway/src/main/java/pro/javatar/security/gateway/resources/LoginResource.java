@@ -17,6 +17,8 @@ import pro.javatar.security.gateway.service.api.GatewaySecurityService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Andrii Murashkin / Javatar LLC
@@ -52,8 +54,10 @@ public class LoginResource {
         AuthRequestBO authRequestBO = converter.toAuthRequestBO(loginRequest);
         String rootToken = gatewaySecurityService.login(authRequestBO, request, response);
         logger.info("rootToken: {} was issued for loginRequest: {}", rootToken, loginRequest);
+        Map<String, String> body = new HashMap<>();
+        body.put("login", "success");
         return ResponseEntity.created(null)
-                .body("{'login': 'success'}"); // TODO add more info about session expiration
+                .body(body); // TODO add more info about session expiration
     }
 
 }
