@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import pro.javatar.secret.storage.api.SecretStorageService;
 import pro.javatar.secret.storage.api.model.SecretTokenDetails;
 import pro.javatar.security.api.AuthService;
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.gateway.exception.LoginException;
 import pro.javatar.security.gateway.service.api.GatewaySecurityService;
 import pro.javatar.security.api.exception.IssueTokensException;
@@ -34,11 +35,15 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
 
     private SecretStorageService secretService;
 
+    private SecurityConfig config;
+
     @Autowired
     public GatewaySecurityServiceImpl(AuthService authService,
-                                      SecretStorageService secretService) {
+                                      SecretStorageService secretService,
+                                      SecurityConfig config) {
         this.authService = authService;
         this.secretService = secretService;
+        this.config = config;
     }
 
     @Override
@@ -46,6 +51,7 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
                         HttpServletRequest request,
                         HttpServletResponse response) throws LoginException {
         try {
+            populateRealmInAuthRequestIfMissing(authRequest);
             TokenInfoBO authToken = authService.issueTokens(authRequest);
 
             String realm = authRequest.getRealm();
@@ -60,6 +66,12 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         } catch (IssueTokensException e) {
             logger.error(e.getMessage(), e);
             throw new LoginException(e.getMessage());
+        }
+    }
+
+    private void populateRealmInAuthRequestIfMissing(AuthRequestBO authRequest) {
+        if (authRequest.getRealm() == null) {
+            authRequest.setRealm(config.identityProvider().realm());
         }
     }
 
