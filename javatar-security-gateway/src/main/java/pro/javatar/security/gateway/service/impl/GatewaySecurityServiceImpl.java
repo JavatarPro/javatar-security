@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pro.javatar.secret.storage.api.SecretStorageService;
+import pro.javatar.secret.storage.api.exception.DeleteFailedSecretStorageException;
+import pro.javatar.secret.storage.api.exception.PersistenceSecretStorageException;
 import pro.javatar.secret.storage.api.model.SecretTokenDetails;
 import pro.javatar.security.api.AuthService;
 import pro.javatar.security.api.config.SecurityConfig;
@@ -61,9 +63,9 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
             String correlationId = UUID.randomUUID().toString();
             secretService.put(correlationId, secretToken);
 
-            addCookies(correlationId, response);
+            CookieUtil.createSecureCookie(response, TOKEN_ID, correlationId);
             return correlationId;
-        } catch (IssueTokensException e) {
+        } catch (IssueTokensException | PersistenceSecretStorageException e) {
             logger.error(e.getMessage(), e);
             throw new LoginException(e.getMessage());
         }
@@ -73,12 +75,6 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         if (authRequest.getRealm() == null) {
             authRequest.setRealm(config.identityProvider().realm());
         }
-    }
-
-    private void addCookies(String correlationId, HttpServletResponse response) {
-        Cookie cookie = CookieUtil.createSecureCookie(TOKEN_ID, correlationId);
-        logger.debug(":: Set secret key as cookie {}", cookie);
-        response.addCookie(cookie);
     }
 
     @Override
@@ -96,8 +92,12 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         Cookie[] cookies = request.getCookies();
         String secretKey = CookieUtil.getCookie(TOKEN_ID, cookies);
         // TODO remove parent vault key, rotate keys more frequently
-        secretService.delete(secretKey);
-        // TODO response send empty cookies for our token
+        try {
+            secretService.delete(secretKey);
+        } catch (DeleteFailedSecretStorageException e) {
+            logger.error(e.getMessage(), e);
+        }
+        CookieUtil.removeCookie(response, TOKEN_ID);
     }
 
     private SecretTokenDetails getSecretTokenDetails(String realm,
