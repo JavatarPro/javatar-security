@@ -41,6 +41,7 @@ public class LoginResource {
                          GatewayConverter converter) {
         this.gatewaySecurityService = gatewaySecurityService;
         this.converter = converter;
+        logger.info("LoginResource created");
     }
 
     @PostMapping
