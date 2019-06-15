@@ -15,6 +15,8 @@ public class GatewayConfigImpl implements GatewayConfig {
 
     LogoutImpl logout;
 
+    boolean enablePostExchangeToken = true;
+
     @Override
     public Login login() {
         return login;
@@ -23,6 +25,11 @@ public class GatewayConfigImpl implements GatewayConfig {
     @Override
     public Logout logout() {
         return logout;
+    }
+
+    @Override
+    public boolean enablePostExchangeToken() {
+        return enablePostExchangeToken;
     }
 
     static class LoginImpl implements Login {

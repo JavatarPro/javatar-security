@@ -21,7 +21,6 @@ public class SecretStorageRedisImpl implements SecretStorageService {
 
     private static final Logger logger = LoggerFactory.getLogger(SecretStorageRedisImpl.class);
 
-
     private RedisTemplate<String, String> redisTemplate;
 
     private ObjectMapper mapper;

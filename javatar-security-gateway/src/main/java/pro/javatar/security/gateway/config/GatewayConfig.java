@@ -10,6 +10,8 @@ public interface GatewayConfig {
 
     Logout logout();
 
+    boolean enablePostExchangeToken();
+
     interface Login {
 
         Boolean enabled();
