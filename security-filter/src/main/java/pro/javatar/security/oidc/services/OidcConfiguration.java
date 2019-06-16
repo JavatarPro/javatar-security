@@ -137,7 +137,7 @@ public class OidcConfiguration implements InitializingBean {
         urlResolver.setFilterApplyUrls(filterOptionConverter.convertList(filterApplyUrlList));
     }
 
-    @Value("#{'${security.oidc.filterIgnoreUrlList:}'.split(',')}")
+    // @Value("#{'${security.oidc.filterIgnoreUrlList:}'.split(',')}")
     public void setFilterIgnoreUrlList(List<String> filterIgnoreUrlList) {
         urlResolver.setFilterIgnoreUrls(filterOptionConverter.convertList(filterIgnoreUrlList));
     }
