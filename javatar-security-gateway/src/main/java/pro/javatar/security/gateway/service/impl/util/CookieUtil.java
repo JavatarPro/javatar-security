@@ -1,5 +1,8 @@
 package pro.javatar.security.gateway.service.impl.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
@@ -13,6 +16,8 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class CookieUtil {
 
+    private static final Logger logger = LoggerFactory.getLogger(CookieUtil.class);
+
     public static String getCookie(String cookieName, Cookie[] cookies) {
         if(cookies == null){
             return "";
@@ -23,6 +28,12 @@ public class CookieUtil {
             }
         }
         return "";
+    }
+
+    public static void createSecureCookie(HttpServletResponse response, String key, String value) {
+        Cookie secureCookie = createSecureCookie(key, value);
+        logger.debug(":: Set secret key as cookie {}", secureCookie);
+        response.addCookie(secureCookie);
     }
 
     public static Cookie createSecureCookie(String key, String value) {

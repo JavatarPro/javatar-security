@@ -4,6 +4,7 @@
  */
 package pro.javatar.secret.storage.impl;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import pro.javatar.secret.storage.api.SecretStorageService;
+import pro.javatar.secret.storage.api.exception.PersistenceSecretStorageException;
 import pro.javatar.secret.storage.api.model.SecretTokenDetails;
 
 import java.time.Duration;
@@ -19,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 public class SecretStorageRedisImpl implements SecretStorageService {
 
     private static final Logger logger = LoggerFactory.getLogger(SecretStorageRedisImpl.class);
-
 
     private RedisTemplate<String, String> redisTemplate;
 
@@ -33,11 +34,12 @@ public class SecretStorageRedisImpl implements SecretStorageService {
     public SecretStorageRedisImpl(RedisTemplate<String, String> redisTemplate, Duration keyExpiration) {
         this.redisTemplate = redisTemplate;
         mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.keyExpiration = keyExpiration;
     }
 
     @Override
-    public void put(String secretKey, SecretTokenDetails secretTokenDetails) {
+    public void put(String secretKey, SecretTokenDetails secretTokenDetails) throws PersistenceSecretStorageException {
         logger.info("Storing secret details for secretKey `{}`", secretKey);
         try {
             String json = mapper.writeValueAsString(secretTokenDetails);
@@ -46,6 +48,7 @@ public class SecretStorageRedisImpl implements SecretStorageService {
             redisTemplate.opsForValue().set(fullSecretKey, json, keyExpiration.toMillis(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             logger.error("Can't write token details as json. Token details is {}", secretTokenDetails, e);
+            throw new PersistenceSecretStorageException(e.getMessage());
         }
     }
 
@@ -73,7 +76,6 @@ public class SecretStorageRedisImpl implements SecretStorageService {
         redisTemplate.delete(fullSecretKey);
     }
 
-    @Override
     public String getStorageName() {
         return storageName;
     }

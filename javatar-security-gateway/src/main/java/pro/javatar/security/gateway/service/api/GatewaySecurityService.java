@@ -3,6 +3,8 @@ package pro.javatar.security.gateway.service.api;
 import pro.javatar.security.api.model.AuthRequestBO;
 import pro.javatar.security.api.model.TokenInfoBO;
 import pro.javatar.security.gateway.exception.LoginException;
+import pro.javatar.security.gateway.model.GatewayResponse;
+import pro.javatar.security.gateway.model.HeaderMapRequestWrapper;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,9 +32,9 @@ public interface GatewaySecurityService {
     String login(AuthRequestBO authRequest, HttpServletRequest request, HttpServletResponse response)
             throws LoginException;
 
-    String exchangeToken(HttpServletResponse response);
+    void exchangeToken(GatewayResponse response);
 
-    TokenInfoBO exchangeToken(HttpServletRequest request);
+    void appendSecurityHeaders(HeaderMapRequestWrapper requestWrapper);
 
     void logout(HttpServletRequest request, HttpServletResponse response);
 

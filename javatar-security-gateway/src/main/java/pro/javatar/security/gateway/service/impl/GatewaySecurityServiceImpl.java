@@ -3,22 +3,34 @@ package pro.javatar.security.gateway.service.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import pro.javatar.secret.storage.api.SecretStorageService;
+import pro.javatar.secret.storage.api.exception.DeleteFailedSecretStorageException;
+import pro.javatar.secret.storage.api.exception.PersistenceSecretStorageException;
+import pro.javatar.secret.storage.api.exception.TokenNotFoundSecretStorageException;
 import pro.javatar.secret.storage.api.model.SecretTokenDetails;
 import pro.javatar.security.api.AuthService;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.gateway.exception.LoginException;
+import pro.javatar.security.gateway.model.GatewayResponse;
+import pro.javatar.security.gateway.model.HeaderMapRequestWrapper;
 import pro.javatar.security.gateway.service.api.GatewaySecurityService;
 import pro.javatar.security.api.exception.IssueTokensException;
 import pro.javatar.security.api.model.AuthRequestBO;
 import pro.javatar.security.api.model.TokenInfoBO;
 import pro.javatar.security.gateway.service.impl.util.CookieUtil;
+import pro.javatar.security.oidc.utils.StringUtils;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 import java.util.UUID;
+
+import static org.apache.http.HttpHeaders.AUTHORIZATION;
+import static pro.javatar.security.oidc.SecurityConstants.REALM_HEADER;
+import static pro.javatar.security.oidc.SecurityConstants.REFRESH_TOKEN_HEADER;
 
 /**
  * @author Borys Zora
@@ -61,34 +73,67 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
             String correlationId = UUID.randomUUID().toString();
             secretService.put(correlationId, secretToken);
 
-            addCookies(correlationId, response);
+            CookieUtil.createSecureCookie(response, TOKEN_ID, correlationId);
             return correlationId;
-        } catch (IssueTokensException e) {
+        } catch (IssueTokensException | PersistenceSecretStorageException e) {
             logger.error(e.getMessage(), e);
             throw new LoginException(e.getMessage());
         }
     }
 
-    private void populateRealmInAuthRequestIfMissing(AuthRequestBO authRequest) {
-        if (authRequest.getRealm() == null) {
-            authRequest.setRealm(config.identityProvider().realm());
+    // TODO find out how to extract ip address and other info precisely
+    @Override
+    public void exchangeToken(GatewayResponse response) {
+        Map<String, Object> gatewayHeaders = response.getResponseGatewayHeaders();
+
+        // TODO validate previous token as well
+        if (!gatewayHeaders.containsKey(HttpHeaders.AUTHORIZATION)) {
+            logger.debug("Authorization header is not found, tokenID is not exchanged");
+            return;
+        }
+
+        SecretTokenDetails secretToken = new SecretTokenDetails();
+        // TODO use only access & refresh tokens all other info we can retrieve from previous token,
+        //  that should be provided
+        // secretToken.setAccessToken((String) gatewayHeaders.get(HttpHeaders.AUTHORIZATION));
+        // secretToken.setRefreshToken((String) gatewayHeaders.get(SecurityConstants.REFRESH_TOKEN_HEADER));
+        // secretToken.setRealm((String) gatewayHeaders.get(SecurityConstants.REALM_HEADER))
+        String correlationId = UUID.randomUUID().toString();
+        try {
+            secretService.put(correlationId, secretToken);
+            CookieUtil.createSecureCookie(response.getResponse(), TOKEN_ID, correlationId);
+        } catch (PersistenceSecretStorageException e) {
+            logger.warn(e.getMessage(), e);
         }
     }
 
-    private void addCookies(String correlationId, HttpServletResponse response) {
-        Cookie cookie = CookieUtil.createSecureCookie(TOKEN_ID, correlationId);
-        logger.debug(":: Set secret key as cookie {}", cookie);
-        response.addCookie(cookie);
-    }
-
     @Override
-    public String exchangeToken(HttpServletResponse response) {
-        return null;
-    }
+    public void appendSecurityHeaders(HeaderMapRequestWrapper requestWrapper) {
+        String secretKey = CookieUtil.getCookie(TOKEN_ID, requestWrapper.getCookies());
 
-    @Override
-    public TokenInfoBO exchangeToken(HttpServletRequest request) {
-        return null;
+        if (StringUtils.isBlank(secretKey)) {
+            logger.debug("authorizationKey is blank, skip retrieve from secret storage");
+            return;
+        }
+
+        SecretTokenDetails secretTokenDetails = null;
+        try {
+            secretTokenDetails = secretService.get(secretKey);
+            // TODO if close to expiration exchange refresh token
+        } catch (TokenNotFoundSecretStorageException e) {
+            logger.error(e.getMessage(), e);
+            // TODO throw exception
+        }
+
+        if (secretTokenDetails == null || secretTokenDetails.isEmpty()) {
+            logger.info("Token details is empty");
+            // TODO throw exception
+            return;
+        }
+
+        requestWrapper.addHeader(AUTHORIZATION, secretTokenDetails.getAccessToken());
+        requestWrapper.addHeader(REFRESH_TOKEN_HEADER, secretTokenDetails.getRefreshToken());
+        requestWrapper.addHeader(REALM_HEADER, secretTokenDetails.getRealm());
     }
 
     @Override
@@ -96,8 +141,12 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         Cookie[] cookies = request.getCookies();
         String secretKey = CookieUtil.getCookie(TOKEN_ID, cookies);
         // TODO remove parent vault key, rotate keys more frequently
-        secretService.delete(secretKey);
-        // TODO response send empty cookies for our token
+        try {
+            secretService.delete(secretKey);
+        } catch (DeleteFailedSecretStorageException e) {
+            logger.error(e.getMessage(), e);
+        }
+        CookieUtil.removeCookie(response, TOKEN_ID);
     }
 
     private SecretTokenDetails getSecretTokenDetails(String realm,
@@ -111,5 +160,11 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         secretToken.setSessionId(sessionToken);
         secretToken.setIpAddress(ipAddress);
         return secretToken;
+    }
+
+    private void populateRealmInAuthRequestIfMissing(AuthRequestBO authRequest) {
+        if (authRequest.getRealm() == null) {
+            authRequest.setRealm(config.identityProvider().realm());
+        }
     }
 }
