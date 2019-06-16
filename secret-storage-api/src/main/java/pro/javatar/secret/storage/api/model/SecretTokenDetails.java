@@ -57,16 +57,19 @@ public class SecretTokenDetails {
     }
 
     public boolean isEmpty() {
-        if (isBlank(this.accessToken)) return false;
-        if (isBlank(this.refreshToken)) return false;
+        if (isNotBlank(accessToken) && isNotBlank(this.refreshToken)) {
+            return false;
+        }
         return true;
     }
 
     public static boolean isEmpty(SecretTokenDetails secretTokenDetails) {
         if (secretTokenDetails == null) return false;
-        if (isBlank(secretTokenDetails.accessToken)) return false;
-        if (isBlank(secretTokenDetails.refreshToken)) return false;
-        return true;
+        return secretTokenDetails.isEmpty();
+    }
+
+    private static boolean isNotBlank(CharSequence cs) {
+        return !isBlank(cs);
     }
 
     private static boolean isBlank(CharSequence cs) {

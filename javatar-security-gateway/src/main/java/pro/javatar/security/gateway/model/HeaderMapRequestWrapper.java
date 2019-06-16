@@ -19,6 +19,7 @@ public class HeaderMapRequestWrapper extends HttpServletRequestWrapper {
 
     public HeaderMapRequestWrapper(HttpServletRequest request, Map<String, String> headerMap) {
         super(request);
+        this.headerMap = headerMap;
     }
 
     public HeaderMapRequestWrapper(HttpServletRequest request) {

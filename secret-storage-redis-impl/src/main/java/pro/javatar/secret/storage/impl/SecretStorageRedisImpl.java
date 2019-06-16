@@ -4,6 +4,7 @@
  */
 package pro.javatar.secret.storage.impl;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ public class SecretStorageRedisImpl implements SecretStorageService {
     public SecretStorageRedisImpl(RedisTemplate<String, String> redisTemplate, Duration keyExpiration) {
         this.redisTemplate = redisTemplate;
         mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.keyExpiration = keyExpiration;
     }
 
