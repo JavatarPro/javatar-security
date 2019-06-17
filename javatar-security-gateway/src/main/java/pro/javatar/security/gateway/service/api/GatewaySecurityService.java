@@ -1,11 +1,11 @@
 package pro.javatar.security.gateway.service.api;
 
 import pro.javatar.security.api.model.AuthRequestBO;
-import pro.javatar.security.api.model.TokenInfoBO;
 import pro.javatar.security.gateway.exception.LoginException;
 import pro.javatar.security.gateway.model.GatewayResponse;
 import pro.javatar.security.gateway.model.HeaderMapRequestWrapper;
 
+import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -37,5 +37,7 @@ public interface GatewaySecurityService {
     void appendSecurityHeaders(HeaderMapRequestWrapper requestWrapper);
 
     void logout(HttpServletRequest request, HttpServletResponse response);
+
+    boolean shouldApplyUrl(ServletRequest request);
 
 }
