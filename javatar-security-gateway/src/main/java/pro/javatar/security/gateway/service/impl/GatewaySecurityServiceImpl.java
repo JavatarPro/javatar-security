@@ -20,8 +20,10 @@ import pro.javatar.security.api.exception.IssueTokensException;
 import pro.javatar.security.api.model.AuthRequestBO;
 import pro.javatar.security.api.model.TokenInfoBO;
 import pro.javatar.security.gateway.service.impl.util.CookieUtil;
+import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 import pro.javatar.security.oidc.utils.StringUtils;
 
+import javax.servlet.ServletRequest;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -49,13 +51,17 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
 
     private SecurityConfig config;
 
+    private OidcAuthenticationHelper oidcHelper;
+
     @Autowired
     public GatewaySecurityServiceImpl(AuthService authService,
                                       SecretStorageService secretService,
-                                      SecurityConfig config) {
+                                      SecurityConfig config,
+                                      OidcAuthenticationHelper oidcHelper) {
         this.authService = authService;
         this.secretService = secretService;
         this.config = config;
+        this.oidcHelper = oidcHelper;
     }
 
     @Override
@@ -147,6 +153,14 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
             logger.error(e.getMessage(), e);
         }
         CookieUtil.removeCookie(response, TOKEN_ID);
+    }
+
+    @Override
+    public boolean shouldApplyUrl(ServletRequest request) {
+        HttpServletRequest req = (HttpServletRequest) request;
+        String method = req.getMethod();
+        String path = req.getRequestURI();
+        return oidcHelper.shouldApplyUrl(method, path);
     }
 
     private SecretTokenDetails getSecretTokenDetails(String realm,

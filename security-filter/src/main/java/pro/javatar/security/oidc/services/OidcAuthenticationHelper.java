@@ -124,6 +124,10 @@ public class OidcAuthenticationHelper {
         realmService.removeRealmFromCurrentRequest();
     }
 
+    public boolean shouldApplyUrl(String method, String path) {
+        return oidcConfiguration.getUrlResolver().apply(method, path);
+    }
+
     public boolean shouldApplyUrl(HttpRequest request) {
         return oidcConfiguration.getUrlResolver().apply(request);
     }

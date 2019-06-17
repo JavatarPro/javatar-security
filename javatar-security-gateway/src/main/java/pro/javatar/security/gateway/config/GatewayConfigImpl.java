@@ -17,6 +17,8 @@ public class GatewayConfigImpl implements GatewayConfig {
 
     boolean enablePostExchangeToken = true;
 
+    UiImpl ui;
+
     @Override
     public Login login() {
         return login;
@@ -30,6 +32,42 @@ public class GatewayConfigImpl implements GatewayConfig {
     @Override
     public boolean enablePostExchangeToken() {
         return enablePostExchangeToken;
+    }
+
+    @Override
+    public Ui ui() {
+        return ui;
+    }
+
+    public void setLogin(LoginImpl login) {
+        this.login = login;
+    }
+
+    public void setLogout(LogoutImpl logout) {
+        this.logout = logout;
+    }
+
+    public void setEnablePostExchangeToken(boolean enablePostExchangeToken) {
+        this.enablePostExchangeToken = enablePostExchangeToken;
+    }
+
+    public void setUi(UiImpl ui) {
+        this.ui = ui;
+    }
+
+    static class UiImpl implements Ui {
+
+        String pathPrefix;
+
+        @Override
+        public String pathPrefix() {
+            return pathPrefix;
+        }
+
+        public void setPathPrefix(String pathPrefix) {
+            this.pathPrefix = pathPrefix;
+        }
+
     }
 
     static class LoginImpl implements Login {

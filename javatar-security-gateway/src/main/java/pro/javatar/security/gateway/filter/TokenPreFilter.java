@@ -45,9 +45,13 @@ public class TokenPreFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-        HeaderMapRequestWrapper wrapper = new HeaderMapRequestWrapper(request);
-        gatewaySecurityService.appendSecurityHeaders(wrapper);
-        chain.doFilter(wrapper, response);
+        if (gatewaySecurityService.shouldApplyUrl(request)) {
+            HeaderMapRequestWrapper wrapper = new HeaderMapRequestWrapper(request);
+            gatewaySecurityService.appendSecurityHeaders(wrapper);
+            chain.doFilter(wrapper, response);
+        } else {
+            chain.doFilter(request, response);
+        }
     }
 
     @Override

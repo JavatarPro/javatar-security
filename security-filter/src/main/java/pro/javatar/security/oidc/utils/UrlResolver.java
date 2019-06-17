@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class UrlResolver {
+
     private static final String WILDCARD_SEARCH_SYMBOL = "*";
 
     private Pattern applyPattern;
@@ -42,45 +43,51 @@ public class UrlResolver {
     }
 
     public boolean apply(HttpRequest request) {
+        String path = request.getURI().getPath();
+        String method = request.getMethod().name();
+        return apply(method, path);
+    }
+
+    public boolean apply(String method, String path) {
         if (isEmpty()) {
             return true;
         }
 
         if (ignoreAsContaining.stream()
-                 .anyMatch(UriPredicate.uriContains(request)
-                         .and(UriPredicate.httpMethodEquals(request)))) {
+                 .anyMatch(UriPredicate.uriContains(path)
+                         .and(UriPredicate.httpMethodEquals(method, path)))) {
             return false;
         }
         if (ignoreAsStarting.stream()
-                     .anyMatch(UriPredicate.uriStarts(request)
-                             .and(UriPredicate.httpMethodEquals(request)))) {
+                     .anyMatch(UriPredicate.uriStarts(path)
+                             .and(UriPredicate.httpMethodEquals(method, path)))) {
             return false;
         }
         if (ignoreAsEquality.stream()
-                     .anyMatch(UriPredicate.uriEquals(request)
-                             .and(UriPredicate.httpMethodEquals(request)))) {
+                     .anyMatch(UriPredicate.uriEquals(path)
+                             .and(UriPredicate.httpMethodEquals(method, path)))) {
             return false;
         }
         if (applyAsContaining.stream()
-                .anyMatch(UriPredicate.uriContains(request)
-                        .and(UriPredicate.httpMethodEquals(request)))) {
+                .anyMatch(UriPredicate.uriContains(path)
+                        .and(UriPredicate.httpMethodEquals(method, path)))) {
             return true;
         }
         if (applyAsStarting.stream()
-                .anyMatch(UriPredicate.uriStarts(request)
-                        .and(UriPredicate.httpMethodEquals(request)))) {
+                .anyMatch(UriPredicate.uriStarts(path)
+                        .and(UriPredicate.httpMethodEquals(method, path)))) {
             return true;
         }
         if (applyAsEquality.stream()
-                .anyMatch(UriPredicate.uriEquals(request)
-                        .and(UriPredicate.httpMethodEquals(request)))) {
+                .anyMatch(UriPredicate.uriEquals(path)
+                        .and(UriPredicate.httpMethodEquals(method, path)))) {
             return true;
         }
 
         if (applyPattern == null) {
             return false;
         }
-        Matcher matcher = applyPattern.matcher(request.getURI().getPath());
+        Matcher matcher = applyPattern.matcher(path);
         return matcher.matches();
     }
 

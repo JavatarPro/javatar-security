@@ -10,7 +10,15 @@ public interface GatewayConfig {
 
     Logout logout();
 
+    Ui ui();
+
     boolean enablePostExchangeToken();
+
+    interface Ui {
+
+        String pathPrefix();
+
+    }
 
     interface Login {
 
