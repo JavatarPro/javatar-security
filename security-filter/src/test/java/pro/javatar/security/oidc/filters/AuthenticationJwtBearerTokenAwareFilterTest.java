@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.model.OAuth2Constants;
 import pro.javatar.security.oidc.SecurityTestFilter;
 import pro.javatar.security.oidc.SecurityTestResource;
@@ -76,6 +77,9 @@ public class AuthenticationJwtBearerTokenAwareFilterTest {
     private OidcConfiguration oidcConfiguration;
 
     @Autowired
+    private SecurityConfig config;
+
+    @Autowired
     private AuthorizationStubFilter authorizationStubFilter;
 
     @Autowired
@@ -93,7 +97,7 @@ public class AuthenticationJwtBearerTokenAwareFilterTest {
         authenticationRealmAwareFilter.setRealmMandatory(true);
         oidcAuthenticationHelper.setOidcConfiguration(oidcConfiguration);
         jwtBearerTokenAwareFilter.setOidcHelper(oidcAuthenticationHelper);
-        jwtBearerTokenAwareFilter.setOidcConfiguration(oidcConfiguration);
+        jwtBearerTokenAwareFilter.setConfig(config);
         jwtBearerTokenAwareFilter.setAuthorizationStubFilter(authorizationStubFilter);
         jwtBearerTokenAwareFilter.init(null);
         this.mockMvc = MockMvcBuilders

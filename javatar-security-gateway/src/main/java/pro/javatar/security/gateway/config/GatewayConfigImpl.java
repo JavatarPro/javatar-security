@@ -1,19 +1,17 @@
 package pro.javatar.security.gateway.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * @author Borys Zora
  * @version 2019-06-02
  */
-//@Configuration
 @ConfigurationProperties(prefix = "javatar.security.gateway")
 public class GatewayConfigImpl implements GatewayConfig {
 
-    LoginImpl login;
+    LoginImpl login = new LoginImpl(false, null);
 
-    LogoutImpl logout;
+    LogoutImpl logout = new LogoutImpl(false, null);
 
     boolean enablePostExchangeToken = true;
 
@@ -72,9 +70,16 @@ public class GatewayConfigImpl implements GatewayConfig {
 
     static class LoginImpl implements Login {
 
-        Boolean enabled;
+        Boolean enabled = false;
 
         String redirectUrl;
+
+        public LoginImpl() {}
+
+        public LoginImpl(Boolean enabled, String redirectUrl) {
+            this.enabled = enabled;
+            this.redirectUrl = redirectUrl;
+        }
 
         @Override
         public Boolean enabled() {
@@ -108,6 +113,13 @@ public class GatewayConfigImpl implements GatewayConfig {
         Boolean enabled;
 
         String redirectUrl;
+
+        public LogoutImpl() {}
+
+        public LogoutImpl(Boolean enabled, String redirectUrl) {
+            this.enabled = enabled;
+            this.redirectUrl = redirectUrl;
+        }
 
         @Override
         public Boolean enabled() {

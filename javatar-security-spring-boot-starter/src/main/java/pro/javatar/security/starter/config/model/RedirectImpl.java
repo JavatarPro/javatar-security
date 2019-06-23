@@ -10,11 +10,18 @@ public class RedirectImpl implements SecurityConfig.Redirect {
 
     boolean enabled;
 
+    boolean useReferAsRedirectUri;
+
     String redirectUrl;
 
     @Override
     public boolean enabled() {
         return enabled;
+    }
+
+    @Override
+    public boolean isUseReferAsRedirectUri() {
+        return useReferAsRedirectUri;
     }
 
     @Override
@@ -24,6 +31,10 @@ public class RedirectImpl implements SecurityConfig.Redirect {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public void setUseReferAsRedirectUri(boolean useReferAsRedirectUri) {
+        this.useReferAsRedirectUri = useReferAsRedirectUri;
     }
 
     public void setRedirectUrl(String redirectUrl) {

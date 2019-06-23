@@ -16,6 +16,10 @@ public interface SecurityConfig {
 
     List<String> ignoreUrls();
 
+    SecurityFilter securityFilter();
+
+    boolean isSkipRefererCheck();
+
     Redirect redirect();
 
     IdentityProvider identityProvider();
@@ -38,9 +42,20 @@ public interface SecurityConfig {
 
     String errorDescriptionLink();
 
+    interface SecurityFilter {
+
+        boolean isAnonymousAllowed();
+
+        boolean isJwtBearerFilterEnable();
+
+        boolean isJwtBearerTokenOtherAuthenticationAllowed();
+    }
+
     interface Redirect {
 
         boolean enabled();
+
+        boolean isUseReferAsRedirectUri();
 
         String redirectUrl();
 

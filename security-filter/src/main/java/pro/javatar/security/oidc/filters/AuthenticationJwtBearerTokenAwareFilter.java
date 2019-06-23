@@ -1,5 +1,6 @@
 package pro.javatar.security.oidc.filters;
 
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.OAuth2Constants;
 import pro.javatar.security.jwt.TokenVerifier;
@@ -8,7 +9,6 @@ import pro.javatar.security.oidc.SecurityConstants;
 import pro.javatar.security.oidc.exceptions.BearerJwtTokenNotFoundAuthenticationException;
 import pro.javatar.security.oidc.exceptions.ExchangeTokenByCodeAuthenticationException;
 import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
-import pro.javatar.security.oidc.services.OidcConfiguration;
 import pro.javatar.security.oidc.utils.StringUtils;
 
 import org.apache.http.HttpHeaders;
@@ -41,10 +41,11 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationJwtBearerTokenAwareFilter.class);
 
-    public static final String DIGEST_AUTHORIZATION_HEADER = "Digest";
-    public static final String BASIC_AUTHORIZATION_HEADER = "Basic";
+    public static final String DIGEST_AUTHORIZATION_HEADER_SCHEMA = "Digest";
 
-    private OidcConfiguration oidcConfiguration;
+    public static final String BASIC_AUTHORIZATION_HEADER_SCHEMA = "Basic";
+
+    private SecurityConfig config;
 
     // TODO (bzo) ask configuration about is filter enable/disable
     private AuthorizationStubFilter authorizationStubFilter;
@@ -63,7 +64,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
                          FilterChain filterChain) throws IOException, ServletException {
         // TODO remove stub
         boolean stubFilterEnable = authorizationStubFilter.isFilterEnable();
-        if (!oidcConfiguration.isJwtBearerFilterEnable() || stubFilterEnable) {
+        if (!config.securityFilter().isJwtBearerFilterEnable() || stubFilterEnable) {
             logger.info("{} is disabled. Dev mode is {}.", getClass().getCanonicalName(),
                     stubFilterEnable ? "on" : "off");
             filterChain.doFilter(servletRequest, servletResponse);
@@ -79,7 +80,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
             return;
         }
 
-        if (isOtherAuthenticaticationAllowed()) {
+        if (isOtherAuthenticationAllowed()) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated()) {
                 logger.info("authentication was obtained by other method");
@@ -117,7 +118,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
 
     void authenticate(HttpServletRequest request, HttpServletResponse response) {
         TokenDetails tokenDetails = obtainJwtBearerToken(request);
-        if (tokenDetails == null && oidcConfiguration.isAnonymousAllowed()) {
+        if (tokenDetails == null && config.securityFilter().isAnonymousAllowed()) {
             logger.debug("skipping authentication bearer token not found but anonymous is allowed");
             return;
         }
@@ -153,7 +154,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
                 isAuthorizationCodePassedByIdentityProvider(request)) {
             return exchangeAuthorizationCodeForBearerToken(request);
         }
-        if (oidcConfiguration.isAnonymousAllowed()) {
+        if (config.securityFilter().isAnonymousAllowed()) {
             return null;
         } else {
             throw new BearerJwtTokenNotFoundAuthenticationException();
@@ -166,7 +167,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
         try {
             String redirectUrl = request.getRequestURL().toString();
             String referer = request.getHeader(SecurityConstants.REFERER_HEADER);
-            if (oidcConfiguration.isUseReferAsRedirectUri() && StringUtils.isNotBlank(referer)) {
+            if (config.redirect().isUseReferAsRedirectUri() && StringUtils.isNotBlank(referer)) {
                 redirectUrl = referer;
             }
             redirectUrl = oidcHelper.removeCodeFromUrl(redirectUrl, secureCode);
@@ -186,21 +187,21 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
 
     boolean isHeaderTokenPresent(HttpServletRequest request) {
         String token = oidcHelper.getBearerToken(request);
-        return StringUtils.isNotBlank(token) && !token.startsWith(DIGEST_AUTHORIZATION_HEADER)
-                && !token.startsWith(BASIC_AUTHORIZATION_HEADER);
+        return StringUtils.isNotBlank(token) && !token.startsWith(DIGEST_AUTHORIZATION_HEADER_SCHEMA)
+                && !token.startsWith(BASIC_AUTHORIZATION_HEADER_SCHEMA);
     }
 
-    boolean isOtherAuthenticaticationAllowed() {
-        return oidcConfiguration.isJwtBearerTokenOtherAuthenticationAllowed();
+    boolean isOtherAuthenticationAllowed() {
+        return config.securityFilter().isJwtBearerTokenOtherAuthenticationAllowed();
     }
 
     private boolean isAuthorizationCodePassedByIdentityProvider(HttpServletRequest request) {
         String referrer = request.getHeader(SecurityConstants.REFERER_HEADER);
-        if (StringUtils.isBlank(oidcConfiguration.getIdentityProviderHost())) {
+        if (StringUtils.isBlank(config.identityProvider().url())) {
             logger.warn("IdentityProviderHost not set");
             return true;
         }
-        if(oidcConfiguration.isSkipRefererCheck()){
+        if(config.isSkipRefererCheck()){
             logger.debug("Skipping referer check.");
             return true;
         }
@@ -225,9 +226,8 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
     }
 
     @Autowired
-    public void setOidcConfiguration(OidcConfiguration oidcConfiguration) {
-        this.oidcConfiguration = oidcConfiguration;
+    public void setConfig(SecurityConfig config) {
+        this.config = config;
     }
-
 }
 
