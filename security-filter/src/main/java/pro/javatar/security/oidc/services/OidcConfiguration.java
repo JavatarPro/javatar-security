@@ -175,6 +175,8 @@ public class OidcConfiguration implements InitializingBean {
         }
     }
 
+    // use SecurityConfig
+    @Deprecated
     public boolean isJwtBearerFilterEnable() {
         return jwtBearerFilterEnable;
     }
@@ -319,6 +321,7 @@ public class OidcConfiguration implements InitializingBean {
         this.excludeValidationRealm = excludeValidationRealm;
     }
 
+    @Deprecated
     public boolean isUseReferAsRedirectUri() {
         return useReferAsRedirectUri;
     }
@@ -348,6 +351,8 @@ public class OidcConfiguration implements InitializingBean {
         this.jwtBearerTokenOtherAuthenticationAllowed = jwtBearerTokenOtherAuthenticationAllowed;
     }
 
+    // TODO move it security config
+    @Deprecated
     public boolean isJwtBearerTokenOtherAuthenticationAllowed() {
         return jwtBearerTokenOtherAuthenticationAllowed;
     }
@@ -401,6 +406,8 @@ public class OidcConfiguration implements InitializingBean {
         addRunOnBehalfOfUsers(login.trim(), password.trim(), realm.trim());
     }
 
+    // moved to SecurityConfig
+    @Deprecated
     public boolean isAnonymousAllowed() {
         return anonymousAllowed;
     }
@@ -409,6 +416,8 @@ public class OidcConfiguration implements InitializingBean {
         this.anonymousAllowed = anonymousAllowed;
     }
 
+    // moved to SecurityConfig
+    @Deprecated
     public boolean isSkipRefererCheck() {
         return skipRefererCheck;
     }

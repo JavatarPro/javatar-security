@@ -18,11 +18,17 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "javatar.security")
 public class SecurityConfigImpl implements SecurityConfig {
 
-    private static TokenValidation defaultTokenValidation = new TokenValidationImpl();
+    private static final TokenValidation defaultTokenValidation = new TokenValidationImpl();
+
+    private static final SecurityFilter defaultSecurityFilter = new SecurityFilterImpl();
 
     List<String> applyUrls;
 
     List<String> ignoreUrls;
+
+    SecurityFilterImpl securityFilter;
+
+    boolean skipRefererCheck = true;
 
     RedirectImpl redirect;
 
@@ -54,6 +60,19 @@ public class SecurityConfigImpl implements SecurityConfig {
     @Override
     public List<String> ignoreUrls() {
         return ignoreUrls;
+    }
+
+    @Override
+    public SecurityFilter securityFilter() {
+        if (securityFilter == null) {
+            return defaultSecurityFilter;
+        }
+        return securityFilter;
+    }
+
+    @Override
+    public boolean isSkipRefererCheck() {
+        return skipRefererCheck;
     }
 
     @Override
@@ -131,6 +150,18 @@ public class SecurityConfigImpl implements SecurityConfig {
 
     public void setIgnoreUrls(List<String> ignoreUrls) {
         this.ignoreUrls = ignoreUrls;
+    }
+
+    public void setSecurityFilter(SecurityFilterImpl securityFilter) {
+        this.securityFilter = securityFilter;
+    }
+
+    public void setSkipRefererCheck(boolean skipRefererCheck) {
+        this.skipRefererCheck = skipRefererCheck;
+    }
+
+    public void setRedirect(RedirectImpl redirect) {
+        this.redirect = redirect;
     }
 
     public IdentityProviderImpl getIdentityProvider() {

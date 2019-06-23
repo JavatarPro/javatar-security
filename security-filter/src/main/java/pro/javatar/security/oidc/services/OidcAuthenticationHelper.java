@@ -145,7 +145,7 @@ public class OidcAuthenticationHelper {
         logger.info("Start authenticate current thread");
         AccessToken accessToken = parseAccessToken(tokenDetails);
         AccessToken.Access access =
-                accessToken.getResourceAccess().get(oidcConfiguration.getClientId());
+                accessToken.getResourceAccess().get(config.identityProvider().client());
         Collection<GrantedAuthority> authorities = retrieveAuthorities(access);
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(accessToken.getPreferredUsername(), tokenDetails, authorities);

@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 /**
  * @author Borys Zora
  * @version 2019-05-18
@@ -49,6 +52,7 @@ public class SpringTestConfig {
         return new RealmServiceImpl(securityConfig());
     }
 
+    // TODO replace with mock below
     @Bean
     public SecurityConfig securityConfig() {
         return new SecurityConfig() {
@@ -64,10 +68,40 @@ public class SpringTestConfig {
             }
 
             @Override
+            public SecurityFilter securityFilter() {
+                return new SecurityFilter() {
+                    @Override
+                    public boolean isAnonymousAllowed() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isJwtBearerFilterEnable() {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean isJwtBearerTokenOtherAuthenticationAllowed() {
+                        return false;
+                    }
+                };
+            }
+
+            @Override
+            public boolean isSkipRefererCheck() {
+                return false;
+            }
+
+            @Override
             public Redirect redirect() {
                 return new Redirect() {
                     @Override
                     public boolean enabled() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isUseReferAsRedirectUri() {
                         return false;
                     }
 
@@ -227,5 +261,27 @@ public class SpringTestConfig {
                 return null;
             }
         };
+    }
+
+    public SecurityConfig getSecurityConfigMock(String client) {
+        SecurityConfig securityConfig = mock(SecurityConfig.class);
+
+        SecurityConfig.IdentityProvider identityProvider = mock(SecurityConfig.IdentityProvider.class);
+        when((securityConfig.identityProvider())).thenReturn(identityProvider);
+        when(identityProvider.client()).thenReturn(client);
+        when(identityProvider.secret()).thenReturn("86ff8f97-04b5-43f0-9c2f-6031d4e11aac");
+        when(identityProvider.url()).thenReturn("http://195.201.110.123:48666");
+
+        SecurityConfig.Application application = mock(SecurityConfig.Application.class);
+        when(securityConfig.application()).thenReturn(application);
+        when(application.user()).thenReturn("jenkins");
+        when(application.password()).thenReturn("se(ur3");
+
+        SecurityConfig.TokenValidation tokenValidation = mock(SecurityConfig.TokenValidation.class);
+        when(securityConfig.tokenValidation()).thenReturn(tokenValidation);
+        when(tokenValidation.checkTokenIsActive()).thenReturn(false);
+        when(tokenValidation.checkTokenType()).thenReturn(true);
+
+        return securityConfig;
     }
 }

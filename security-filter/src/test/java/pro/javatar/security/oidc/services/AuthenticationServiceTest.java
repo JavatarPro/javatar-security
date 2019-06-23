@@ -25,6 +25,8 @@ import java.util.Collection;
 
 public class AuthenticationServiceTest {
 
+    private static final String CLIENT_ID = "producer-service";
+
     private TokenService tokenService;
 
     private OidcAuthenticationHelper oidcAuthenticationHelper;
@@ -41,17 +43,16 @@ public class AuthenticationServiceTest {
         publicKeyCacheService = mock(PublicKeyCacheService.class);
 
         OidcConfiguration oidcConfiguration = new OidcConfiguration();
-        oidcConfiguration.setClientId("producer-service");
-        oidcConfiguration.setCheckTokenType(true);
-        oidcConfiguration.setCheckIsActive(true);
 
-        securityConfig = new SpringTestConfig().securityConfig();
+        securityConfig = new SpringTestConfig().getSecurityConfigMock(CLIENT_ID);
+
         RealmService realmService = mock(RealmService.class);
         OAuthClient oAuthClient = new OAuthClient(oidcConfiguration, realmService, publicKeyCacheService, securityConfig);
 
         oidcAuthenticationHelper = new OidcAuthenticationHelper();
         oidcAuthenticationHelper.setOidcConfiguration(oidcConfiguration);
         oidcAuthenticationHelper.setOAuthClient(oAuthClient);
+        oidcAuthenticationHelper.setConfig(securityConfig);
 
         service = new AuthenticationService(this.tokenService, oidcAuthenticationHelper);
     }
@@ -60,7 +61,7 @@ public class AuthenticationServiceTest {
     public void authenticateByTokenDetails() throws Exception {
         JwtTokenGenerator tokenGenerator =
                 new JwtTokenGenerator("http://localhost:8080/auth/test-realm",
-                        "producer-service", Arrays.asList("USER_READ", "USER_WRITE"));
+                        CLIENT_ID, Arrays.asList("USER_READ", "USER_WRITE"));
         String accessToken = tokenGenerator.generateJwtAccessToken();
         TokenDetails tokenDetails = new TokenDetails();
         tokenDetails.setAccessToken(accessToken);
@@ -85,7 +86,7 @@ public class AuthenticationServiceTest {
     public void authenticateByRefreshToken() throws Exception {
         JwtTokenGenerator tokenGenerator =
                 new JwtTokenGenerator("http://localhost:8080/auth/test-realm",
-                        "producer-service", Arrays.asList("USER_READ", "USER_WRITE"));
+                        CLIENT_ID, Arrays.asList("USER_READ", "USER_WRITE"));
         String accessToken = tokenGenerator.generateJwtAccessToken();
         TokenDetails tokenDetails = new TokenDetails();
         tokenDetails.setAccessToken(accessToken);

@@ -444,10 +444,40 @@ public class AuthenticationRealmAwareFilterTest {
                 }
 
                 @Override
+                public SecurityFilter securityFilter() {
+                    return new SecurityFilter() {
+                        @Override
+                        public boolean isAnonymousAllowed() {
+                            return false;
+                        }
+
+                        @Override
+                        public boolean isJwtBearerFilterEnable() {
+                            return true;
+                        }
+
+                        @Override
+                        public boolean isJwtBearerTokenOtherAuthenticationAllowed() {
+                            return false;
+                        }
+                    };
+                }
+
+                @Override
+                public boolean isSkipRefererCheck() {
+                    return false;
+                }
+
+                @Override
                 public Redirect redirect() {
                     return new Redirect() {
                         @Override
                         public boolean enabled() {
+                            return false;
+                        }
+
+                        @Override
+                        public boolean isUseReferAsRedirectUri() {
                             return false;
                         }
 

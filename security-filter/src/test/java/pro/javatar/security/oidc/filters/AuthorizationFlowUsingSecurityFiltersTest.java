@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.public_key.api.RealmPublicKeyCacheService;
 import pro.javatar.security.oidc.SecurityConstants;
 import pro.javatar.security.oidc.SecurityTestFilter;
@@ -40,6 +41,7 @@ import pro.javatar.security.oidc.utils.SpringTestConfig;
 import javax.servlet.ServletException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {SpringTestConfig.class, AuthorizationFlowUsingSecurityFiltersTest.SpringConfig.class})
@@ -89,7 +91,8 @@ public class AuthorizationFlowUsingSecurityFiltersTest {
     public void setup() throws ServletException {
         MockitoAnnotations.initMocks(this);
         pem = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAufMhTirSlRD2iQKp6SDheMxSeritq8DeA9ropyua6K//b9D33yQI5vFSfZu4EY/Dj45Vi6XXrc3wK8BC0aMHD8647CABpBGx667KSFmKOWb15DHIYYsvSWS7y5LnZieC5VpNlnqOrSb+8pNbUBJa2VbBRBxnFG6tBzwpZ42Jyo9fFVkwxdBDUiA6GD2Xtf/8v3EboDc7fvtNcrog4/4ICd3/v+aIOVsUTxCTwLkbfdUPHFDetD9vBecWeMouS8Nl4nZO2dG0Im+Z7lcIVu70O8ERkzveULSVgPXqIC0cICqsLKL/VOcfXZ/wcvn0Eb31UuuMVjBsDmqJMXXwypSOWwIDAQAB";
-        oidcConfiguration.setClientId("configuration-service");
+        jwtBearerTokenAwareFilter.setConfig(getConfig());
+        oidcAuthenticationHelper.setConfig(getConfig());
         oidcConfiguration.setFilterApplyUrlRegex("\\/.*");
         authenticationRealmAwareFilter.setEnableFilter(true);
         redirectAwareFilter.setEnableFilter(true);
@@ -164,5 +167,157 @@ public class AuthorizationFlowUsingSecurityFiltersTest {
             publicKeyCacheService.setRealmPublicKeyCacheService(
                     AuthorizationFlowUsingSecurityFiltersTest.realmPublicKeyCacheService);
         }
+
     }
+
+    // TODO replace with mock
+    public SecurityConfig getConfig() {
+        return new SecurityConfig() {
+            @Override
+            public List<String> applyUrls() {
+                return null;
+            }
+
+            @Override
+            public List<String> ignoreUrls() {
+                return null;
+            }
+
+            @Override
+            public SecurityFilter securityFilter() {
+                return new SecurityFilter() {
+                    @Override
+                    public boolean isAnonymousAllowed() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isJwtBearerFilterEnable() {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean isJwtBearerTokenOtherAuthenticationAllowed() {
+                        return false;
+                    }
+                };
+            }
+
+            @Override
+            public boolean isSkipRefererCheck() {
+                return false;
+            }
+
+            @Override
+            public Redirect redirect() {
+                return new Redirect() {
+                    @Override
+                    public boolean enabled() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isUseReferAsRedirectUri() {
+                        return false;
+                    }
+
+                    @Override
+                    public String redirectUrl() {
+                        return null;
+                    }
+                };
+            }
+
+            @Override
+            public IdentityProvider identityProvider() {
+                return new IdentityProvider() {
+                    @Override
+                    public String url() {
+                        return null;
+                    }
+
+                    @Override
+                    public String client() {
+                        return "configuration-service";
+                    }
+
+                    @Override
+                    public String secret() {
+                        return null;
+                    }
+
+                    @Override
+                    public String realm() {
+                        return "dev";
+                    }
+                };
+            }
+
+            @Override
+            public Boolean useReferAsRedirectUri() {
+                return null;
+            }
+
+            @Override
+            public String publicKeysStorage() {
+                return null;
+            }
+
+            @Override
+            public String tokenStorage() {
+                return null;
+            }
+
+            @Override
+            public Storage storage() {
+                return null;
+            }
+
+            @Override
+            public TokenValidation tokenValidation() {
+                return new TokenValidation() {
+                    @Override
+                    public Boolean checkTokenIsActive() {
+                        return false;
+                    }
+
+                    @Override
+                    public Boolean skipRefererCheck() {
+                        return true;
+                    }
+
+                    @Override
+                    public Boolean checkTokenType() {
+                        return true;
+                    }
+
+                    @Override
+                    public Boolean realmRequired() {
+                        return true;
+                    }
+                };
+            }
+
+            @Override
+            public Stub stub() {
+                return null;
+            }
+
+            @Override
+            public HttpClient httpClient() {
+                return null;
+            }
+
+            @Override
+            public Application application() {
+                return null;
+            }
+
+            @Override
+            public String errorDescriptionLink() {
+                return null;
+            }
+        };
+    }
+
 }
