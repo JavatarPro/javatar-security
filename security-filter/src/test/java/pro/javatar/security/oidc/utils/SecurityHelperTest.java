@@ -27,8 +27,10 @@ public class SecurityHelperTest {
     private static final String REALM = "test-realm";
     private static final String DEFAULT_REALM = "default-realm";
 
-    @Mock
-    private OidcConfiguration oidcConfiguration;
+    // decouple securityHelper from OidcConfiguration
+    // since 2019-06-24
+//    @Mock
+//    private OidcConfiguration oidcConfiguration;
 
     @InjectMocks
     private SecurityHelper securityHelper;
@@ -48,9 +50,12 @@ public class SecurityHelperTest {
                 new UsernamePasswordAuthenticationToken(LOGIN, null, new ArrayList<>()));
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
 
-        when(oidcConfiguration.getDefaultRealm()).thenReturn(DEFAULT_REALM);
+        // when(oidcConfiguration.getDefaultRealm()).thenReturn(DEFAULT_REALM);
 
-        assertEquals(DEFAULT_REALM, securityHelper.getCurrentRealm());
+        // assertEquals(DEFAULT_REALM, securityHelper.getCurrentRealm());
+        // change behaviour to return null, to not couple securityHelper to configuration
+        // since 2019-06-24
+        assertEquals(null, securityHelper.getCurrentRealm());
     }
 
     @Test
@@ -58,9 +63,12 @@ public class SecurityHelperTest {
         SecurityContextHolder.clearContext();
         assertNull(SecurityContextHolder.getContext().getAuthentication());
 
-        when(oidcConfiguration.getDefaultRealm()).thenReturn(DEFAULT_REALM);
+        // when(oidcConfiguration.getDefaultRealm()).thenReturn(DEFAULT_REALM);
 
-        assertEquals(DEFAULT_REALM, securityHelper.getCurrentRealm());
+        // assertEquals(DEFAULT_REALM, securityHelper.getCurrentRealm());
+        // change behaviour to return null, to not couple securityHelper to configuration
+        // since 2019-06-24
+        assertEquals(null, securityHelper.getCurrentRealm());
     }
 
     @Test
