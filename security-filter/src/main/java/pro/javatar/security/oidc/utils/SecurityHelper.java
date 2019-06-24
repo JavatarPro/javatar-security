@@ -7,14 +7,12 @@ package pro.javatar.security.oidc.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import pro.javatar.security.oidc.model.TokenDetails;
-import pro.javatar.security.oidc.services.OidcConfiguration;
 
 /**
  * @author Andrii Murashkin / Javatar LLC
@@ -25,13 +23,6 @@ public class SecurityHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityHelper.class);
 
-    private OidcConfiguration oidcConfiguration;
-
-    @Autowired
-    public SecurityHelper(OidcConfiguration oidcConfiguration) {
-        this.oidcConfiguration = oidcConfiguration;
-    }
-
     public String getCurrentRealm() {
         TokenDetails tokenDetails = null;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -41,9 +32,7 @@ public class SecurityHelper {
         if (tokenDetails != null) {
             return tokenDetails.getRealm();
         }
-        String defaultRealm = oidcConfiguration.getDefaultRealm();
-        logger.debug("Token details is null. Default realm {} will be applied.", defaultRealm);
-        return defaultRealm;
+        return null;
     }
 
     public String getCurrentLogin() {
