@@ -2,6 +2,8 @@ package pro.javatar.security.gateway.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.time.Duration;
+
 /**
  * @author Borys Zora
  * @version 2019-06-02
@@ -9,13 +11,21 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "javatar.security.gateway")
 public class GatewayConfigImpl implements GatewayConfig {
 
+    // fields
+
     LoginImpl login = new LoginImpl(false, null);
 
     LogoutImpl logout = new LogoutImpl(false, null);
 
     boolean enablePostExchangeToken = true;
 
+    Duration tokenRefreshInterval = Duration.parse("PT7M");
+
     UiImpl ui;
+
+    DevModeImpl devMode;
+
+    // interface impl
 
     @Override
     public Login login() {
@@ -33,9 +43,21 @@ public class GatewayConfigImpl implements GatewayConfig {
     }
 
     @Override
+    public Duration tokenRefreshInterval() {
+        return tokenRefreshInterval;
+    }
+
+    @Override
     public Ui ui() {
         return ui;
     }
+
+    @Override
+    public DevMode devMode() {
+        return devMode;
+    }
+
+    // setters
 
     public void setLogin(LoginImpl login) {
         this.login = login;
@@ -49,9 +71,19 @@ public class GatewayConfigImpl implements GatewayConfig {
         this.enablePostExchangeToken = enablePostExchangeToken;
     }
 
+    public void setTokenRefreshInterval(Duration tokenRefreshInterval) {
+        this.tokenRefreshInterval = tokenRefreshInterval;
+    }
+
     public void setUi(UiImpl ui) {
         this.ui = ui;
     }
+
+    public void setDevMode(DevModeImpl devMode) {
+        this.devMode = devMode;
+    }
+
+    // classes
 
     static class UiImpl implements Ui {
 
@@ -66,6 +98,12 @@ public class GatewayConfigImpl implements GatewayConfig {
             this.pathPrefix = pathPrefix;
         }
 
+        @Override
+        public String toString() {
+            return "UiImpl{" +
+                    "pathPrefix='" + pathPrefix + '\'' +
+                    '}';
+        }
     }
 
     static class LoginImpl implements Login {
@@ -148,4 +186,47 @@ public class GatewayConfigImpl implements GatewayConfig {
         }
     }
 
+    static class DevModeImpl implements DevMode {
+
+        Boolean enabled;
+
+        Boolean disableTokenIdSecuredCookies = true;
+
+        @Override
+        public Boolean enabled() {
+            return enabled;
+        }
+
+        @Override
+        public Boolean disableTokenIdSecuredCookies() {
+            return disableTokenIdSecuredCookies;
+        }
+
+        public void setEnabled(Boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public void setDisableTokenIdSecuredCookies(Boolean disableTokenIdSecuredCookies) {
+            this.disableTokenIdSecuredCookies = disableTokenIdSecuredCookies;
+        }
+
+        @Override
+        public String toString() {
+            return "DevModeImpl{" +
+                    "enabled=" + enabled +
+                    ", disableTokenIdSecuredCookies=" + disableTokenIdSecuredCookies +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "GatewayConfigImpl{" +
+                "login=" + login +
+                ", logout=" + logout +
+                ", enablePostExchangeToken=" + enablePostExchangeToken +
+                ", tokenRefreshInterval=" + tokenRefreshInterval +
+                ", ui=" + ui +
+                '}';
+    }
 }

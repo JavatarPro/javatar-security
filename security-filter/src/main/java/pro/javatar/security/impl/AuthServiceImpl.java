@@ -57,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public TokenInfoBO reIssueTokens(String refreshToken) throws ObtainRefreshTokenException {
-        return null;
+        return reIssueTokensUsingIdentityProvider(refreshToken);
     }
 
     private TokenInfoBO issueTokensUsingIdentityProvider(AuthRequestBO authRequest) {

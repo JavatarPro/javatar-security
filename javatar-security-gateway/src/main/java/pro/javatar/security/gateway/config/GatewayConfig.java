@@ -1,5 +1,7 @@
 package pro.javatar.security.gateway.config;
 
+import java.time.Duration;
+
 /**
  * @author Borys Zora
  * @version 2019-06-02
@@ -13,6 +15,10 @@ public interface GatewayConfig {
     Ui ui();
 
     boolean enablePostExchangeToken();
+
+    Duration tokenRefreshInterval();
+
+    DevMode devMode();
 
     interface Ui {
 
@@ -32,6 +38,14 @@ public interface GatewayConfig {
         Boolean enabled();
 
         String redirectUrl();
+
+    }
+
+    interface DevMode {
+
+        Boolean enabled();
+
+        Boolean disableTokenIdSecuredCookies();
 
     }
 }

@@ -34,11 +34,7 @@ public interface GatewaySecurityService {
     String login(AuthRequestBO authRequest, HttpServletRequest request, HttpServletResponse response)
             throws LoginException;
 
-    String exchangeToken(HttpServletRequest request, HttpServletResponse response);
-
     void appendSecurityHeaders(HeaderMapRequestWrapper requestWrapper);
-
-    void appendSecurityHeaders(GatewayResponse response);
 
     void logout(HttpServletRequest request, HttpServletResponse response);
 
