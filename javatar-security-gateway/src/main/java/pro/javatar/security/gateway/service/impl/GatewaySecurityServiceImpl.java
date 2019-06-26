@@ -91,71 +91,23 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         }
     }
 
-    // TODO find out how to extract ip address and other info precisely
-    @Override
-    public String exchangeToken(HttpServletRequest request,
-                                HttpServletResponse response) {
-        // TODO validate ip address of who is trying to refresh token
-        try {
-            String refreshToken = oidcHelper.getRefreshToken(request);
-            TokenInfoBO authToken = authService.reIssueTokens(refreshToken);
-
-            String realm = securityService.getUser(authToken.getAccessToken()).getRealm();
-            String ipAddress = request.getRemoteAddr();
-            return prepareSecretCookies(response, authToken, realm, ipAddress);
-        } catch (ObtainRefreshTokenException | PersistenceSecretStorageException e) {
-            logger.error(e.getMessage(), e);
-            throw new LoginException(e.getMessage());
-        }
-
-    }
-
-    private String prepareSecretCookies(HttpServletResponse response,
-                                      TokenInfoBO authToken,
-                                      String realm,
-                                      String ipAddress) throws PersistenceSecretStorageException {
-        SecretTokenDetails secretToken = getSecretTokenDetails(realm, ipAddress, authToken);
-
-        String correlationId = UUID.randomUUID().toString();
-        secretService.put(correlationId, secretToken);
-
-        CookieUtil.createSecureCookie(response, TOKEN_ID, correlationId);
-        return correlationId;
-    }
-
     @Override
     public void appendSecurityHeaders(HeaderMapRequestWrapper requestWrapper) {
-        String secretKey = CookieUtil.getCookie(TOKEN_ID, requestWrapper.getCookies());
+        SecretTokenDetails secretTokenDetails = getSecretTokenDetails(requestWrapper);
 
-        if (StringUtils.isBlank(secretKey)) {
-            logger.debug("authorizationKey is blank, skip retrieve from secret storage");
-            return;
-        }
-
-        SecretTokenDetails secretTokenDetails = null;
-        try {
-            secretTokenDetails = secretService.get(secretKey);
-            // TODO if close to expiration exchange refresh token
-        } catch (TokenNotFoundSecretStorageException e) {
-            logger.error(e.getMessage(), e);
-            // TODO throw exception
-        }
-
+        // TODO if close to expiration exchange refresh token
+        //  validate token
         if (secretTokenDetails == null || secretTokenDetails.isEmpty()) {
-            logger.info("Token details is empty");
-            // TODO throw exception
+            logger.warn("Token details is empty. Security headers are not added for request: {}",
+                    requestWrapper.getRequestURI());
             return;
         }
 
         requestWrapper.addHeader(AUTHORIZATION, secretTokenDetails.getAccessToken());
         requestWrapper.addHeader(REFRESH_TOKEN_HEADER, secretTokenDetails.getRefreshToken());
         requestWrapper.addHeader(REALM_HEADER, secretTokenDetails.getRealm());
-    }
 
-    @Override
-    public void appendSecurityHeaders(GatewayResponse response) {
-        Map<String, Object> gatewayHeaders = response.getResponseGatewayHeaders();
-
+        logger.debug("Security headers successfully added for request: {}", requestWrapper.getRequestURI());
     }
 
     @Override
@@ -197,6 +149,35 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         return secretToken;
     }
 
+    private String prepareSecretCookies(HttpServletResponse response,
+                                        TokenInfoBO authToken,
+                                        String realm,
+                                        String ipAddress) throws PersistenceSecretStorageException {
+        SecretTokenDetails secretToken = getSecretTokenDetails(realm, ipAddress, authToken);
+
+        String correlationId = UUID.randomUUID().toString();
+        secretService.put(correlationId, secretToken);
+
+        CookieUtil.createSecureCookie(response, TOKEN_ID, correlationId);
+        return correlationId;
+    }
+
+    private SecretTokenDetails getSecretTokenDetails(HeaderMapRequestWrapper requestWrapper) {
+        String secretKey = CookieUtil.getCookie(TOKEN_ID, requestWrapper.getCookies());
+
+        if (StringUtils.isBlank(secretKey)) {
+            logger.debug("authorizationKey is blank, skip retrieve from secret storage");
+            return null;
+        }
+
+        try {
+            return secretService.get(secretKey);
+        } catch (TokenNotFoundSecretStorageException e) {
+            logger.warn(e.getMessage(), e);
+            return null;
+        }
+    }
+
     private void populateRealmInAuthRequestIfMissing(AuthRequestBO authRequest) {
         if (authRequest.getRealm() == null) {
             authRequest.setRealm(config.identityProvider().realm());
@@ -207,6 +188,25 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         excludedHeaders.add(REFRESH_TOKEN_HEADER);
         excludedHeaders.add(REALM_HEADER);
         excludedHeaders.add(AUTHORIZATION);
+    }
+
+    // TODO find out how to extract ip address and other info precisely
+    String exchangeToken(HttpServletRequest request,
+                         HttpServletResponse response) {
+        // TODO validate ip address of who is trying to refresh token
+        String ipAddress = request.getRemoteAddr();
+        try {
+            // TODO Does not work, no headers at that point
+            String refreshToken = oidcHelper.getRefreshToken(request);
+            TokenInfoBO authToken = authService.reIssueTokens(refreshToken);
+
+            String realm = securityService.getUser(authToken.getAccessToken()).getRealm();
+            return prepareSecretCookies(response, authToken, realm, ipAddress);
+        } catch (ObtainRefreshTokenException | PersistenceSecretStorageException e) {
+            logger.error(e.getMessage(), e);
+            throw new LoginException(e.getMessage());
+        }
+
     }
 
 }

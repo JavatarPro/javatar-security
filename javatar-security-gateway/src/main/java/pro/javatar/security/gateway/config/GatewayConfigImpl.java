@@ -2,6 +2,8 @@ package pro.javatar.security.gateway.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.time.Duration;
+
 /**
  * @author Borys Zora
  * @version 2019-06-02
@@ -14,6 +16,8 @@ public class GatewayConfigImpl implements GatewayConfig {
     LogoutImpl logout = new LogoutImpl(false, null);
 
     boolean enablePostExchangeToken = true;
+
+    Duration tokenRefreshInterval = Duration.parse("PT7M");
 
     UiImpl ui;
 
@@ -33,6 +37,11 @@ public class GatewayConfigImpl implements GatewayConfig {
     }
 
     @Override
+    public Duration tokenRefreshInterval() {
+        return tokenRefreshInterval;
+    }
+
+    @Override
     public Ui ui() {
         return ui;
     }
@@ -47,6 +56,10 @@ public class GatewayConfigImpl implements GatewayConfig {
 
     public void setEnablePostExchangeToken(boolean enablePostExchangeToken) {
         this.enablePostExchangeToken = enablePostExchangeToken;
+    }
+
+    public void setTokenRefreshInterval(Duration tokenRefreshInterval) {
+        this.tokenRefreshInterval = tokenRefreshInterval;
     }
 
     public void setUi(UiImpl ui) {

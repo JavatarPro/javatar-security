@@ -140,11 +140,13 @@ public class OidcAuthenticationHelper {
         return !shouldApplyUrl(request);
     }
 
+    // TODO refactor
     public void authenticateCurrentThread(String accessToken, String refreshToken) {
         TokenDetails tokenDetails = generateTokenDetails(accessToken, accessToken);
         authenticateCurrentThread(tokenDetails);
     }
 
+    // TODO refactor
     public void authenticateCurrentThread(TokenDetails tokenDetails) {
         logger.info("Start authenticate current thread");
         AccessToken accessToken = parseAccessToken(tokenDetails);
