@@ -1,6 +1,5 @@
 package pro.javatar.security.gateway.service.impl;
 
-import org.apache.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,14 +13,13 @@ import pro.javatar.security.api.AuthService;
 import pro.javatar.security.api.SecurityService;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.gateway.exception.LoginException;
-import pro.javatar.security.gateway.model.GatewayResponse;
 import pro.javatar.security.gateway.model.HeaderMapRequestWrapper;
+import pro.javatar.security.gateway.service.api.CookieService;
 import pro.javatar.security.gateway.service.api.GatewaySecurityService;
 import pro.javatar.security.api.exception.IssueTokensException;
 import pro.javatar.security.api.model.AuthRequestBO;
 import pro.javatar.security.api.model.TokenInfoBO;
-import pro.javatar.security.gateway.service.impl.util.CookieUtil;
-import pro.javatar.security.oidc.SecurityConstants;
+import pro.javatar.security.gateway.service.impl.util.CookieServiceImpl;
 import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
 import pro.javatar.security.oidc.utils.StringUtils;
@@ -57,6 +55,8 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
 
     private SecurityService securityService;
 
+    private CookieService cookieService;
+
     private Set<String> excludedHeaders = new HashSet<>();
 
     @Autowired
@@ -64,12 +64,14 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
                                       SecretStorageService secretService,
                                       SecurityConfig config,
                                       OidcAuthenticationHelper oidcHelper,
+                                      CookieService cookieService,
                                       SecurityService securityService) {
         this.authService = authService;
         this.secretService = secretService;
         this.config = config;
         this.oidcHelper = oidcHelper;
         this.securityService = securityService;
+        this.cookieService = cookieService;
         prepareExcludedHeaders();
     }
 
@@ -113,14 +115,14 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         Cookie[] cookies = request.getCookies();
-        String secretKey = CookieUtil.getCookie(TOKEN_ID, cookies);
+        String secretKey = cookieService.getCookie(TOKEN_ID, cookies);
         // TODO remove parent vault key, rotate keys more frequently
         try {
             secretService.delete(secretKey);
         } catch (DeleteFailedSecretStorageException e) {
             logger.error(e.getMessage(), e);
         }
-        CookieUtil.removeCookie(response, TOKEN_ID);
+        cookieService.removeCookie(response, TOKEN_ID);
     }
 
     @Override
@@ -158,12 +160,12 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         String correlationId = UUID.randomUUID().toString();
         secretService.put(correlationId, secretToken);
 
-        CookieUtil.createSecureCookie(response, TOKEN_ID, correlationId);
+        cookieService.createSecureCookie(response, TOKEN_ID, correlationId);
         return correlationId;
     }
 
     private SecretTokenDetails getSecretTokenDetails(HeaderMapRequestWrapper requestWrapper) {
-        String secretKey = CookieUtil.getCookie(TOKEN_ID, requestWrapper.getCookies());
+        String secretKey = cookieService.getCookie(TOKEN_ID, requestWrapper.getCookies());
 
         if (StringUtils.isBlank(secretKey)) {
             logger.debug("authorizationKey is blank, skip retrieve from secret storage");

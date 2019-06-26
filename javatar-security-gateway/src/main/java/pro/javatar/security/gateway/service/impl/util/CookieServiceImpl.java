@@ -2,6 +2,9 @@ package pro.javatar.security.gateway.service.impl.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
+import pro.javatar.security.gateway.service.api.CookieService;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -14,11 +17,14 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @version 2019-05-08
  */
-public class CookieUtil {
+@Service
+@ConditionalOnProperty(value = "javatar.security.gateway.devMode.enabled", havingValue = "false", matchIfMissing = true)
+public class CookieServiceImpl implements CookieService {
 
-    private static final Logger logger = LoggerFactory.getLogger(CookieUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(CookieServiceImpl.class);
 
-    public static String getCookie(String cookieName, Cookie[] cookies) {
+    @Override
+    public String getCookie(String cookieName, Cookie[] cookies) {
         if(cookies == null){
             return "";
         }
@@ -30,13 +36,15 @@ public class CookieUtil {
         return "";
     }
 
-    public static void createSecureCookie(HttpServletResponse response, String key, String value) {
+    @Override
+    public void createSecureCookie(HttpServletResponse response, String key, String value) {
         Cookie secureCookie = createSecureCookie(key, value);
         logger.debug(":: Set secret key as cookie {}", secureCookie);
         response.addCookie(secureCookie);
     }
 
-    public static Cookie createSecureCookie(String key, String value) {
+    @Override
+    public Cookie createSecureCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
@@ -44,11 +52,13 @@ public class CookieUtil {
         return cookie;
     }
 
-    public static void removeCookie(HttpServletResponse response, String cookieName) {
+    @Override
+    public void removeCookie(HttpServletResponse response, String cookieName) {
         Cookie cookie = new Cookie(cookieName, null);
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
+
 }
 

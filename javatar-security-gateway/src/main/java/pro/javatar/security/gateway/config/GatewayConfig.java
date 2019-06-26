@@ -18,6 +18,8 @@ public interface GatewayConfig {
 
     Duration tokenRefreshInterval();
 
+    DevMode devMode();
+
     interface Ui {
 
         String pathPrefix();
@@ -36,6 +38,14 @@ public interface GatewayConfig {
         Boolean enabled();
 
         String redirectUrl();
+
+    }
+
+    interface DevMode {
+
+        Boolean enabled();
+
+        Boolean disableTokenIdSecuredCookies();
 
     }
 }

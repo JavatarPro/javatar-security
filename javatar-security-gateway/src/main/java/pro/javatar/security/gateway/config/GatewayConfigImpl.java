@@ -11,6 +11,8 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "javatar.security.gateway")
 public class GatewayConfigImpl implements GatewayConfig {
 
+    // fields
+
     LoginImpl login = new LoginImpl(false, null);
 
     LogoutImpl logout = new LogoutImpl(false, null);
@@ -20,6 +22,10 @@ public class GatewayConfigImpl implements GatewayConfig {
     Duration tokenRefreshInterval = Duration.parse("PT7M");
 
     UiImpl ui;
+
+    DevModeImpl devMode;
+
+    // interface impl
 
     @Override
     public Login login() {
@@ -46,6 +52,13 @@ public class GatewayConfigImpl implements GatewayConfig {
         return ui;
     }
 
+    @Override
+    public DevMode devMode() {
+        return devMode;
+    }
+
+    // setters
+
     public void setLogin(LoginImpl login) {
         this.login = login;
     }
@@ -66,6 +79,12 @@ public class GatewayConfigImpl implements GatewayConfig {
         this.ui = ui;
     }
 
+    public void setDevMode(DevModeImpl devMode) {
+        this.devMode = devMode;
+    }
+
+    // classes
+
     static class UiImpl implements Ui {
 
         String pathPrefix;
@@ -79,6 +98,12 @@ public class GatewayConfigImpl implements GatewayConfig {
             this.pathPrefix = pathPrefix;
         }
 
+        @Override
+        public String toString() {
+            return "UiImpl{" +
+                    "pathPrefix='" + pathPrefix + '\'' +
+                    '}';
+        }
     }
 
     static class LoginImpl implements Login {
@@ -161,4 +186,47 @@ public class GatewayConfigImpl implements GatewayConfig {
         }
     }
 
+    static class DevModeImpl implements DevMode {
+
+        Boolean enabled;
+
+        Boolean disableTokenIdSecuredCookies = true;
+
+        @Override
+        public Boolean enabled() {
+            return enabled;
+        }
+
+        @Override
+        public Boolean disableTokenIdSecuredCookies() {
+            return disableTokenIdSecuredCookies;
+        }
+
+        public void setEnabled(Boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public void setDisableTokenIdSecuredCookies(Boolean disableTokenIdSecuredCookies) {
+            this.disableTokenIdSecuredCookies = disableTokenIdSecuredCookies;
+        }
+
+        @Override
+        public String toString() {
+            return "DevModeImpl{" +
+                    "enabled=" + enabled +
+                    ", disableTokenIdSecuredCookies=" + disableTokenIdSecuredCookies +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "GatewayConfigImpl{" +
+                "login=" + login +
+                ", logout=" + logout +
+                ", enablePostExchangeToken=" + enablePostExchangeToken +
+                ", tokenRefreshInterval=" + tokenRefreshInterval +
+                ", ui=" + ui +
+                '}';
+    }
 }
