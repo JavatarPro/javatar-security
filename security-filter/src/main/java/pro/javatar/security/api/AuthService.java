@@ -7,6 +7,7 @@ package pro.javatar.security.api;
 import pro.javatar.security.api.exception.IssueTokensException;
 import pro.javatar.security.api.model.AuthRequestBO;
 import pro.javatar.security.api.model.TokenInfoBO;
+import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 
 /**
  * External auth calls.
@@ -18,5 +19,7 @@ import pro.javatar.security.api.model.TokenInfoBO;
 public interface AuthService {
 
     TokenInfoBO issueTokens(AuthRequestBO authRequest) throws IssueTokensException;
+
+    TokenInfoBO reIssueTokens(String refreshToken) throws ObtainRefreshTokenException;
 
 }

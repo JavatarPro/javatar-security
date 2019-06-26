@@ -15,6 +15,7 @@ import pro.javatar.security.api.model.TokenInfoBO;
 import pro.javatar.security.impl.coverter.AuthBOConverter;
 import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.exceptions.InvalidUserCredentialsAuthenticationException;
+import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 import pro.javatar.security.oidc.exceptions.RealmNotFoundAuthnticationException;
 import pro.javatar.security.oidc.model.TokenDetails;
 
@@ -54,9 +55,19 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public TokenInfoBO reIssueTokens(String refreshToken) throws ObtainRefreshTokenException {
+        return null;
+    }
+
     private TokenInfoBO issueTokensUsingIdentityProvider(AuthRequestBO authRequest) {
         TokenDetails tokenDetails = oAuthClient.obtainTokenDetailsByApplicationCredentials(
                 authRequest.getEmail(), authRequest.getPassword(), authRequest.getRealm());
+        return authBOConverter.toTokenInfoBO(tokenDetails);
+    }
+
+    private TokenInfoBO reIssueTokensUsingIdentityProvider(String refreshToken) {
+        TokenDetails tokenDetails = oAuthClient.obtainTokenDetailsByRefreshToken(refreshToken);
         return authBOConverter.toTokenInfoBO(tokenDetails);
     }
 }

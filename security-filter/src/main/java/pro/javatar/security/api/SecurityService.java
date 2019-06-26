@@ -20,4 +20,5 @@ public interface SecurityService {
 
     String getCurrentLogin();
 
+    User getUser(String accessToken);
 }

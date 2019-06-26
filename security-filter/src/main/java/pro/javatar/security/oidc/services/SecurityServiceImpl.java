@@ -48,8 +48,7 @@ public class SecurityServiceImpl implements SecurityService {
             return null;
         }
         String accessToken = tokenDetails.getAccessToken();
-        User user = userConverter.toUserFromAccessToken(accessToken);
-        return user;
+        return getUser(accessToken);
     }
 
     @Override
@@ -75,5 +74,10 @@ public class SecurityServiceImpl implements SecurityService {
     @Override
     public String getCurrentLogin() {
         return securityHelper.getCurrentLogin();
+    }
+
+    @Override
+    public User getUser(String accessToken) {
+        return userConverter.toUserFromAccessToken(accessToken);
     }
 }

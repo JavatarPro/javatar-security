@@ -25,6 +25,9 @@ public class User {
 
     private String scope;
 
+    // TODO
+    private String realm;
+
     // TODO (bzo) add roles
 
 
@@ -92,6 +95,14 @@ public class User {
         this.scope = scope;
     }
 
+    public String getRealm() {
+        return realm;
+    }
+
+    public void setRealm(String realm) {
+        this.realm = realm;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -99,6 +110,7 @@ public class User {
         User user = (User) o;
         return Objects.equals(id, user.id) &&
                 Objects.equals(email, user.email) &&
+                Objects.equals(realm, user.realm) &&
                 Objects.equals(preferredUsername, user.preferredUsername);
     }
 
@@ -118,6 +130,7 @@ public class User {
                 ", preferredUsername='" + preferredUsername + '\'' +
                 ", emailVerified=" + emailVerified +
                 ", scope='" + scope + '\'' +
+                ", realm='" + realm + '\'' +
                 '}';
     }
 }

@@ -8,6 +8,8 @@ import pro.javatar.security.gateway.model.HeaderMapRequestWrapper;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Gateway exchange token service used to hide token from the end user and set into cookies only UUID token.
@@ -32,12 +34,16 @@ public interface GatewaySecurityService {
     String login(AuthRequestBO authRequest, HttpServletRequest request, HttpServletResponse response)
             throws LoginException;
 
-    void exchangeToken(GatewayResponse response);
+    String exchangeToken(HttpServletRequest request, HttpServletResponse response);
 
     void appendSecurityHeaders(HeaderMapRequestWrapper requestWrapper);
+
+    void appendSecurityHeaders(GatewayResponse response);
 
     void logout(HttpServletRequest request, HttpServletResponse response);
 
     boolean shouldApplyUrl(ServletRequest request);
+
+    Set<String> excludedHeaders();
 
 }
