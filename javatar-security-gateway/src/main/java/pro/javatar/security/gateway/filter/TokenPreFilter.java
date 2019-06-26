@@ -47,6 +47,7 @@ public class TokenPreFilter implements Filter {
             throws IOException, ServletException {
         if (gatewaySecurityService.shouldApplyUrl(request)) {
             HeaderMapRequestWrapper wrapper = new HeaderMapRequestWrapper(request);
+            // TODO refresh token if needed
             gatewaySecurityService.appendSecurityHeaders(wrapper);
             chain.doFilter(wrapper, response);
         } else {

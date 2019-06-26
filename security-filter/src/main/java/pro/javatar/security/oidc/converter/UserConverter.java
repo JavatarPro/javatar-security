@@ -24,6 +24,7 @@ public class UserConverter {
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
+    // TODO retrieve realm
     public User toUserFromAccessToken(String accessToken) {
         try {
             String userInfoPart = retrieveUserInfoPart(accessToken);

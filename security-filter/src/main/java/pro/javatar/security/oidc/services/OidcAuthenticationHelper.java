@@ -94,6 +94,10 @@ public class OidcAuthenticationHelper {
         return response.getHeader(SecurityConstants.REFRESH_TOKEN_HEADER);
     }
 
+    public String getAccessToken(HttpServletRequest request) {
+        return getBearerToken(request);
+    }
+
     public String getRefreshToken(HttpServletRequest request) {
         return request.getHeader(SecurityConstants.REFRESH_TOKEN_HEADER);
     }
