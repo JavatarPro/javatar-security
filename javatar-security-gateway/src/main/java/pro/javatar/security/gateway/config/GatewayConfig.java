@@ -8,38 +8,19 @@ import java.time.Duration;
  */
 public interface GatewayConfig {
 
-    Login login();
+    Boolean loginEnabled();
 
-    Logout logout();
+    Boolean logoutEnabled();
 
-    Ui ui();
+    String uiPathPrefix();
 
+    // temporary to support current functionality
+    @Deprecated
     boolean enablePostExchangeToken();
 
     Duration tokenRefreshInterval();
 
     DevMode devMode();
-
-    interface Ui {
-
-        String pathPrefix();
-
-    }
-
-    interface Login {
-
-        Boolean enabled();
-
-        String redirectUrl();
-    }
-
-    interface Logout {
-
-        Boolean enabled();
-
-        String redirectUrl();
-
-    }
 
     interface DevMode {
 

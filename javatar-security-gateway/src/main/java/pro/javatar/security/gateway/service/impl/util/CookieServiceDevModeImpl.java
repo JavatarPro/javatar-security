@@ -11,7 +11,7 @@ import javax.servlet.http.Cookie;
  * @version 2019-06-27
  */
 @Service
-@ConditionalOnProperty(value = "javatar.security.gateway.devMode.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = "javatar.security.gateway.dev-mode.enabled", havingValue = "true", matchIfMissing = false)
 public class CookieServiceDevModeImpl extends CookieServiceImpl {
 
     private GatewayConfig gatewayConfig;

@@ -1,0 +1,53 @@
+{
+  "properties": [
+    {
+      "name": "javatar.security.gateway.token-refresh-interval",
+      "type": "java.time.Duration",
+      "defaultValue": "PT7M",
+      "description": "interval with which toke will be refreshed. If expiration of token is less comparing to token-refresh-interval value then refresh will be more frequent",
+      "sourceType": "pro.javatar.security.gateway.config.GatewayConfigImpl"
+    },
+    {
+      "name": "javatar.security.gateway.login-enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": "false",
+      "description": "enable login endpoint",
+      "sourceType": "pro.javatar.security.gateway.config.GatewayConfigImpl"
+    },
+    {
+      "name": "javatar.security.gateway.login-enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": "false",
+      "description": "enable login endpoint",
+      "sourceType": "pro.javatar.security.gateway.resources.LoginResource"
+    },
+    {
+      "name": "javatar.security.gateway.logout-enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": "false",
+      "description": "enable logout endpoint",
+      "sourceType": "pro.javatar.security.gateway.resources.LogoutResource"
+    },
+    {
+      "name": "javatar.security.gateway.ui-path-prefix",
+      "type": "java.lang.String",
+      "defaultValue": "/ui/",
+      "description": "instruction to gateway filter to ignore requested urls starting with this prefix to not send security tokens on ui resources",
+      "sourceType": "pro.javatar.security.gateway.config.GatewayConfigImpl"
+    },
+    {
+      "name": "javatar.security.gateway.dev-mode.enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": "false",
+      "description": "enables dev mode that could be useful for ui team",
+      "sourceType": "pro.javatar.security.gateway.service.impl.util.CookieServiceDevModeImpl"
+    },
+    {
+      "name": "javatar.security.gateway.dev-mode.disable-token-id-secured-cookies",
+      "type": "java.lang.Boolean",
+      "defaultValue": "true",
+      "description": "if dev mode and this flag enabled then prevents to store secure cookies, so ui team could proceed with non https proxies",
+      "sourceType": "pro.javatar.security.gateway.service.impl.util.CookieServiceDevModeImpl"
+    }
+  ]
+}
