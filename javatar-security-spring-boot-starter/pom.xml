@@ -27,7 +27,7 @@
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
+                <version>${spring-cloud-dependencies.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -60,7 +60,7 @@
 
         <dependency>
             <groupId>pro.javatar.security</groupId>
-            <artifactId>secret-storage-service-redis-impl</artifactId>
+            <artifactId>secret-storage-redis-impl</artifactId>
             <version>${project.version}</version>
         </dependency>
 

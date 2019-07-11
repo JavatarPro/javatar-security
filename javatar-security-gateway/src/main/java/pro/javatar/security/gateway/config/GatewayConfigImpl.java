@@ -23,9 +23,6 @@ public class GatewayConfigImpl implements GatewayConfig {
 
     DevModeImpl devMode;
 
-    // temporary field
-    boolean enablePostExchangeToken = true;
-
     // interface impl
 
     @Override
@@ -41,11 +38,6 @@ public class GatewayConfigImpl implements GatewayConfig {
     @Override
     public String uiPathPrefix() {
         return uiPathPrefix;
-    }
-
-    @Override
-    public boolean enablePostExchangeToken() {
-        return enablePostExchangeToken;
     }
 
     @Override
@@ -70,10 +62,6 @@ public class GatewayConfigImpl implements GatewayConfig {
 
     public void setUiPathPrefix(String uiPathPrefix) {
         this.uiPathPrefix = uiPathPrefix;
-    }
-
-    public void setEnablePostExchangeToken(boolean enablePostExchangeToken) {
-        this.enablePostExchangeToken = enablePostExchangeToken;
     }
 
     public void setTokenRefreshInterval(Duration tokenRefreshInterval) {
@@ -127,7 +115,6 @@ public class GatewayConfigImpl implements GatewayConfig {
                 ", tokenRefreshInterval=" + tokenRefreshInterval +
                 ", uiPathPrefix='" + uiPathPrefix + '\'' +
                 ", devMode=" + devMode +
-                ", enablePostExchangeToken=" + enablePostExchangeToken +
                 '}';
     }
 }

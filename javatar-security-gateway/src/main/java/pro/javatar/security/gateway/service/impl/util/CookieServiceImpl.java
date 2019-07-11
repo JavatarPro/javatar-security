@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
  * @version 2019-05-08
  */
 @Service
-@ConditionalOnProperty(value = "javatar.security.gateway.devMode.enabled", havingValue = "false", matchIfMissing = true)
+@ConditionalOnProperty(value = "javatar.security.gateway.dev-mode.enabled", havingValue = "false", matchIfMissing = true)
 public class CookieServiceImpl implements CookieService {
 
     private static final Logger logger = LoggerFactory.getLogger(CookieServiceImpl.class);

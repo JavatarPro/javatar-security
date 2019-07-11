@@ -14,10 +14,6 @@ public interface GatewayConfig {
 
     String uiPathPrefix();
 
-    // temporary to support current functionality
-    @Deprecated
-    boolean enablePostExchangeToken();
-
     Duration tokenRefreshInterval();
 
     DevMode devMode();
