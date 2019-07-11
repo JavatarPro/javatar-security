@@ -5,7 +5,7 @@
 
     <groupId>pro.javatar.security</groupId>
     <artifactId>javatar-security</artifactId>
-    <version>0.0.17</version>
+    <version>0.0.18-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>javatar-security</name>
