@@ -21,11 +21,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * The aim of this class is to issue security tokens and add security cookie to a browser
+ * that should be exchanged for access & refresh bearer tokens
+ * when user goes though api-gateway to secure endpoint
+ *
  * @author Andrii Murashkin / Javatar LLC
  * @author Borys Zora / Javatar LLC
  * @version 2019-05-28
  */
-@ConditionalOnProperty(value = "javatar.security.gateway.login.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = "javatar.security.gateway.login-enabled", havingValue = "true", matchIfMissing = false)
 @RestController
 @RequestMapping(value = "/login",
         consumes = MediaType.APPLICATION_JSON_VALUE,

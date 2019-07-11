@@ -13,28 +13,34 @@ public class GatewayConfigImpl implements GatewayConfig {
 
     // fields
 
-    LoginImpl login = new LoginImpl(false, null);
+    Boolean loginEnabled = false;
 
-    LogoutImpl logout = new LogoutImpl(false, null);
-
-    boolean enablePostExchangeToken = true;
+    Boolean logoutEnabled = false;
 
     Duration tokenRefreshInterval = Duration.parse("PT7M");
 
-    UiImpl ui;
+    String uiPathPrefix;
 
     DevModeImpl devMode;
+
+    // temporary field
+    boolean enablePostExchangeToken = true;
 
     // interface impl
 
     @Override
-    public Login login() {
-        return login;
+    public Boolean loginEnabled() {
+        return loginEnabled;
     }
 
     @Override
-    public Logout logout() {
-        return logout;
+    public Boolean logoutEnabled() {
+        return logoutEnabled;
+    }
+
+    @Override
+    public String uiPathPrefix() {
+        return uiPathPrefix;
     }
 
     @Override
@@ -48,23 +54,22 @@ public class GatewayConfigImpl implements GatewayConfig {
     }
 
     @Override
-    public Ui ui() {
-        return ui;
-    }
-
-    @Override
     public DevMode devMode() {
         return devMode;
     }
 
     // setters
 
-    public void setLogin(LoginImpl login) {
-        this.login = login;
+    public void setLoginEnabled(Boolean loginEnabled) {
+        this.loginEnabled = loginEnabled;
     }
 
-    public void setLogout(LogoutImpl logout) {
-        this.logout = logout;
+    public void setLogoutEnabled(Boolean logoutEnabled) {
+        this.logoutEnabled = logoutEnabled;
+    }
+
+    public void setUiPathPrefix(String uiPathPrefix) {
+        this.uiPathPrefix = uiPathPrefix;
     }
 
     public void setEnablePostExchangeToken(boolean enablePostExchangeToken) {
@@ -75,116 +80,11 @@ public class GatewayConfigImpl implements GatewayConfig {
         this.tokenRefreshInterval = tokenRefreshInterval;
     }
 
-    public void setUi(UiImpl ui) {
-        this.ui = ui;
-    }
-
     public void setDevMode(DevModeImpl devMode) {
         this.devMode = devMode;
     }
 
     // classes
-
-    static class UiImpl implements Ui {
-
-        String pathPrefix;
-
-        @Override
-        public String pathPrefix() {
-            return pathPrefix;
-        }
-
-        public void setPathPrefix(String pathPrefix) {
-            this.pathPrefix = pathPrefix;
-        }
-
-        @Override
-        public String toString() {
-            return "UiImpl{" +
-                    "pathPrefix='" + pathPrefix + '\'' +
-                    '}';
-        }
-    }
-
-    static class LoginImpl implements Login {
-
-        Boolean enabled = false;
-
-        String redirectUrl;
-
-        public LoginImpl() {}
-
-        public LoginImpl(Boolean enabled, String redirectUrl) {
-            this.enabled = enabled;
-            this.redirectUrl = redirectUrl;
-        }
-
-        @Override
-        public Boolean enabled() {
-            return enabled;
-        }
-
-        @Override
-        public String redirectUrl() {
-            return redirectUrl;
-        }
-
-        public void setEnabled(Boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        public void setRedirectUrl(String redirectUrl) {
-            this.redirectUrl = redirectUrl;
-        }
-
-        @Override
-        public String toString() {
-            return "LoginImpl{" +
-                    "enabled=" + enabled +
-                    ", redirectUrl='" + redirectUrl + '\'' +
-                    '}';
-        }
-    }
-
-    static class LogoutImpl implements Logout {
-
-        Boolean enabled;
-
-        String redirectUrl;
-
-        public LogoutImpl() {}
-
-        public LogoutImpl(Boolean enabled, String redirectUrl) {
-            this.enabled = enabled;
-            this.redirectUrl = redirectUrl;
-        }
-
-        @Override
-        public Boolean enabled() {
-            return enabled;
-        }
-
-        @Override
-        public String redirectUrl() {
-            return redirectUrl;
-        }
-
-        public void setEnabled(Boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        public void setRedirectUrl(String redirectUrl) {
-            this.redirectUrl = redirectUrl;
-        }
-
-        @Override
-        public String toString() {
-            return "LogoutImpl{" +
-                    "enabled=" + enabled +
-                    ", redirectUrl='" + redirectUrl + '\'' +
-                    '}';
-        }
-    }
 
     static class DevModeImpl implements DevMode {
 
@@ -222,11 +122,12 @@ public class GatewayConfigImpl implements GatewayConfig {
     @Override
     public String toString() {
         return "GatewayConfigImpl{" +
-                "login=" + login +
-                ", logout=" + logout +
-                ", enablePostExchangeToken=" + enablePostExchangeToken +
+                "loginEnabled=" + loginEnabled +
+                ", logoutEnabled=" + logoutEnabled +
                 ", tokenRefreshInterval=" + tokenRefreshInterval +
-                ", ui=" + ui +
+                ", uiPathPrefix='" + uiPathPrefix + '\'' +
+                ", devMode=" + devMode +
+                ", enablePostExchangeToken=" + enablePostExchangeToken +
                 '}';
     }
 }
