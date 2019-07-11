@@ -1,0 +1,54 @@
+server:
+  port: 8080
+
+javatar:
+  security:
+    gateway:
+      token-refresh-interval: PT10M
+      login-enabled: true
+      logout-enabled: true
+      ui-path-prefix: /ui/
+      dev-mode:
+        enabled: true
+        disable-token-id-secured-cookies: true
+    apply-urls:
+      - /*
+    ignore-urls:
+      - /login
+      - /actuator/*
+    identity-provider:
+      # TODO add test container to keycloak
+      url: ${keycloak.url}
+      client: zuul-gateway
+      secret: b7100896-62e6-4127-b07c-e6401bb788fd
+      realm: dev
+    public-keys-storage: in-memory
+    token-storage: redis
+    storage:
+      in-memory:
+        public-keys:
+          dev: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApDO/xCzSgTbqxTpSz4nhIS3vcxO/RhdbZ7tLZT39RTh53XOxUUa+/CQB9WFNmfiUep3waf4pK/OGCwiuxZN+8fQru22vkMbd/pJMW2vndRjRc12dAkcEzlQdRUEBfHxVA0OjTtWNNKsY45kPMsSu5Bu1BRFX2wfpz0lZAjy/UNxxhWvfX/ZgP6a75zaaweN07W+p6WbQClTVPMsskY3R5NLzgPrEyj845Ej++KxdioNE3ybiUghaBuUXYJxOop4sst7pGCwsx0FkweeYam4z7rRQKn6lf9gIz64HbLQhQ/W/JY36xCOmZBhOgW/DOUnYosnhvMa0D471KVnxu0h/SwIDAQAB
+      redis:
+        host: localhost
+        port: 6379
+        expiration: PT15M15S
+
+zuul:
+  sensitiveHeaders:
+  traceRequestBody: true
+  host:
+    connect-timeout-millis: 300000
+    socket-timeout-millis: 300000
+  debug:
+    include-debug-header: true
+    request: true
+    parameter: true
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+logging:
+  level:
+    ROOT: DEBUG
+    org.springframework.cloud.config: DEBUG

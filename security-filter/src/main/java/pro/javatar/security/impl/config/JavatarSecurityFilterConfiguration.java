@@ -12,6 +12,6 @@ import org.springframework.context.annotation.Configuration;
         "pro.javatar.security.impl",
         "pro.javatar.security.oidc" // TODO move all to impl package
 })
-public class JavatarSecurityFilterSpringConfig {
+public class JavatarSecurityFilterConfiguration {
 
 }

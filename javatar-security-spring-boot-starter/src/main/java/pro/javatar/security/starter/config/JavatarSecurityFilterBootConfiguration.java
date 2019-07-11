@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import pro.javatar.security.api.config.SecurityConfig;
-import pro.javatar.security.impl.config.JavatarSecurityFilterSpringConfig;
+import pro.javatar.security.impl.config.JavatarSecurityFilterConfiguration;
 import pro.javatar.security.public_key.api.RealmPublicKeyCacheService;
 import pro.javatar.security.public_key.impl.RealmPublicKeyCacheServiceInMemoryImmutableImpl;
 
@@ -15,8 +15,11 @@ import pro.javatar.security.public_key.impl.RealmPublicKeyCacheServiceInMemoryIm
  * @version 2019-05-19
  */
 @Configuration
-@Import(JavatarSecurityFilterSpringConfig.class)
-public class CommonSpringConfig {
+@Import(value = {
+        JavatarSecurityFilterConfiguration.class,
+        JavatarSecurityFilterOrderConfiguration.class
+})
+public class JavatarSecurityFilterBootConfiguration {
 
     @Autowired
     SecurityConfig securityConfig;

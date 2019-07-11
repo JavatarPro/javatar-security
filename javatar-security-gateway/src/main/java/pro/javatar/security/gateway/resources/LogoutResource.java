@@ -12,13 +12,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
+ * The aim of this class is to prevent of exchanging all issued tokens for the logged in user
+ * who trigger this endpoint
+ *
  * @author Borys Zora
  * @author Andrii Murashkin
  * @author Serhii Petrychenko
  *
  * @version 2019-05-08
  */
-@ConditionalOnProperty(value = "javatar.security.logout.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(value = "javatar.security.gateway.logout-enabled", havingValue = "true", matchIfMissing = false)
 @RestController
 @RequestMapping(value = "/logout", produces = MediaType.APPLICATION_JSON_VALUE)
 public class LogoutResource {
