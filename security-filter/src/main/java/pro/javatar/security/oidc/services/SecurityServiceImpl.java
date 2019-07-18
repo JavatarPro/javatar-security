@@ -24,7 +24,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     private UserConverter userConverter;
 
-    private TokenService tokenService;
+    private UsersTokenService tokenService;
 
     private SecurityHelper securityHelper;
 
@@ -32,7 +32,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Autowired
     public SecurityServiceImpl(UserConverter userConverter,
-                               TokenService tokenService,
+                               UsersTokenService tokenService,
                                SecurityHelper securityHelper,
                                SecurityConfig securityConfig) {
         this.userConverter = userConverter;
@@ -43,7 +43,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     @Override
     public User getCurrentUser() {
-        TokenDetails tokenDetails = tokenService.getTokenDetails();
+        TokenDetails tokenDetails = tokenService.retrieveUsersTokenDetails();
         if (tokenDetails == null) {
             return null;
         }
