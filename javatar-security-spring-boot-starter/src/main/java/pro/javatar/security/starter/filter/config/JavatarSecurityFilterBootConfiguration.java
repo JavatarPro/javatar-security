@@ -1,4 +1,4 @@
-package pro.javatar.security.starter.config;
+package pro.javatar.security.starter.filter.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
