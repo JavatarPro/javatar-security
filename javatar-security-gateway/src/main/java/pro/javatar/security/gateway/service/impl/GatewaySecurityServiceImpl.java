@@ -9,9 +9,12 @@ import pro.javatar.secret.storage.api.exception.DeleteFailedSecretStorageExcepti
 import pro.javatar.secret.storage.api.exception.PersistenceSecretStorageException;
 import pro.javatar.secret.storage.api.exception.TokenNotFoundSecretStorageException;
 import pro.javatar.secret.storage.api.model.SecretTokenDetails;
+import pro.javatar.security.api.AccessTokenConverter;
 import pro.javatar.security.api.AuthService;
 import pro.javatar.security.api.SecurityService;
 import pro.javatar.security.api.config.SecurityConfig;
+import pro.javatar.security.api.model.TokenExpirationInfoBO;
+import pro.javatar.security.gateway.config.GatewayConfig;
 import pro.javatar.security.gateway.exception.LoginException;
 import pro.javatar.security.gateway.model.HeaderMapRequestWrapper;
 import pro.javatar.security.gateway.service.api.CookieService;
@@ -48,6 +51,8 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
 
     private SecretStorageService secretService;
 
+    private GatewayConfig gatewayConfig;
+
     private SecurityConfig config;
 
     private OidcAuthenticationHelper oidcHelper;
@@ -56,21 +61,27 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
 
     private CookieService cookieService;
 
+    private AccessTokenConverter tokenConverter;
+
     private Set<String> excludedHeaders = new HashSet<>();
 
     @Autowired
     public GatewaySecurityServiceImpl(AuthService authService,
                                       SecretStorageService secretService,
+                                      GatewayConfig gatewayConfig,
                                       SecurityConfig config,
                                       OidcAuthenticationHelper oidcHelper,
                                       CookieService cookieService,
-                                      SecurityService securityService) {
+                                      SecurityService securityService,
+                                      AccessTokenConverter tokenConverter) {
         this.authService = authService;
         this.secretService = secretService;
+        this.gatewayConfig = gatewayConfig;
         this.config = config;
         this.oidcHelper = oidcHelper;
         this.securityService = securityService;
         this.cookieService = cookieService;
+        this.tokenConverter = tokenConverter;
         prepareExcludedHeaders();
     }
 
@@ -94,10 +105,9 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
 
     @Override
     public void appendSecurityHeaders(HeaderMapRequestWrapper requestWrapper) {
+        // get from thread local
         SecretTokenDetails secretTokenDetails = getSecretTokenDetails(requestWrapper);
 
-        // TODO if close to expiration exchange refresh token
-        //  validate token
         if (secretTokenDetails == null || secretTokenDetails.isEmpty()) {
             logger.warn("Token details is empty. Security headers are not added for request: {}",
                     requestWrapper.getRequestURI());
@@ -137,9 +147,26 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         return excludedHeaders;
     }
 
-    private SecretTokenDetails getSecretTokenDetails(String realm,
-                                                     String ipAddress,
-                                                     TokenInfoBO authToken) {
+    public boolean shouldProlongUserSession(String accessToken) {
+        TokenExpirationInfoBO token = tokenConverter.toTokenExpirationInfoBO(accessToken);
+        return token.isDurationPassed(gatewayConfig.tokenRefreshInterval()) ||
+                token.isExpired() || token.isPartLifetimePassed(0.75);
+    }
+
+    @Override
+    public void prolongUserSession(HttpServletRequest request, HttpServletResponse response) {
+        SecretTokenDetails secretTokenDetails = getSecretTokenDetails(request);
+        if (shouldProlongUserSession(secretTokenDetails.getAccessToken())) {
+            // TODO prolong token
+            //  get access & refresh token by refresh token
+            //  create new SecretTokenDetails with all data copied except 2 new tokens
+            //  store secretTokenDetails in redis
+        }
+    }
+
+    private SecretTokenDetails createSecretTokenDetails(String realm,
+                                                        String ipAddress,
+                                                        TokenInfoBO authToken) {
         SecretTokenDetails secretToken = new SecretTokenDetails();
         secretToken.setAccessToken(authToken.getAccessToken());
         secretToken.setRefreshToken(authToken.getRefreshToken());
@@ -154,7 +181,7 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
                                         TokenInfoBO authToken,
                                         String realm,
                                         String ipAddress) throws PersistenceSecretStorageException {
-        SecretTokenDetails secretToken = getSecretTokenDetails(realm, ipAddress, authToken);
+        SecretTokenDetails secretToken = createSecretTokenDetails(realm, ipAddress, authToken);
 
         String correlationId = UUID.randomUUID().toString();
         secretService.put(correlationId, secretToken);
@@ -163,8 +190,8 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         return correlationId;
     }
 
-    private SecretTokenDetails getSecretTokenDetails(HeaderMapRequestWrapper requestWrapper) {
-        String secretKey = cookieService.getCookie(TOKEN_ID, requestWrapper.getCookies());
+    private SecretTokenDetails getSecretTokenDetails(HttpServletRequest request) {
+        String secretKey = cookieService.getCookie(TOKEN_ID, request.getCookies());
 
         if (StringUtils.isBlank(secretKey)) {
             logger.debug("authorizationKey is blank, skip retrieve from secret storage");

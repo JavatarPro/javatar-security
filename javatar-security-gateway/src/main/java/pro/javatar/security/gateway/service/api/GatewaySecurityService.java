@@ -42,4 +42,6 @@ public interface GatewaySecurityService {
 
     Set<String> excludedHeaders();
 
+    void prolongUserSession(HttpServletRequest request, HttpServletResponse response);
+
 }
