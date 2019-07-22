@@ -15,7 +15,7 @@ public class TokenExpirationInfoBO {
 
     public TokenExpirationInfoBO() {}
 
-    public TokenExpirationInfoBO(int issuedAt, int expiration) {
+    public TokenExpirationInfoBO(long issuedAt, long expiration) {
         this.issuedAt = Instant.ofEpochSecond(issuedAt);
         this.expiration = Instant.ofEpochSecond(expiration);
     }
@@ -35,11 +35,11 @@ public class TokenExpirationInfoBO {
     }
 
     public boolean isDurationPassed(Duration duration, Instant comparing) {
-        return issuedAt.plus(duration).isAfter(comparing);
+        return issuedAt.plus(duration).isBefore(comparing);
     }
 
     public boolean isExpired() {
-        return expiration.isAfter(Instant.now());
+        return expiration.isBefore(Instant.now());
     }
 
     /**
@@ -50,8 +50,8 @@ public class TokenExpirationInfoBO {
     public boolean isPartLifetimePassed(double part) {
         Duration tokenDurationAllowedByIdentityProvider = getTokenExpirationDuration();
         Duration actualTokenDuration = getTokenLifetimeDuration();
-        return tokenDurationAllowedByIdentityProvider.toMillis() * 1.0 * part > actualTokenDuration.toMillis();
-    }
+        return tokenDurationAllowedByIdentityProvider.toMillis() * 1.0 * part < actualTokenDuration.toMillis();
+}
 
     // getters & setters
 
