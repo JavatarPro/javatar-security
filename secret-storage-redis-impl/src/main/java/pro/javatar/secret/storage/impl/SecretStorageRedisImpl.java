@@ -11,14 +11,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
-import pro.javatar.secret.storage.api.SecretStorageService;
+import pro.javatar.secret.storage.api.SecretStorage;
 import pro.javatar.secret.storage.api.exception.PersistenceSecretStorageException;
 import pro.javatar.secret.storage.api.model.SecretTokenDetails;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
-public class SecretStorageRedisImpl implements SecretStorageService {
+public class SecretStorageRedisImpl implements SecretStorage {
 
     private static final Logger logger = LoggerFactory.getLogger(SecretStorageRedisImpl.class);
 

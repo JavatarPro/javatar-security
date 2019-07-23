@@ -6,9 +6,8 @@ package pro.javatar.security.gateway.exception;
  */
 public class LoginException extends GatewayRestException {
 
-    public LoginException() {}
-
     public LoginException(String message) {
         super(message);
     }
+
 }

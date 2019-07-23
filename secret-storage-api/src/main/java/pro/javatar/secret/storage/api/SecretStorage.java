@@ -5,7 +5,7 @@ import pro.javatar.secret.storage.api.exception.PersistenceSecretStorageExceptio
 import pro.javatar.secret.storage.api.exception.TokenNotFoundSecretStorageException;
 import pro.javatar.secret.storage.api.model.SecretTokenDetails;
 
-public interface SecretStorageService {
+public interface SecretStorage {
 
     void put(String secretKey, SecretTokenDetails secretTokenDetails) throws PersistenceSecretStorageException;
 

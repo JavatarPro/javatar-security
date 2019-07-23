@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import pro.javatar.secret.storage.api.SecretStorageService;
+import pro.javatar.secret.storage.api.SecretStorage;
 import pro.javatar.secret.storage.api.exception.DeleteFailedSecretStorageException;
 import pro.javatar.secret.storage.api.exception.PersistenceSecretStorageException;
 import pro.javatar.secret.storage.api.exception.TokenNotFoundSecretStorageException;
@@ -15,6 +15,7 @@ import pro.javatar.security.api.SecurityService;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.api.model.TokenExpirationInfoBO;
 import pro.javatar.security.gateway.config.GatewayConfig;
+import pro.javatar.security.gateway.exception.IpAddressValidationRestException;
 import pro.javatar.security.gateway.exception.LoginException;
 import pro.javatar.security.gateway.model.HeaderMapRequestWrapper;
 import pro.javatar.security.gateway.service.api.CookieService;
@@ -49,7 +50,7 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
 
     private AuthService authService;
 
-    private SecretStorageService secretService;
+    private SecretStorage secretStorage;
 
     private GatewayConfig gatewayConfig;
 
@@ -67,7 +68,7 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
 
     @Autowired
     public GatewaySecurityServiceImpl(AuthService authService,
-                                      SecretStorageService secretService,
+                                      SecretStorage secretStorage,
                                       GatewayConfig gatewayConfig,
                                       SecurityConfig config,
                                       OidcAuthenticationHelper oidcHelper,
@@ -75,7 +76,7 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
                                       SecurityService securityService,
                                       AccessTokenConverter tokenConverter) {
         this.authService = authService;
-        this.secretService = secretService;
+        this.secretStorage = secretStorage;
         this.gatewayConfig = gatewayConfig;
         this.config = config;
         this.oidcHelper = oidcHelper;
@@ -96,7 +97,8 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
             String realm = authRequest.getRealm();
             String ipAddress = request.getRemoteAddr();
 
-            return prepareSecretCookies(response, authToken, realm, ipAddress);
+            SecretTokenDetails secretToken = createSecretTokenDetails(realm, ipAddress, authToken);
+            return prepareSecretCookies(response, secretToken);
         } catch (IssueTokensException | PersistenceSecretStorageException e) {
             logger.error(e.getMessage(), e);
             throw new LoginException(e.getMessage());
@@ -127,7 +129,7 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         String secretKey = cookieService.getCookie(TOKEN_ID, cookies);
         // TODO remove parent vault key, rotate keys more frequently
         try {
-            secretService.delete(secretKey);
+            secretStorage.delete(secretKey);
         } catch (DeleteFailedSecretStorageException e) {
             logger.error(e.getMessage(), e);
         }
@@ -155,12 +157,22 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
 
     @Override
     public void prolongUserSession(HttpServletRequest request, HttpServletResponse response) {
-        SecretTokenDetails secretTokenDetails = getSecretTokenDetails(request);
-        if (shouldProlongUserSession(secretTokenDetails.getAccessToken())) {
-            // TODO prolong token
-            //  get access & refresh token by refresh token
-            //  create new SecretTokenDetails with all data copied except 2 new tokens
-            //  store secretTokenDetails in redis
+        SecretTokenDetails secretToken = getSecretTokenDetails(request);
+        if (secretToken == null) {
+            return;
+        }
+        validateIpAddress(request, secretToken);
+        if (!shouldProlongUserSession(secretToken.getAccessToken())) {
+            return; // no need to prolong user session
+        }
+        TokenInfoBO tokenInfoBO = authService.reIssueTokens(secretToken.getRefreshToken());
+        secretToken.setAccessToken(tokenInfoBO.getAccessToken());
+        secretToken.setRefreshToken(tokenInfoBO.getRefreshToken());
+        try {
+            String token = prepareSecretCookies(response, secretToken);
+            logger.info("user session has been successfully prolonged, new token: {} will be set to cookies", token);
+        } catch (PersistenceSecretStorageException e) {
+            logger.warn(e.getMessage(), e);
         }
     }
 
@@ -178,13 +190,9 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
     }
 
     private String prepareSecretCookies(HttpServletResponse response,
-                                        TokenInfoBO authToken,
-                                        String realm,
-                                        String ipAddress) throws PersistenceSecretStorageException {
-        SecretTokenDetails secretToken = createSecretTokenDetails(realm, ipAddress, authToken);
-
+                                        SecretTokenDetails secretToken) throws PersistenceSecretStorageException {
         String correlationId = UUID.randomUUID().toString();
-        secretService.put(correlationId, secretToken);
+        secretStorage.put(correlationId, secretToken);
 
         cookieService.createSecureCookie(response, TOKEN_ID, correlationId);
         return correlationId;
@@ -199,7 +207,7 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         }
 
         try {
-            return secretService.get(secretKey);
+            return secretStorage.get(secretKey);
         } catch (TokenNotFoundSecretStorageException e) {
             logger.warn(e.getMessage(), e);
             return null;
@@ -218,23 +226,15 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         excludedHeaders.add(AUTHORIZATION);
     }
 
-    // TODO find out how to extract ip address and other info precisely
-    String exchangeToken(HttpServletRequest request,
-                         HttpServletResponse response) {
-        // TODO validate ip address of who is trying to refresh token
+    void validateIpAddress(HttpServletRequest request, SecretTokenDetails secretToken) {
         String ipAddress = request.getRemoteAddr();
-        try {
-            // TODO Does not work, no headers at that point
-            String refreshToken = oidcHelper.getRefreshToken(request);
-            TokenInfoBO authToken = authService.reIssueTokens(refreshToken);
-
-            String realm = securityService.getUser(authToken.getAccessToken()).getRealm();
-            return prepareSecretCookies(response, authToken, realm, ipAddress);
-        } catch (ObtainRefreshTokenException | PersistenceSecretStorageException e) {
-            logger.error(e.getMessage(), e);
-            throw new LoginException(e.getMessage());
+        if (ipAddress.equals(secretToken.getIpAddress())) {
+            return;
         }
-
+        String message = "Token was issued for other ip address.";
+        logger.error(message + " Current ipAddress: {}, but token was issued to - {}",
+                ipAddress, secretToken.getIpAddress());
+        throw new IpAddressValidationRestException(message);
     }
 
 }
