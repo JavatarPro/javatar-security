@@ -13,6 +13,8 @@ import pro.javatar.security.gateway.model.HeaderMapRequestWrapper;
 import pro.javatar.security.gateway.service.api.GatewaySecurityService;
 
 import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
@@ -47,7 +49,7 @@ public class TokenPreFilter implements Filter {
             throws IOException, ServletException {
         if (gatewaySecurityService.shouldApplyUrl(request)) {
             HeaderMapRequestWrapper wrapper = new HeaderMapRequestWrapper(request);
-            // TODO refresh token if needed
+            gatewaySecurityService.prolongUserSession((HttpServletRequest)request, (HttpServletResponse) response);
             gatewaySecurityService.appendSecurityHeaders(wrapper);
             chain.doFilter(wrapper, response);
         } else {
