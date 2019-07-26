@@ -30,6 +30,7 @@ public class User {
 
     // TODO (bzo) add roles
 
+    public User() {}
 
     public String getId() {
         return id;

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import pro.javatar.security.api.SecurityService;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.api.model.User;
-import pro.javatar.security.oidc.converter.UserConverter;
+import pro.javatar.security.impl.coverter.AccessTokenConverter;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.utils.SecurityHelper;
 
@@ -22,7 +22,7 @@ public class SecurityServiceImpl implements SecurityService {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityServiceImpl.class);
 
-    private UserConverter userConverter;
+    private AccessTokenConverter userConverter;
 
     private UsersTokenService tokenService;
 
@@ -31,7 +31,7 @@ public class SecurityServiceImpl implements SecurityService {
     private SecurityConfig securityConfig;
 
     @Autowired
-    public SecurityServiceImpl(UserConverter userConverter,
+    public SecurityServiceImpl(AccessTokenConverter userConverter,
                                UsersTokenService tokenService,
                                SecurityHelper securityHelper,
                                SecurityConfig securityConfig) {
