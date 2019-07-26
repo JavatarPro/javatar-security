@@ -1,4 +1,4 @@
-package pro.javatar.security.starter.config;
+package pro.javatar.security.starter.infra.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,9 +10,11 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import pro.javatar.secret.storage.api.SecretStorageService;
+import pro.javatar.secret.storage.api.SecretStorage;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.secret.storage.impl.SecretStorageRedisImpl;
+import pro.javatar.security.starter.config.ConfigValidationAware;
+import pro.javatar.security.starter.config.ConfigValidationException;
 
 import static pro.javatar.security.oidc.utils.StringUtils.isBlank;
 
@@ -50,7 +52,7 @@ public class RedisStorageConfig implements ConfigValidationAware {
     }
 
     @Bean
-    public SecretStorageService getSecretStorageRedisImpl() {
+    public SecretStorage getSecretStorageRedisImpl() {
         return new SecretStorageRedisImpl(createRedisTemplate(), config.expiration());
     }
 

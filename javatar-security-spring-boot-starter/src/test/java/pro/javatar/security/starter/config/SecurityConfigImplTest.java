@@ -1,6 +1,6 @@
 package pro.javatar.security.starter.config;
 
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * @author Borys Zora
  * @version 2019-05-11
  */
+// TODO it seems maven does not run this test, works only in IDE
 @SpringBootTest(classes = {SpringBootApp.class})
 class SecurityConfigImplTest {
 
@@ -45,6 +46,15 @@ class SecurityConfigImplTest {
         assertThat(actual, is(expected));
     }
 
+    @Test
+    void securityFilter() {
+        SecurityConfig.SecurityFilter actual = config.securityFilter();
+        assertThat(actual.isAnonymousAllowed(), is(true));
+        assertThat(actual.isJwtBearerFilterEnable(), is(true));
+        assertThat(actual.isJwtBearerTokenOtherAuthenticationAllowed(), is(true));
+    }
+
+    @Disabled
     @Test
     void redirectUrl() {
         assertThat(config.redirect().redirectUrl(), is("/login.html"));

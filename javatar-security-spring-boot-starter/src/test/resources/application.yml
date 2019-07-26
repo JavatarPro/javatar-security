@@ -15,6 +15,10 @@ javatar:
       secret: a78f09a1-ac49-4855-b3a4-dca4ce6e4cb8
       realm: dev
     use-refer-as-redirect-uri: true
+    security-filter:
+      anonymous-allowed: true
+      jwt-bearer-filter-enable: true
+      jwtBearerTokenOtherAuthenticationAllowed: true
     public-keys-storage: in-memeory
     token-storage: redis
     storage:
