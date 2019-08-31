@@ -47,10 +47,10 @@ public class AuthServiceImpl implements AuthService {
             logger.debug("Invalid user credentials.");
             throw new InvalidUserCredentialsAuthenticationException();
         } catch (RealmNotFoundAuthnticationException e) {
-            logger.debug("Realm {} not found.", authRequest.getRealm());
+            logger.error("Realm {} not found.", authRequest.getRealm());
             throw new RealmNotFoundAuthnticationException();
         } catch (Exception e) {
-            logger.debug("issueTokens failed for authRequest: {}, trying handle exception", authRequest);
+            logger.error("issueTokens failed for authRequest: {}, trying handle exception", authRequest, e);
             throw new IssueTokensException(e.getMessage());
         }
     }
