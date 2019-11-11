@@ -1,7 +1,6 @@
 package pro.javatar.security.starter.config.model;
 
 import pro.javatar.security.api.config.SecurityConfig;
-import pro.javatar.security.starter.config.SecurityConfigImpl;
 
 /**
  * @author Borys Zora
