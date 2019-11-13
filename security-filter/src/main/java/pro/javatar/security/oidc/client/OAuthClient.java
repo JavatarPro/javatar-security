@@ -35,6 +35,7 @@ import pro.javatar.security.oidc.utils.StringUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -158,7 +159,7 @@ public class OAuthClient {
             requestBase.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE);
 
             logger.debug("Query parameters: {}", maskedParams(params));
-            requestBase.setEntity(new UrlEncodedFormEntity(params));
+            requestBase.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
 
             httpResponse = httpClient.execute(requestBase);
 
