@@ -14,6 +14,8 @@ public interface SecurityConfig {
 
     List<String> applyUrls();
 
+    // TODO forbidden urls, issue SEC-5
+
     List<String> ignoreUrls();
 
     SecurityFilter securityFilter();

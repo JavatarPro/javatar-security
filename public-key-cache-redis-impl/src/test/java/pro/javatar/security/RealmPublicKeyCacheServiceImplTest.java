@@ -21,8 +21,11 @@ import java.util.Map;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {RealmPublicKeyCacheServiceImplTest.SpringConfig.class})
 public class RealmPublicKeyCacheServiceImplTest {
-    private static final Logger LOG = LoggerFactory.getLogger(RealmPublicKeyCacheServiceImplTest.class);
+
+    private static final Logger logger = LoggerFactory.getLogger(RealmPublicKeyCacheServiceImplTest.class);
+
     private static final String SOME_REALM = "SOME_REALM";
+
     private static final int REDIS_PORT = 6399;
 
     RedisServer redisServer;
@@ -35,7 +38,7 @@ public class RealmPublicKeyCacheServiceImplTest {
     @Before
     public void setUp() throws Exception {
         datPublicKey = "public_key_131283618263123";
-        LOG.info("set up redis server");
+        logger.info("set up redis server");
 //        redisServer = new RedisServerBuilder().setting("maxheap 256Mb").port(REDIS_PORT).build();
         redisServer = new RedisServer(REDIS_PORT);
         redisServer.start();
@@ -46,7 +49,7 @@ public class RealmPublicKeyCacheServiceImplTest {
         configuration.setUsePool(true);
         RedisTemplate redisTemplate = configuration.createRedisTemplate();
 
-        publicKeyCacheService = new RealmPublicKeyCacheServiceExt(keyPattern, redisTemplate);
+        publicKeyCacheService = new TestRealmPublicKeyCacheServiceExt(keyPattern, redisTemplate);
         publicKeyCacheService.put(keyPattern + SOME_REALM, datPublicKey);
         publicKeyCacheService.put(keyPattern + "REALM", "realm_public_key_3234789237942934");
         publicKeyCacheService.put(keyPattern + "REALM_SK", "realm_sk_public_key_93878745345");
@@ -54,9 +57,9 @@ public class RealmPublicKeyCacheServiceImplTest {
 
     @After
     public void tearDown() throws Exception {
-        LOG.info("stop redis server");
+        logger.info("stop redis server");
         redisServer.stop();
-        LOG.info("test completed");
+        logger.info("test completed");
     }
 
     @Test
@@ -90,11 +93,11 @@ public class RealmPublicKeyCacheServiceImplTest {
     public static class SpringConfig {
     }
 
-    private static class RealmPublicKeyCacheServiceExt extends RealmPublicKeyCacheServiceImpl {
+    private static class TestRealmPublicKeyCacheServiceExt extends RealmPublicKeyCacheServiceImpl {
 
         private RedisTemplate<String, String> redisTemplate;
 
-        public RealmPublicKeyCacheServiceExt(String keyPattern, RedisTemplate<String, String> redisTemplate) {
+        public TestRealmPublicKeyCacheServiceExt(String keyPattern, RedisTemplate<String, String> redisTemplate) {
             super(keyPattern, redisTemplate);
             this.redisTemplate = redisTemplate;
         }

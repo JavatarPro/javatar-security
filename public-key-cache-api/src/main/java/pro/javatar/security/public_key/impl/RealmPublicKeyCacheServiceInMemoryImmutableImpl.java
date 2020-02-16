@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public class RealmPublicKeyCacheServiceInMemoryImmutableImpl implements RealmPublicKeyCacheService {
 
-    private Map<String, String> keys;
+    private final Map<String, String> keys;
 
     public RealmPublicKeyCacheServiceInMemoryImmutableImpl(Map<String, String> map) {
         keys = new HashMap<>(map);
