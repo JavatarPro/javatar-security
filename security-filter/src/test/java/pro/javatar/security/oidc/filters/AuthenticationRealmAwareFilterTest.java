@@ -1,26 +1,10 @@
 package pro.javatar.security.oidc.filters;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static pro.javatar.security.oidc.filters.AuthenticationRealmAwareFilter.BASE_REALM_REGEX;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import pro.javatar.security.api.config.SecurityConfig;
-import pro.javatar.security.oidc.SecurityConstants;
-import pro.javatar.security.oidc.SecurityTestResource;
-import pro.javatar.security.oidc.exceptions.RealmNotFoundAuthenticationException;
-import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
-import pro.javatar.security.oidc.services.OidcConfiguration;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,30 +16,45 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import pro.javatar.security.api.config.SecurityConfig;
+import pro.javatar.security.oidc.SecurityConstants;
+import pro.javatar.security.oidc.SecurityTestResource;
+import pro.javatar.security.oidc.exceptions.RealmNotFoundAuthenticationException;
+import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
+import pro.javatar.security.oidc.services.OidcConfiguration;
 import pro.javatar.security.oidc.services.api.RealmService;
 import pro.javatar.security.oidc.services.impl.RealmServiceImpl;
 import pro.javatar.security.oidc.utils.MockHttpRequest;
 import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import javax.servlet.ServletException;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-@RunWith(SpringRunner.class)
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pro.javatar.security.oidc.filters.AuthenticationRealmAwareFilter.BASE_REALM_REGEX;
+
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
         SpringTestConfig.class,
         AuthenticationRealmAwareFilterTest.SpringConfig.class
 })
 @WebAppConfiguration
-public class AuthenticationRealmAwareFilterTest {
+class AuthenticationRealmAwareFilterTest {
 
     private final static Logger logger =
             LoggerFactory.getLogger(AuthenticationRealmAwareFilterTest.class);
@@ -86,8 +85,8 @@ public class AuthenticationRealmAwareFilterTest {
 
     ObjectMapper objectMapper = new ObjectMapper();
 
-    @Before
-    public void setup() throws ServletException {
+    @BeforeEach
+    void setup() throws ServletException {
         MockitoAnnotations.initMocks(this);
         authenticationRealmAwareFilter = new AuthenticationRealmAwareFilter(oidcAuthenticationHelper);
         oidcConfiguration.setClientId("user-management-service");
@@ -108,8 +107,8 @@ public class AuthenticationRealmAwareFilterTest {
         logger.info("authenticationRealmAwareFilter filter state: {}", authenticationRealmAwareFilter.toString());
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         oidcAuthenticationHelper.removeRealmFromCurrentRequest();
         authenticationRealmAwareFilter.destroy();
         authenticationControllerAdviceFilter.destroy();
@@ -118,7 +117,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void realmAwareFilterDisabledScenario() throws Exception {
+    void realmAwareFilterDisabledScenario() throws Exception {
         authenticationRealmAwareFilter.setEnableFilter(false);
         authenticationRealmAwareFilter.setRealmMandatory(true);
         MvcResult result = mockMvc.perform(post("/security/realm/users")
@@ -134,7 +133,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void filterSuccessfullySetupRealmFromHeaderForThread() throws Exception {
+    void filterSuccessfullySetupRealmFromHeaderForThread() throws Exception {
         authenticationRealmAwareFilter.setEnableFilter(true);
         authenticationRealmAwareFilter.setRealmMandatory(true);
         MvcResult result = mockMvc.perform(post("/security/realm/users")
@@ -150,7 +149,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void filterSetupRealmFromHeaderUnauthorizedFlow() throws Exception {
+    void filterSetupRealmFromHeaderUnauthorizedFlow() throws Exception {
         authenticationRealmAwareFilter.setEnableFilter(true);
         authenticationRealmAwareFilter.setRealmMandatory(true);
 //        authorizationStubFilter.setEnableFilter(false);
@@ -162,7 +161,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void retrieveRealmFromUrl() throws Exception {
+    void retrieveRealmFromUrl() throws Exception {
         authenticationRealmAwareFilter.setEnableFilter(true);
         authenticationRealmAwareFilter.setRealmMandatory(true);
         authenticationRealmAwareFilter.setRealmUrlPattern("/security/{realm}/*");
@@ -180,7 +179,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void setupRealmFromParamsMockMvc() throws Exception {
+    void setupRealmFromParamsMockMvc() throws Exception {
         authenticationRealmAwareFilter.setEnableFilter(true);
         authenticationRealmAwareFilter.setRealmMandatory(true);
         MvcResult result = mockMvc.perform(post("/security/javatar-security/users")
@@ -198,7 +197,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void shouldSkipMockMvc() throws Exception {
+    void shouldSkipMockMvc() throws Exception {
         authenticationRealmAwareFilter.setEnableFilter(true);
         authenticationRealmAwareFilter.setRealmMandatory(true);
         authenticationRealmAwareFilter.setFilterApplyUrlRegex("\\/security\\/.*");
@@ -218,7 +217,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void shouldSkipMockFromHelperMvc() throws Exception {
+    void shouldSkipMockFromHelperMvc() throws Exception {
         authenticationRealmAwareFilter.setEnableFilter(true);
         authenticationRealmAwareFilter.setRealmMandatory(true);
         authenticationRealmAwareFilter.setFilterApplyUrlRegex("");
@@ -243,52 +242,52 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void shouldSkipByRegexp() {
+    void shouldSkipByRegexp() {
         AuthenticationRealmAwareFilter authenticationRealmAwareFilter = getFilter();
         authenticationRealmAwareFilter.setFilterApplyUrlRegex("\\/users\\/.*");
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/users/id")), is(false));
     }
 
     @Test
-    public void shouldSkipByList() {
+    void shouldSkipByList() {
         AuthenticationRealmAwareFilter authenticationRealmAwareFilter = getFilter();
         authenticationRealmAwareFilter.setFilterApplyUrlList(Arrays.asList("/users/id", "/users/get"));
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/users/id")), is(false));
     }
 
     @Test
-    public void shouldSkip(){
+    void shouldSkip(){
         AuthenticationRealmAwareFilter authenticationRealmAwareFilter = getFilter();
         authenticationRealmAwareFilter.setFilterApplyUrlRegex("\\/users\\/.*");
         authenticationRealmAwareFilter.setFilterApplyUrlList(Arrays.asList("/orders/id", "/orders/get"));
-        authenticationRealmAwareFilter.setFilterIgnoreUrls(Collections.EMPTY_LIST);
+        authenticationRealmAwareFilter.setFilterIgnoreUrls(Collections.emptyList());
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/users/id")), is(false));
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/orders/id")), is(false));
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/contacts/id")), is(true));
 
         authenticationRealmAwareFilter.setFilterApplyUrlRegex("\\/users\\/.*");
-        authenticationRealmAwareFilter.setFilterApplyUrlList(Arrays.asList("/orders/*"));
-        authenticationRealmAwareFilter.setFilterIgnoreUrls(Arrays.asList("/users/id"));
+        authenticationRealmAwareFilter.setFilterApplyUrlList(Collections.singletonList("/orders/*"));
+        authenticationRealmAwareFilter.setFilterIgnoreUrls(Collections.singletonList("/users/id"));
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/users/id")), is(true));
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/orders/id")), is(false));
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/contacts/id")), is(true));
 
-        authenticationRealmAwareFilter.setFilterApplyUrlList(Arrays.asList("/orders/*"));
-        authenticationRealmAwareFilter.setFilterIgnoreUrls(Collections.EMPTY_LIST);
+        authenticationRealmAwareFilter.setFilterApplyUrlList(Collections.singletonList("/orders/*"));
+        authenticationRealmAwareFilter.setFilterIgnoreUrls(Collections.emptyList());
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/users/id")), is(false));
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/orders/id")), is(false));
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/contacts/id")), is(true));
 
         authenticationRealmAwareFilter.setFilterApplyUrlRegex("");
         authenticationRealmAwareFilter.setFilterApplyUrlList(Arrays.asList("/orders/*", "/users/*"));
-        authenticationRealmAwareFilter.setFilterIgnoreUrls(Collections.EMPTY_LIST);
+        authenticationRealmAwareFilter.setFilterIgnoreUrls(Collections.emptyList());
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/users/id")), is(false));
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/orders/id")), is(false));
         assertThat(authenticationRealmAwareFilter.shouldSkip(MockHttpRequest.mockGetUri("/contacts/id")), is(true));
     }
 
     @Test
-    public void shouldSkipFromHelper() throws Exception {
+    void shouldSkipFromHelper() {
         AuthenticationRealmAwareFilter filter = getFilter();
         oidcConfiguration.setFilterApplyUrlRegex("\\/security\\/rest\\/.*");
         assertThat(filter.shouldSkip(MockHttpRequest.mockGetUri("/security/rest/users/id")), is(false));
@@ -301,13 +300,13 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void setupRealmForCurrentRequestThread() throws Exception {
+    void setupRealmForCurrentRequestThread() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         // TODO
     }
 
     @Test
-    public void setupRealmFromParams() throws Exception {
+    void setupRealmFromParams() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         authenticationRealmAwareFilter.setupRealmFromParams(request);
         String actualRealm = oidcAuthenticationHelper.getRealmForCurrentRequest();
@@ -322,7 +321,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void containsRealmHeader() throws Exception {
+    void containsRealmHeader() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         assertThat(authenticationRealmAwareFilter.containsRealmHeader(request), is(false));
         request.addHeader(SecurityConstants.REALM_HEADER, "realm");
@@ -330,7 +329,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void setupRealmFromHeader() throws Exception {
+    void setupRealmFromHeader() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(SecurityConstants.REALM_HEADER, "realm");
         authenticationRealmAwareFilter.setupRealmFromHeader(request);
@@ -339,7 +338,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void isUrlRetrieverEnabled() throws Exception {
+    void isUrlRetrieverEnabled() {
         assertThat(authenticationRealmAwareFilter.isUrlRetrieverEnabled(), is(false));
         authenticationRealmAwareFilter.setRealmUrlPattern("/security/realm/users");
         assertThat(authenticationRealmAwareFilter.isUrlRetrieverEnabled(), is(false));
@@ -350,7 +349,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void isSuccessfulSetupRealmFromUri() throws Exception {
+    void isSuccessfulSetupRealmFromUri() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         authenticationRealmAwareFilter.setRealmUrlPattern("/security/{realm}/users");
         request.setRequestURI("/index.html");
@@ -362,7 +361,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void validateRealmSetup() throws Exception {
+    void validateRealmSetup() {
         authenticationRealmAwareFilter.setRealmMandatory(true);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(SecurityConstants.REALM_HEADER, "realm");
@@ -371,21 +370,21 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void validateRealmSetupRealmNotMandatory() throws Exception {
+    void validateRealmSetupRealmNotMandatory() {
         unsetDefaultRealm();
         authenticationRealmAwareFilter.setRealmMandatory(false);
         authenticationRealmAwareFilter.validateRealmSetup();
     }
 
-    @Test(expected = RealmNotFoundAuthenticationException.class)
-    public void validateRealmSetupWithException() throws Exception {
+    @Test
+    void validateRealmSetupWithException() {
         unsetDefaultRealm();
         authenticationRealmAwareFilter.setRealmMandatory(true);
-        authenticationRealmAwareFilter.validateRealmSetup();
+        assertThrows(RealmNotFoundAuthenticationException.class, () -> authenticationRealmAwareFilter.validateRealmSetup());
     }
 
     @Test
-    public void prepareRealmRegex() throws Exception {
+    void prepareRealmRegex() {
         String realmRegex = authenticationRealmAwareFilter.prepareRealmRegex("/security/{realm}");
         assertThat(realmRegex, is(BASE_REALM_REGEX));
         realmRegex = authenticationRealmAwareFilter.prepareRealmRegex("/security/tenant-{realm}");
@@ -397,7 +396,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void setupRealmInResponse() throws Exception {
+    void setupRealmInResponse() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         String realm = "SOME_REALM";
         request.addHeader(SecurityConstants.REALM_HEADER, realm);
@@ -409,7 +408,7 @@ public class AuthenticationRealmAwareFilterTest {
     }
 
     @Test
-    public void shouldSkipGetMethods() throws Exception {
+    void shouldSkipGetMethods() {
         AuthenticationRealmAwareFilter filter = getFilter();
         oidcConfiguration.setFilterApplyUrlRegex("\\/security\\/rest\\/.*");
         oidcConfiguration.setFilterIgnoreUrlList(Collections.singletonList("GET /*"));

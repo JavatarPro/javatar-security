@@ -1,53 +1,50 @@
 package pro.javatar.security.oidc.filters;
 
-import static pro.javatar.security.oidc.services.OidcConfiguration.AUTHORIZATION_ENDPOINT;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import org.junit.Ignore;
-import pro.javatar.security.api.config.SecurityConfig;
-import pro.javatar.security.oidc.SecurityTestFilter;
-import pro.javatar.security.oidc.SecurityTestResource;
-import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
-import pro.javatar.security.oidc.services.OidcConfiguration;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import pro.javatar.security.api.config.SecurityConfig;
+import pro.javatar.security.oidc.SecurityTestFilter;
+import pro.javatar.security.oidc.SecurityTestResource;
+import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
+import pro.javatar.security.oidc.services.OidcConfiguration;
 import pro.javatar.security.oidc.utils.SpringTestConfig;
 
 import javax.servlet.ServletException;
-
 import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
 
-@RunWith(SpringRunner.class)
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pro.javatar.security.oidc.services.OidcConfiguration.AUTHORIZATION_ENDPOINT;
+
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
         SpringTestConfig.class,
         AuthenticationOAuth2RedirectAwareFilterTest.SpringConfig.class
 })
 @WebAppConfiguration
-public class AuthenticationOAuth2RedirectAwareFilterTest {
+class AuthenticationOAuth2RedirectAwareFilterTest {
 
     private static final String REALM = "javatar-security";
 
@@ -82,8 +79,8 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
 
     MockMvc mockMvc;
 
-    @Before
-    public void setup() throws ServletException {
+    @BeforeEach
+    void setup() throws ServletException {
         MockitoAnnotations.initMocks(this);
         authenticationRealmAwareFilter.setEnableFilter(true);
         authenticationRealmAwareFilter.setRealmMandatory(true);
@@ -113,14 +110,14 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
                 .build();
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         oidcAuthenticationHelper.removeRealmFromCurrentRequest();
         redirectAwareFilter.destroy();
     }
 
     @Test
-    public void redirectAwareFilterDisabledAndReturnWithException() throws Exception {
+    void redirectAwareFilterDisabledAndReturnWithException() throws Exception {
         redirectAwareFilter.setEnableFilter(false);
         securityTestFilter.state = SecurityTestFilter.State.FAIL;
         mockMvc.perform(post("/security/realm/users")
@@ -132,7 +129,7 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
     }
 
     @Test
-    public void redirectAwareFilterDisabledAndSimpleReturn() throws Exception {
+    void redirectAwareFilterDisabledAndSimpleReturn() throws Exception {
         redirectAwareFilter.setEnableFilter(false);
         securityTestFilter.state = SecurityTestFilter.State.SKIP;
         mockMvc.perform(get("/security/realm/users/456")
@@ -144,7 +141,7 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
     }
 
     @Test
-    public void redirectAwareFilterEnabled() throws Exception {
+    void redirectAwareFilterEnabled() throws Exception {
         redirectAwareFilter.setEnableFilter(true);
         securityTestFilter.state = SecurityTestFilter.State.BEARER_NOT_FOUND;
         // TODO disable filter by not creating it
@@ -158,9 +155,9 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
         authorizationStubFilter.setEnableFilter(true);
     }
 
-    @Ignore // we do not support regex any more
+    @Disabled // we do not support regex any more
     @Test
-    public void redirectAwareFilterShouldSkipScenario() throws Exception {
+    void redirectAwareFilterShouldSkipScenario() throws Exception {
 //        oidcConfiguration.setFilterApplyUrlRegex("/some-other-url");
         redirectAwareFilter.setEnableFilter(true);
         // redirectAwareFilter.setFilterApplyUrlRegex("\\/wrong-url-pattern\\/realm\\/.*");
@@ -173,9 +170,9 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
                 .andDo(print()).andExpect(status().isUnauthorized()).andReturn();
     }
 
-    @Ignore // we do not support regex any more
+    @Disabled // we do not support regex any more
     @Test
-    public void redirectAwareFilterShouldListSkipScenario() throws Exception {
+    void redirectAwareFilterShouldListSkipScenario() throws Exception {
         redirectAwareFilter.setEnableFilter(true);
         // redirectAwareFilter.setFilterApplyUrlList(Collections.singletonList("/realm/users"));
         securityTestFilter.state = SecurityTestFilter.State.FAIL;
@@ -188,7 +185,7 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
     }
 
     @Test
-    public void redirectAwareFilterShouldSkipFromHelperScenario() throws Exception {
+    void redirectAwareFilterShouldSkipFromHelperScenario() throws Exception {
         oidcConfiguration.setFilterApplyUrlRegex("/some-other-url");
         redirectAwareFilter.setEnableFilter(true);
         securityTestFilter.state = SecurityTestFilter.State.FAIL;
@@ -208,7 +205,7 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
     }
 
     @Test
-    public void redirectAwareFilterAllPassedNoRedirectNeeded() throws Exception {
+    void redirectAwareFilterAllPassedNoRedirectNeeded() throws Exception {
         redirectAwareFilter.setEnableFilter(true);
         securityTestFilter.state = SecurityTestFilter.State.SKIP;
         mockMvc.perform(get("/security/realm/users/156")
@@ -220,7 +217,7 @@ public class AuthenticationOAuth2RedirectAwareFilterTest {
     }
 
     @Test
-    public void redirectToAuthorizationEndpointScenario() throws Exception {
+    void redirectToAuthorizationEndpointScenario() throws Exception {
         String realm = "realm_sk";
         String clientId = "seat-matching";
         String identityProviderHost = "https://ip.javatar.pro";

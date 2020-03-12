@@ -1,15 +1,15 @@
 package pro.javatar.security.oidc.model;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-public class TokenDetailsTest {
+class TokenDetailsTest {
 
     @Test
-    public void getMaskedAccessToken() throws Exception {
+    void getMaskedAccessToken() {
         TokenDetails tokenDetails = new TokenDetails();
         assertThat(tokenDetails.getMaskedAccessToken(), is(nullValue()));
         tokenDetails.setAccessToken("0123456789");
@@ -17,7 +17,7 @@ public class TokenDetailsTest {
     }
 
     @Test
-    public void getMaskedRefreshToken() throws Exception {
+    void getMaskedRefreshToken() {
         TokenDetails tokenDetails = new TokenDetails();
         assertThat(tokenDetails.getMaskedRefreshToken(), is(nullValue()));
         tokenDetails.setRefreshToken("0123456789");

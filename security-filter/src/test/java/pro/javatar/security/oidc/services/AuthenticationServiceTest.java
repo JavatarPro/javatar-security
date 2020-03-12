@@ -1,10 +1,12 @@
 package pro.javatar.security.oidc.services;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
@@ -12,8 +14,6 @@ import pro.javatar.security.oidc.services.api.RealmService;
 import pro.javatar.security.oidc.utils.JwtTokenGenerator;
 import pro.javatar.security.oidc.utils.KeyUtils;
 
-import org.junit.Before;
-import org.junit.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,7 +23,7 @@ import pro.javatar.security.oidc.utils.SpringTestConfig;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class AuthenticationServiceTest {
+class AuthenticationServiceTest {
 
     private static final String CLIENT_ID = "producer-service";
 
@@ -37,8 +37,8 @@ public class AuthenticationServiceTest {
 
     private SecurityConfig securityConfig;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         tokenService = mock(TokenService.class);
         publicKeyCacheService = mock(PublicKeyCacheService.class);
 
@@ -58,7 +58,7 @@ public class AuthenticationServiceTest {
     }
 
     @Test
-    public void authenticateByTokenDetails() throws Exception {
+    void authenticateByTokenDetails() throws Exception {
         JwtTokenGenerator tokenGenerator =
                 new JwtTokenGenerator("http://localhost:8080/auth/test-realm",
                         CLIENT_ID, Arrays.asList("USER_READ", "USER_WRITE"));
@@ -83,7 +83,7 @@ public class AuthenticationServiceTest {
     }
 
     @Test
-    public void authenticateByRefreshToken() throws Exception {
+    void authenticateByRefreshToken() throws Exception {
         JwtTokenGenerator tokenGenerator =
                 new JwtTokenGenerator("http://localhost:8080/auth/test-realm",
                         CLIENT_ID, Arrays.asList("USER_READ", "USER_WRITE"));

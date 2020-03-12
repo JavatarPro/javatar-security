@@ -1,28 +1,28 @@
 package pro.javatar.security.oidc.services;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertSame;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.oidc.client.OAuthClient;
-import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
-
-import org.junit.Before;
-import org.junit.Test;
+import pro.javatar.security.oidc.model.TokenDetails;
 
 import java.time.LocalDateTime;
 
-public class TokenServiceTest {
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class TokenServiceTest {
 
     private TokenService service;
     private UsersTokenService usersTokenService;
     private ApplicationTokenService applicationTokenService;
     private OAuthClient oAuthClient;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         usersTokenService = mock(UsersTokenService.class);
         applicationTokenService = mock(ApplicationTokenService.class);
         oAuthClient = mock(OAuthClient.class);
@@ -30,7 +30,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void getApplicationTokenDetails() throws Exception {
+    void getApplicationTokenDetails() {
         TokenDetails tokenDetails = new TokenDetails();
         when(usersTokenService.retrieveUsersTokenDetails()).thenReturn(tokenDetails);
         TokenDetails applicationTokenDetails =
@@ -41,7 +41,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void getUserTokenDetails() throws Exception {
+    void getUserTokenDetails() {
         TokenDetails userTokenDetails =
                 new TokenDetails("accessToken5", "refreshToken555", LocalDateTime.now());
         when(usersTokenService.retrieveUsersTokenDetails()).thenReturn(userTokenDetails);
@@ -50,7 +50,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void getTokenByRefreshToken() throws Exception {
+    void getTokenByRefreshToken() {
         String refreshToken = "refresh-token333";
         TokenDetails tokenDetails = new TokenDetails();
         when(oAuthClient.obtainTokenDetailsByRefreshToken(refreshToken)).thenReturn(tokenDetails);
@@ -58,12 +58,12 @@ public class TokenServiceTest {
         assertSame(service.getTokenByRefreshToken(refreshToken), tokenDetails);
     }
 
-    @Test(expected = ObtainRefreshTokenException.class)
-    public void getTokenByRefreshTokenException() throws Exception {
+    @Test
+    void getTokenByRefreshTokenException() {
         String refreshToken = "refresh-token333";
         when(oAuthClient.obtainTokenDetailsByRefreshToken(refreshToken))
                 .thenThrow(new ObtainRefreshTokenException());
 
-        service.getTokenByRefreshToken(refreshToken);
+        assertThrows(ObtainRefreshTokenException.class, () -> service.getTokenByRefreshToken(refreshToken));
     }
 }

@@ -1,25 +1,24 @@
 package pro.javatar.security.oidc.services;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertThat;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.oidc.model.UserKey;
 
-import org.junit.Before;
-import org.junit.Test;
-
-public class OnBehalfOfUsernameHolderTest {
+class OnBehalfOfUsernameHolderTest {
 
     private OnBehalfOfUsernameHolder holder;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         holder = new OnBehalfOfUsernameHolder();
     }
 
     @Test
-    public void checkHoldingUserKeyBetweenThreads() throws Exception {
+    void checkHoldingUserKeyBetweenThreads() throws Exception {
         assertThat(holder.getUser(), is(nullValue()));
         UserKey userKey1 = new UserKey("user1", "realm1");
         holder.putUser(userKey1);
@@ -44,7 +43,7 @@ public class OnBehalfOfUsernameHolderTest {
     }
 
     @Test
-    public void putWrongUserKey() throws Exception {
+    void putWrongUserKey() {
         holder.putUser("", "ream1");
         assertThat(holder.getUser(), is(nullValue()));
 
@@ -59,7 +58,7 @@ public class OnBehalfOfUsernameHolderTest {
     }
 
     @Test
-    public void removeUserKey() throws Exception {
+    void removeUserKey() {
         assertThat(holder.getUser(), is(nullValue()));
         UserKey userKey1 = new UserKey("user1", "realm1");
         holder.putUser(userKey1);

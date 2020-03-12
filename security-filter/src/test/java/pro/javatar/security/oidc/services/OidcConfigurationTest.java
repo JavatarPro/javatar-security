@@ -3,25 +3,25 @@ package pro.javatar.security.oidc.services;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.oidc.model.UserKey;
-
-import org.junit.Before;
-import org.junit.Test;
 
 import java.util.Map;
 
-public class OidcConfigurationTest {
+class OidcConfigurationTest {
 
     private OidcConfiguration oidcConfiguration;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         oidcConfiguration = new OidcConfiguration();
     }
 
     @Test
-    public void setRunOnBehalfOfUsersAllSucceeded() throws Exception {
+    void setRunOnBehalfOfUsersAllSucceeded() {
         oidcConfiguration.setRunOnBehalfOfUsers("admin:wtqwerty@test-qa-rc, ecommerce:abcd1234@test-qa-rc");
         Map<UserKey, String> runOnBehalfOfUsers = oidcConfiguration.getRunOnBehalfOfUsers();
         String adminPassword = runOnBehalfOfUsers.get(new UserKey("admin", "test-qa-rc"));
@@ -32,7 +32,7 @@ public class OidcConfigurationTest {
     }
 
     @Test
-    public void setRunOnBehalfOfUsersOneSucceeded() throws Exception {
+    void setRunOnBehalfOfUsersOneSucceeded() {
         oidcConfiguration.setRunOnBehalfOfUsers("admin:wtqwerty@test-qa-rc, ecommerce:abcd1234:test-qa-rc");
         Map<UserKey, String> runOnBehalfOfUsers = oidcConfiguration.getRunOnBehalfOfUsers();
         String adminPassword = runOnBehalfOfUsers.get(new UserKey("admin", "test-qa-rc"));
@@ -43,7 +43,7 @@ public class OidcConfigurationTest {
     }
 
     @Test
-    public void afterPropertiesSetUserAndPasswordAreConfigured() throws Exception {
+    void afterPropertiesSetUserAndPasswordAreConfigured() throws Exception {
         oidcConfiguration.setUsername("login3");
         oidcConfiguration.setUserPassword("login3-password");
         oidcConfiguration.setDefaultRealm("default-realm");
@@ -55,11 +55,11 @@ public class OidcConfigurationTest {
         assertThat(oidcConfiguration.getRunOnBehalfOfUserPassword("login3", "default-realm"), is("login3-password"));
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void afterPropertiesSetPasswordAreNotConfigured() throws Exception {
+    @Test
+    void afterPropertiesSetPasswordAreNotConfigured() {
         oidcConfiguration.setUsername("login3");
         oidcConfiguration.setDefaultRealm("default-realm");
 
-        oidcConfiguration.afterPropertiesSet();
+        assertThrows(IllegalStateException.class, () -> oidcConfiguration.afterPropertiesSet());
     }
 }

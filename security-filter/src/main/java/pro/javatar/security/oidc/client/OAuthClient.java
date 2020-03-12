@@ -24,10 +24,10 @@ import pro.javatar.security.jwt.adapter.AdapterRSATokenVerifier;
 import pro.javatar.security.jwt.bean.representation.AccessToken;
 import pro.javatar.security.jwt.exception.TokenExpirationException;
 import pro.javatar.security.jwt.exception.VerificationException;
-import pro.javatar.security.oidc.model.OAuth2Constants;
-import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.SecurityConstants;
 import pro.javatar.security.oidc.exceptions.*;
+import pro.javatar.security.oidc.model.OAuth2Constants;
+import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.services.OidcConfiguration;
 import pro.javatar.security.oidc.services.PublicKeyCacheService;
 import pro.javatar.security.oidc.services.api.RealmService;
@@ -153,7 +153,7 @@ public class OAuthClient {
         CloseableHttpClient httpClient = null;
         CloseableHttpResponse httpResponse = null;
         try {
-            httpClient = HttpClients.createDefault();
+            httpClient = createDefaultHttpClient();
             HttpPost requestBase = new HttpPost(uri.build());
             logger.debug("Create POST method on uri: {}", uri.build());
             requestBase.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE);
@@ -203,12 +203,12 @@ public class OAuthClient {
 
     String prepareTokenEndpointUrl(String realm) {
         return config.identityProvider().url() +
-                oidcConfiguration.getTokenEndpoint().replace("{realm}", realm);
+                       oidcConfiguration.getTokenEndpoint().replace("{realm}", realm);
     }
 
     private TokenDetails parseTokenFromJsonString(String responseJsonString) {
         JSONParser jsonParser = new JSONParser();
-        Object parsed = null;
+        Object parsed;
         try {
             // TODO parse & validation token should be separate things, we just receive token
             parsed = jsonParser.parse(responseJsonString);
@@ -246,17 +246,17 @@ public class OAuthClient {
                 tokenDetails = obtainTokenDetailsByRefreshToken(refreshToken);
                 token = parseAccessToken(tokenDetails.getAccessToken(), realmFromToken);
                 return createTokenDetails(tokenDetails.getAccessToken(), tokenDetails.getRefreshToken(),
-                        token.getExpiration());
+                                          token.getExpiration());
             } catch (Exception e1) {
                 logger.error("Refresh token is spoiled: {}, realm: {}", StringUtils.getMaskedString(refreshToken),
-                        realmFromToken, e1);
+                             realmFromToken, e1);
                 throw new RefreshTokenObsoleteAuthenticationException();
             }
         }
         return createTokenDetails(accessToken, refreshToken, token.getExpiration());
     }
 
-    private TokenDetails createTokenDetails(String accessToken, String refreshToken, int expiration){
+    private TokenDetails createTokenDetails(String accessToken, String refreshToken, int expiration) {
         LocalDateTime accessTokenExpiration =
                 LocalDateTime.ofInstant(Instant.ofEpochSecond(expiration), ZoneId.systemDefault());
         return new TokenDetails(accessToken, refreshToken, accessTokenExpiration);
@@ -266,7 +266,7 @@ public class OAuthClient {
         ArrayList<BasicNameValuePair> maskedParam = new ArrayList<>();
         for (BasicNameValuePair basicNameValuePair : params) {
             if (OAuth2Constants.PASSWORD.equals(basicNameValuePair.getName()) ||
-                    OAuth2Constants.CLIENT_SECRET.equals(basicNameValuePair.getName())) {
+                        OAuth2Constants.CLIENT_SECRET.equals(basicNameValuePair.getName())) {
                 maskedParam.add(new BasicNameValuePair(basicNameValuePair.getName(), "********"));
             }
         }
@@ -274,17 +274,21 @@ public class OAuthClient {
     }
 
     public AccessToken parseAccessToken(String accessToken, String realm) throws VerificationException,
-            TokenExpirationException {
+                                                                                         TokenExpirationException {
         logger.debug("Token realm is {}", realm);
         String publicKeyByRealm = publicKeyCacheService.getPublicKeyByRealm(realm);
         logger.debug("Public key [{}] was retrieved by realm={}", publicKeyByRealm, realm);
         try {
             return getAccessToken(accessToken, realm, publicKeyByRealm);
         } catch (Exception e) { // TODO catch different exceptions
-            logger.trace("The first attempt to get access token is invalid. Trying again with refreshed public key." , e);
+            logger.trace("The first attempt to get access token is invalid. Trying again with refreshed public key.", e);
             String publicKey = publicKeyCacheService.refreshPublicKey(realm);
             return getAccessToken(accessToken, realm, publicKey);
         }
+    }
+
+    CloseableHttpClient createDefaultHttpClient() {
+        return HttpClients.createDefault();
     }
 
     private AccessToken getAccessToken(String accessToken, String realm, String publicKeyByRealm)
@@ -303,9 +307,5 @@ public class OAuthClient {
 
     public void setRealmService(RealmService realmService) {
         this.realmService = realmService;
-    }
-
-    public void setPublicKeyCacheService(PublicKeyCacheService publicKeyCacheService) {
-        this.publicKeyCacheService = publicKeyCacheService;
     }
 }
