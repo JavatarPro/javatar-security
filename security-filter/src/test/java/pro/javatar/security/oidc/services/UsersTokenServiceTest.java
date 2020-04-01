@@ -7,27 +7,27 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 
-import org.junit.Before;
-import org.junit.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
-public class UsersTokenServiceTest {
+class UsersTokenServiceTest {
 
     private UsersTokenService service;
     private OidcAuthenticationHelper oidcAuthenticationHelper;
     private OAuthClient oAuthClient;
     private TokenDetails tokenDetails;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         this.oidcAuthenticationHelper = mock(OidcAuthenticationHelper.class);
         this.oAuthClient = mock(OAuthClient.class);
         service = new UsersTokenService(oidcAuthenticationHelper, oAuthClient);
@@ -36,7 +36,7 @@ public class UsersTokenServiceTest {
     }
 
     @Test
-    public void retrieveUsersTokenDetailsTokenIsExpired() throws Exception {
+    void retrieveUsersTokenDetailsTokenIsExpired() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("login", tokenDetails, new ArrayList<>()));
         when(oidcAuthenticationHelper.isTokenExpiredOrShouldBeRefreshed(tokenDetails)).thenReturn(false);
@@ -45,7 +45,7 @@ public class UsersTokenServiceTest {
     }
 
     @Test
-    public void retrieveUsersTokenDetailsTokenIsNotExpired() throws Exception {
+    void retrieveUsersTokenDetailsTokenIsNotExpired() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("login", tokenDetails, new ArrayList<>()));
         when(oidcAuthenticationHelper.isTokenExpiredOrShouldBeRefreshed(tokenDetails)).thenReturn(true);
@@ -59,7 +59,7 @@ public class UsersTokenServiceTest {
     }
 
     @Test
-    public void retrieveUsersTokenDetailsExceptionWhenTokenRefreshing() throws Exception {
+    void retrieveUsersTokenDetailsExceptionWhenTokenRefreshing() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("login", tokenDetails, new ArrayList<>()));
         when(oidcAuthenticationHelper.isTokenExpiredOrShouldBeRefreshed(tokenDetails)).thenReturn(true);
@@ -71,7 +71,7 @@ public class UsersTokenServiceTest {
     }
 
     @Test
-    public void retrieveUsersTokenDetailsWhenSecurityContextIsEmpty() throws Exception {
+    void retrieveUsersTokenDetailsWhenSecurityContextIsEmpty() {
         SecurityContextHolder.clearContext();
 
         TokenDetails tokenDetails = service.retrieveUsersTokenDetails();

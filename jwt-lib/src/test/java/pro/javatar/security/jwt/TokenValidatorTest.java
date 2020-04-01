@@ -1,14 +1,14 @@
 package pro.javatar.security.jwt;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TokenValidatorTest {
+class TokenValidatorTest {
 
     @Test
-    public void isRealmValid() throws Exception {
+    void isRealmValid() {
         TokenValidator tokenValidator = new TokenValidator();
         assertTrue(tokenValidator.isRealmValid("http://identity-provider/auth/realms/realm", "realm"));
 

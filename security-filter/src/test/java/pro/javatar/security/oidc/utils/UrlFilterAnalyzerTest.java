@@ -1,23 +1,23 @@
 package pro.javatar.security.oidc.utils;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertThat;
-
-import org.junit.Before;
-import org.junit.Test;
 
 public class UrlFilterAnalyzerTest {
 
     private UrlFilterAnalyzer urlFilterAnalyzer;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() {
         urlFilterAnalyzer = new UrlFilterAnalyzer();
     }
 
     @Test
-    public void getApplyAsContainingFilter() throws Exception {
+    public void getApplyAsContainingFilter() {
         assertThat(urlFilterAnalyzer.getApplyAsContainingFilter("/test/get"), is(nullValue()));
         assertThat(urlFilterAnalyzer.getApplyAsContainingFilter("*/test/get"), is(nullValue()));
 
@@ -26,7 +26,7 @@ public class UrlFilterAnalyzerTest {
     }
 
     @Test
-    public void applyAsStartingPattern() throws Exception {
+    public void applyAsStartingPattern() {
         assertThat(urlFilterAnalyzer.getApplyAsStartingFilter("/test/get"), is(nullValue()));
         assertThat(urlFilterAnalyzer.getApplyAsStartingFilter("/test/get*"), is("/test/get"));
     }

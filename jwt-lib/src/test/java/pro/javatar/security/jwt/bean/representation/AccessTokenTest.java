@@ -1,24 +1,23 @@
 package pro.javatar.security.jwt.bean.representation;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.jwt.RSATokenVerifier;
 import pro.javatar.security.jwt.TokenVerifier;
 import pro.javatar.security.jwt.bean.jws.JWSBuilder;
-import pro.javatar.security.jwt.exception.TokenExpirationException;
 import pro.javatar.security.jwt.exception.VerificationException;
 import pro.javatar.security.jwt.utils.Time;
 import pro.javatar.security.jwt.utils.TokenUtil;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 
-public class AccessTokenTest {
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class AccessTokenTest {
     private static final String REALM = "realm2";
     private static final String CLIENT_ID = "configuration-service";
     private static final String USER_ROLE = "SEC_ADMIN";
@@ -26,14 +25,14 @@ public class AccessTokenTest {
     private static KeyPair idpPair;
     private static KeyPair badPair;
 
-    @BeforeClass
-    public static void setupCerts() throws Exception {
+    @BeforeAll
+    static void setupCerts() throws Exception {
         idpPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
         badPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
     }
 
     @Test
-    public void testTokenAuthHappyFlow() throws Exception {
+    void testTokenAuthHappyFlow() throws Exception {
         AccessToken accessToken = new AccessToken();
         accessToken.type(TokenUtil.TOKEN_TYPE_BEARER)
                 .expiration(Time.currentTime() + 100)
@@ -42,8 +41,8 @@ public class AccessTokenTest {
                 .addAccess(CLIENT_ID).addRole(USER_ROLE);
 
         String tokenString = new JWSBuilder()
-                .jsonContent(accessToken)
-                .rsa256(idpPair.getPrivate());
+                                     .jsonContent(accessToken)
+                                     .rsa256(idpPair.getPrivate());
 
         assertThat(TokenVerifier.getRealm(tokenString), is(REALM));
 
@@ -55,9 +54,8 @@ public class AccessTokenTest {
         assertTrue(parsedAccessToken.getResourceAccess(CLIENT_ID).getRoles().contains(USER_ROLE));
     }
 
-    @SuppressWarnings("Duplicates")
-    @Test(expected = TokenExpirationException.class)
-    public void testTokenAuthIsExpired() throws Exception {
+    @Test
+    void testTokenAuthIsExpired() {
         AccessToken accessToken = new AccessToken();
         accessToken.type(TokenUtil.TOKEN_TYPE_BEARER)
                 .expiration(Time.currentTime() - 100)
@@ -66,16 +64,15 @@ public class AccessTokenTest {
                 .addAccess(CLIENT_ID).addRole(USER_ROLE);
 
         String tokenString = new JWSBuilder()
-                .jsonContent(accessToken)
-                .rsa256(idpPair.getPrivate());
+                                     .jsonContent(accessToken)
+                                     .rsa256(idpPair.getPrivate());
 
         assertThat(TokenVerifier.getRealm(tokenString), is(REALM));
-        RSATokenVerifier.getAccessToken(tokenString, idpPair.getPublic(), REALM, true, true);
+        assertThrows(VerificationException.class, () -> RSATokenVerifier.getAccessToken(tokenString, idpPair.getPublic(), REALM, true, true));
     }
 
-    @SuppressWarnings("Duplicates")
-    @Test(expected = VerificationException.class)
-    public void testTokenAuthBadSignature() throws Exception {
+    @Test
+    void testTokenAuthBadSignature() {
         AccessToken accessToken = new AccessToken();
         accessToken.type(TokenUtil.TOKEN_TYPE_BEARER)
                 .expiration(Time.currentTime() - 100)
@@ -84,15 +81,15 @@ public class AccessTokenTest {
                 .addAccess(CLIENT_ID).addRole(USER_ROLE);
 
         String tokenString = new JWSBuilder()
-                .jsonContent(accessToken)
-                .rsa256(idpPair.getPrivate());
+                                     .jsonContent(accessToken)
+                                     .rsa256(idpPair.getPrivate());
 
         assertThat(TokenVerifier.getRealm(tokenString), is(REALM));
-        RSATokenVerifier.getAccessToken(tokenString, badPair.getPublic(), REALM, true, true);
+        assertThrows(VerificationException.class, () -> RSATokenVerifier.getAccessToken(tokenString, badPair.getPublic(), REALM, true, true));
     }
 
-    @Test(expected = VerificationException.class)
-    public void testTokenAuthIncorrectRealm() throws Exception {
+    @Test
+    void testTokenAuthIncorrectRealm() {
         AccessToken accessToken = new AccessToken();
         accessToken.type(TokenUtil.TOKEN_TYPE_BEARER)
                 .expiration(Time.currentTime() - 100)
@@ -101,9 +98,10 @@ public class AccessTokenTest {
                 .addAccess(CLIENT_ID).addRole(USER_ROLE);
 
         String tokenString = new JWSBuilder()
-                .jsonContent(accessToken)
-                .rsa256(idpPair.getPrivate());
+                                     .jsonContent(accessToken)
+                                     .rsa256(idpPair.getPrivate());
 
-        RSATokenVerifier.getAccessToken(tokenString, idpPair.getPublic(), "incorrect realm", true, true);
+        assertThrows(VerificationException.class, () ->
+                                                          RSATokenVerifier.getAccessToken(tokenString, idpPair.getPublic(), "incorrect realm", true, true));
     }
 }

@@ -6,14 +6,10 @@
   <parent>
     <groupId>pro.javatar.security</groupId>
     <artifactId>javatar-security</artifactId>
-    <version>0.0.23</version>
+    <version>0.0.24</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>public-key-cache-api</artifactId>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 
 </project>

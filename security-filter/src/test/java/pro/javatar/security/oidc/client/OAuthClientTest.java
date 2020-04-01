@@ -1,46 +1,31 @@
 package pro.javatar.security.oidc.client;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-
-import org.junit.Before;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.apache.http.message.BasicNameValuePair;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
 import pro.javatar.security.api.config.SecurityConfig;
-import pro.javatar.security.oidc.model.OAuth2Constants;
-import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.exceptions.ExchangeTokenByCodeAuthenticationException;
 import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 import pro.javatar.security.oidc.exceptions.ObtainTokenByUserCredentialAuthenticationException;
-import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
+import pro.javatar.security.oidc.model.OAuth2Constants;
+import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.services.OidcConfiguration;
-
-import org.apache.http.message.BasicNameValuePair;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import pro.javatar.security.oidc.services.api.RealmService;
 import pro.javatar.security.oidc.utils.SpringTestConfig;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
-@RunWith(MockitoJUnitRunner.class)
-@PrepareForTest(OAuthClient.class)
-public class OAuthClientTest {
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class OAuthClientTest {
 
     @Spy
     @InjectMocks
@@ -61,14 +46,14 @@ public class OAuthClientTest {
     @Mock
     RealmService realmService;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         client.setConfig(config);
         client.setRealmService(realmService);
     }
 
     @Test
-    public void obtainTokenDetailsByAuthorizationCode() throws Exception {
+    void obtainTokenDetailsByAuthorizationCode() throws Exception {
         when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         TokenDetails expectedTokenDetails = new TokenDetails();
@@ -85,17 +70,17 @@ public class OAuthClientTest {
         assertThat(params.get(OAuth2Constants.REDIRECT_URI), is(redirectUrl));
     }
 
-    @Test(expected = ExchangeTokenByCodeAuthenticationException.class)
-    public void obtainTokenDetailsByAuthorizationCodeException() throws Exception {
+    @Test
+    void obtainTokenDetailsByAuthorizationCodeException() throws Exception {
         when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         doThrow(new RuntimeException()).when(client).obtainTokenDetails(any(), any());
 
-        client.obtainTokenDetailsByAuthorizationCode(code, redirectUrl);
+        assertThrows(ExchangeTokenByCodeAuthenticationException.class, () -> client.obtainTokenDetailsByAuthorizationCode(code, redirectUrl));
     }
 
     @Test
-    public void obtainTokenDetailsByRefreshToken() throws Exception {
+    void obtainTokenDetailsByRefreshToken() throws Exception {
         String refreshToken = "refresh token";
         when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
@@ -112,18 +97,18 @@ public class OAuthClientTest {
         assertThat(params.get(OAuth2Constants.CLIENT_SECRET), is(clientSecret));
     }
 
-    @Test(expected = ObtainRefreshTokenException.class)
-    public void obtainTokenDetailsByRefreshTokenException() throws Exception {
+    @Test
+    void obtainTokenDetailsByRefreshTokenException() throws Exception {
         String refreshToken = "refresh token";
         when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         doThrow(new RuntimeException()).when(client).obtainTokenDetails(any(), any());
 
-        client.obtainTokenDetailsByRefreshToken(refreshToken);
+        assertThrows(ObtainRefreshTokenException.class, () -> client.obtainTokenDetailsByRefreshToken(refreshToken));
     }
 
     @Test
-    public void obtainTokenDetailsByApplicationCredentialsByConfiguration() throws Exception {
+    void obtainTokenDetailsByApplicationCredentialsByConfiguration() throws Exception {
         when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         TokenDetails expectedTokenDetails = new TokenDetails();
@@ -140,17 +125,17 @@ public class OAuthClientTest {
         assertThat(params.get(OAuth2Constants.CLIENT_SECRET), is(clientSecret));
     }
 
-    @Test(expected = ObtainTokenByUserCredentialAuthenticationException.class)
-    public void obtainTokenDetailsByApplicationCredentialsByConfigurationException() throws Exception {
+    @Test
+    void obtainTokenDetailsByApplicationCredentialsByConfigurationException() throws Exception {
         when(realmService.getRealmForCurrentRequest()).thenReturn("realm2");
 
         doThrow(new RuntimeException()).when(client).obtainTokenDetails(any(), any());
 
-        client.obtainTokenDetailsByApplicationCredentials();
+        assertThrows(ObtainTokenByUserCredentialAuthenticationException.class, () -> client.obtainTokenDetailsByApplicationCredentials());
     }
 
     @Test
-    public void obtainTokenDetailsByRunOnBehalfOfUserCredentials() throws Exception {
+    void obtainTokenDetailsByRunOnBehalfOfUserCredentials() throws Exception {
         String username = "pupkin2";
         String userPassword = "pupkin2-password";
         String realm = "realm_sk";
@@ -173,7 +158,7 @@ public class OAuthClientTest {
     }
 
     @Test
-    public void obtainTokenDetailsByApplicationCredentialsWithParameters() throws Exception {
+    void obtainTokenDetailsByApplicationCredentialsWithParameters() throws Exception {
         String username = "pupkin3";
         String userPassword = "pupkin3-password";
         String realm = "some_realm";
@@ -195,7 +180,7 @@ public class OAuthClientTest {
     }
 
     @Test
-    public void prepareTokenEndpointUrl() throws Exception {
+    void prepareTokenEndpointUrl() {
         String realm = "test-realm";
 
         when(oidcConfiguration.getTokenEndpoint()).thenReturn("/{realm}/path");

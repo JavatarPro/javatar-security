@@ -1,21 +1,22 @@
 package pro.javatar.security.oidc.services;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.oidc.model.TokenDetails;
-import org.junit.Before;
-import org.junit.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class OidcSecurityDetailsServiceImplTest {
-    public static final String TEST3_REALM = "test3-realm";
-    public static final String LOGIN = "krs";
+class OidcSecurityDetailsServiceImplTest {
+    static final String TEST3_REALM = "test3-realm";
+    static final String LOGIN = "krs";
     private OidcSecurityDetailsService securityDetailsService;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         TokenDetails tokenDetails = new TokenDetails();
         tokenDetails.setRealm(TEST3_REALM);
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(LOGIN, tokenDetails);
@@ -25,7 +26,7 @@ public class OidcSecurityDetailsServiceImplTest {
     }
 
     @Test
-    public void getTokenRealm() throws Exception {
+    void getTokenRealm() {
         assertThat(securityDetailsService.getTokenRealm(), is(TEST3_REALM));
 
         SecurityContextHolder.getContext().setAuthentication(null);
@@ -33,7 +34,7 @@ public class OidcSecurityDetailsServiceImplTest {
     }
 
     @Test
-    public void getTokenUser() throws Exception {
+    void getTokenUser() {
         assertThat(securityDetailsService.getTokenUser(), is(LOGIN));
 
         SecurityContextHolder.getContext().setAuthentication(null);

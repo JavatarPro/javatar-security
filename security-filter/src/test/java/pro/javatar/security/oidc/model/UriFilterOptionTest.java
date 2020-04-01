@@ -1,20 +1,21 @@
 package pro.javatar.security.oidc.model;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.oidc.filters.uri.UriFilterOption;
 
-import org.junit.Test;
 import org.springframework.http.HttpMethod;
 
 import java.util.Optional;
 
-public class UriFilterOptionTest {
+class UriFilterOptionTest {
 
     @Test
-    public void fromString_anyUri() throws Exception {
+    void fromString_anyUri() {
         UriFilterOption option = UriFilterOption.fromString("*");
         assertThat(option.getHttpMethod(), is(Optional.empty()));
         assertThat(option.getUri(), is("*"));
@@ -25,7 +26,7 @@ public class UriFilterOptionTest {
     }
 
     @Test
-    public void fromString_methodAndUri() throws Exception {
+    void fromString_methodAndUri() {
         UriFilterOption option = UriFilterOption.fromString("GET /resource");
         assertThat(option.getHttpMethod(), is(Optional.of(HttpMethod.GET)));
         assertThat(option.getUri(), is("/resource"));
@@ -43,13 +44,13 @@ public class UriFilterOptionTest {
         assertThat(option.getUri(), is("*"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void fromString__invalidMethod() {
-        UriFilterOption.fromString("GETT /resource");
+    @Test
+    void fromString__invalidMethod() {
+        assertThrows(IllegalArgumentException.class, () -> UriFilterOption.fromString("GETT /resource"));
     }
 
     @Test
-    public void fromString__empty() {
+    void fromString__empty() {
         UriFilterOption option = UriFilterOption.fromString("");
         assertTrue(option.isEmpty());
     }
