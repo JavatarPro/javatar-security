@@ -4,36 +4,34 @@ import static junit.framework.TestCase.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.oidc.client.OAuthClient;
 import pro.javatar.security.oidc.model.TokenDetails;
 import pro.javatar.security.oidc.model.UserKey;
 
-import org.junit.Before;
-import org.junit.Test;
-
-public class ApplicationTokenServiceTest {
+class ApplicationTokenServiceTest {
 
     private OAuthClient oAuthClient;
     private OidcAuthenticationHelper oidcAuthenticationHelper;
     private OnBehalfOfUsernameHolder onBehalfOfUsernameHolder;
     private ApplicationTokenHolder applicationTokenHolder;
-    private OidcConfiguration oidcConfiguration;
     private ApplicationTokenService service;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         oAuthClient = mock(OAuthClient.class);
         oidcAuthenticationHelper = mock(OidcAuthenticationHelper.class);
-        oidcConfiguration = new OidcConfiguration();
+        OidcConfiguration oidcConfiguration = new OidcConfiguration();
         onBehalfOfUsernameHolder = new OnBehalfOfUsernameHolder();
         applicationTokenHolder = new ApplicationTokenHolder();
 
         service = new ApplicationTokenService(oAuthClient, oidcAuthenticationHelper,
-                        onBehalfOfUsernameHolder, applicationTokenHolder, oidcConfiguration);
+                                              onBehalfOfUsernameHolder, applicationTokenHolder, oidcConfiguration);
     }
 
     @Test
-    public void getApplicationTokenDetails() throws Exception {
+    void getApplicationTokenDetails() {
         onBehalfOfUsernameHolder.removeUser();
         UserKey userKey1 = new UserKey("user1", "realm1");
         onBehalfOfUsernameHolder.putUser(userKey1);
@@ -49,7 +47,7 @@ public class ApplicationTokenServiceTest {
     }
 
     @Test
-    public void getApplicationTokenDetailsAccessTokenIsNotExpired() throws Exception {
+    void getApplicationTokenDetailsAccessTokenIsNotExpired() {
         onBehalfOfUsernameHolder.removeUser();
         UserKey userKey1 = new UserKey("user1", "realm1");
         onBehalfOfUsernameHolder.putUser(userKey1);
@@ -64,7 +62,7 @@ public class ApplicationTokenServiceTest {
     }
 
     @Test
-    public void getApplicationTokenDetailsAccessTokenIsExpired() throws Exception {
+    void getApplicationTokenDetailsAccessTokenIsExpired() {
         onBehalfOfUsernameHolder.removeUser();
         UserKey userKey1 = new UserKey("user1", "realm1");
         onBehalfOfUsernameHolder.putUser(userKey1);

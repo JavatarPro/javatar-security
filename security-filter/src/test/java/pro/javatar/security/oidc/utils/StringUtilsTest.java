@@ -1,15 +1,15 @@
 package pro.javatar.security.oidc.utils;
 
+import org.junit.jupiter.api.Test;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-import org.junit.Test;
-
-public class StringUtilsTest {
+class StringUtilsTest {
 
     @Test
-    public void isBlank() throws Exception {
+    void isBlank() {
         assertThat(StringUtils.isBlank(null), is(true));
         assertThat(StringUtils.isBlank(""), is(true));
         assertThat(StringUtils.isBlank(" "), is(true));
@@ -18,7 +18,7 @@ public class StringUtilsTest {
     }
 
     @Test
-    public void isNotBlank() throws Exception {
+    void isNotBlank() {
         assertThat(StringUtils.isNotBlank(null), is(false));
         assertThat(StringUtils.isNotBlank(""), is(false));
         assertThat(StringUtils.isNotBlank(" "), is(false));
@@ -27,7 +27,7 @@ public class StringUtilsTest {
     }
 
     @Test
-    public void getMaskedString() throws Exception {
+    void getMaskedString() {
         assertThat(StringUtils.getMaskedString("1234567890"), is("*****4567890"));
         assertThat(StringUtils.getMaskedString("1234567890", 1), is("*****0"));
         assertThat(StringUtils.getMaskedString("1234567890", 2), is("*****90"));

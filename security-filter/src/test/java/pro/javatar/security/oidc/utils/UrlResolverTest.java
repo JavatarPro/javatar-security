@@ -1,23 +1,23 @@
 package pro.javatar.security.oidc.utils;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static pro.javatar.security.oidc.filters.uri.UriFilterOption.fromString;
 import static pro.javatar.security.oidc.utils.MockHttpRequest.mockGetUri;
 import static pro.javatar.security.oidc.utils.MockHttpRequest.mockMethodAndUri;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
 
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.oidc.filters.uri.UriFilterOption;
 
-import org.junit.Test;
 import org.springframework.http.HttpMethod;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class UrlResolverTest {
+class UrlResolverTest {
 
     @Test
-    public void apply() throws Exception {
+    void apply() {
         List<UriFilterOption> applyFilters = new ArrayList<>();
         applyFilters.add(fromString("/test/get/11"));
         applyFilters.add(fromString("/test/list/*"));
@@ -51,7 +51,7 @@ public class UrlResolverTest {
     }
 
     @Test
-    public void applyWithPriority() throws Exception {
+    void applyWithPriority() {
         List<UriFilterOption> applyFilters = new ArrayList<>();
         applyFilters.add(fromString("/test1/*"));
 
@@ -69,7 +69,7 @@ public class UrlResolverTest {
     }
 
     @Test
-    public void applyWithHttpMethods() throws Exception {
+    void applyWithHttpMethods() {
         List<UriFilterOption> applyFilters = new ArrayList<>();
         applyFilters.add(fromString("/test1/*"));
 

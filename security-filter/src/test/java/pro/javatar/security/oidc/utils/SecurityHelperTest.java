@@ -1,27 +1,24 @@
 package pro.javatar.security.oidc.utils;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import pro.javatar.security.oidc.model.TokenDetails;
-import pro.javatar.security.oidc.services.OidcConfiguration;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Andrii Murashkin / Javatar LLC
  * @version 10-03-2019
  */
-@RunWith(MockitoJUnitRunner.class)
-public class SecurityHelperTest {
+@ExtendWith(MockitoExtension.class)
+class SecurityHelperTest {
 
     private static final String LOGIN = "user6767";
     private static final String REALM = "test-realm";
@@ -36,7 +33,7 @@ public class SecurityHelperTest {
     private SecurityHelper securityHelper;
 
     @Test
-    public void getCurrentRealm() {
+    void getCurrentRealm() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(LOGIN, getTokenDetails(), new ArrayList<>()));
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
@@ -45,7 +42,7 @@ public class SecurityHelperTest {
     }
 
     @Test
-    public void getCurrentRealmTokenDetailsIsNull() {
+    void getCurrentRealmTokenDetailsIsNull() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(LOGIN, null, new ArrayList<>()));
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
@@ -55,11 +52,11 @@ public class SecurityHelperTest {
         // assertEquals(DEFAULT_REALM, securityHelper.getCurrentRealm());
         // change behaviour to return null, to not couple securityHelper to configuration
         // since 2019-06-24
-        assertEquals(null, securityHelper.getCurrentRealm());
+        assertNull(securityHelper.getCurrentRealm());
     }
 
     @Test
-    public void getCurrentRealmDefaultRealm() {
+    void getCurrentRealmDefaultRealm() {
         SecurityContextHolder.clearContext();
         assertNull(SecurityContextHolder.getContext().getAuthentication());
 
@@ -68,11 +65,11 @@ public class SecurityHelperTest {
         // assertEquals(DEFAULT_REALM, securityHelper.getCurrentRealm());
         // change behaviour to return null, to not couple securityHelper to configuration
         // since 2019-06-24
-        assertEquals(null, securityHelper.getCurrentRealm());
+        assertNull(securityHelper.getCurrentRealm());
     }
 
     @Test
-    public void getCurrentLogin() {
+    void getCurrentLogin() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(LOGIN, null, new ArrayList<>()));
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
@@ -80,12 +77,12 @@ public class SecurityHelperTest {
         assertEquals(LOGIN, securityHelper.getCurrentLogin());
     }
 
-    @Test(expected = AccessDeniedException.class)
-    public void getCurrentLoginException() {
+    @Test
+    void getCurrentLoginException() {
         SecurityContextHolder.clearContext();
         assertNull(SecurityContextHolder.getContext().getAuthentication());
 
-        securityHelper.getCurrentLogin();
+        assertThrows(AccessDeniedException.class, () -> securityHelper.getCurrentLogin());
     }
 
     private TokenDetails getTokenDetails() {

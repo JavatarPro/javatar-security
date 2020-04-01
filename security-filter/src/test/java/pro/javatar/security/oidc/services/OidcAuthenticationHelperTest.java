@@ -4,13 +4,16 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.eq;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import pro.javatar.security.api.config.SecurityConfig;
 import pro.javatar.security.oidc.model.OAuth2Constants;
 import pro.javatar.security.oidc.model.TokenDetails;
@@ -19,8 +22,6 @@ import pro.javatar.security.oidc.exceptions.TokenSignedForOtherRealmAuthorizatio
 import pro.javatar.security.oidc.filters.AuthenticationJwtBearerTokenAwareFilter;
 
 import org.apache.http.HttpHeaders;
-import org.junit.Before;
-import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -33,12 +34,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 
-public class OidcAuthenticationHelperTest {
+class OidcAuthenticationHelperTest {
 
     private OidcAuthenticationHelper helper;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         SecurityConfig config = new SpringTestConfig().securityConfig();
         RealmService realmService = new RealmServiceImpl(config);
         helper = new OidcAuthenticationHelper();
@@ -47,7 +48,7 @@ public class OidcAuthenticationHelperTest {
     }
 
     @Test
-    public void getBearerTokenFromRequest() throws Exception {
+    void getBearerTokenFromRequest() {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("");
         assertThat(helper.getBearerToken(request), is(nullValue()));
@@ -66,7 +67,7 @@ public class OidcAuthenticationHelperTest {
     }
 
     @Test
-    public void getBearerTokenFromResponse() throws Exception {
+    void getBearerTokenFromResponse() {
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
         when(response.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("");
         assertThat(helper.getBearerToken(response), is(nullValue()));
@@ -85,21 +86,21 @@ public class OidcAuthenticationHelperTest {
     }
 
     @Test
-    public void getRefreshTokenFromRequest() throws Exception {
+    void getRefreshTokenFromRequest() throws Exception {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         when(request.getHeader(SecurityConstants.REFRESH_TOKEN_HEADER)).thenReturn("token333");
         assertThat(helper.getRefreshToken(request), is("token333"));
     }
 
     @Test
-    public void getRefreshTokenFromResponse() throws Exception {
+    void getRefreshTokenFromResponse() {
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
         when(response.getHeader(SecurityConstants.REFRESH_TOKEN_HEADER)).thenReturn("token444");
         assertThat(helper.getRefreshToken(response), is("token444"));
     }
 
     @Test
-    public void realmForCurrentRequest() throws Exception {
+    void realmForCurrentRequest() {
         OidcConfiguration oidcConfiguration = new OidcConfiguration();
         helper.setOidcConfiguration(oidcConfiguration);
         //if realm is not set it will be got as default
@@ -113,7 +114,7 @@ public class OidcAuthenticationHelperTest {
     }
 
     @Test
-    public void removeCodeFromRequest() throws Exception {
+    void removeCodeFromRequest() {
         HttpServletRequest request = mock(HttpServletRequest.class);
 
         String secureCode = "secure_code";
@@ -135,7 +136,7 @@ public class OidcAuthenticationHelperTest {
     }
 
     @Test
-    public void removeCodeFromUrl() throws Exception {
+    void removeCodeFromUrl() {
         assertThat(helper.removeCodeFromUrl("http://mvc.javatar.pro/realm/index.html?param1=12345&code=secure_code", "secure_code"),
                 is("http://mvc.javatar.pro/realm/index.html?param1=12345"));
         assertThat(helper.removeCodeFromUrl("http://mvc.javatar.pro/realm/index.html?code=secure_code&param1=12345", "secure_code"),
@@ -144,8 +145,8 @@ public class OidcAuthenticationHelperTest {
                 is("http://mvc.javatar.pro/realm/index.html?param1=12345"));
     }
 
-    @Test(expected = TokenSignedForOtherRealmAuthorizationException.class)
-    public void validateRealmException() throws Exception {
+    @Test
+    void validateRealmException() {
         OidcConfiguration oidcConfiguration = new OidcConfiguration();
         oidcConfiguration.setDefaultRealm("realm"); //resource realm
         oidcConfiguration.setExcludeValidationRealm("mservice");
@@ -153,11 +154,11 @@ public class OidcAuthenticationHelperTest {
 
         TokenDetails tokenDetails = new TokenDetails();
         tokenDetails.setRealm("realm2");
-        helper.validateRealm(tokenDetails);
+        assertThrows(TokenSignedForOtherRealmAuthorizationException.class, () -> helper.validateRealm(tokenDetails));
     }
 
     @Test
-    public void validateRealm() throws Exception {
+    void validateRealm() {
         OidcConfiguration oidcConfiguration = new OidcConfiguration();
         oidcConfiguration.setDefaultRealm("realm");  //resource realm
         oidcConfiguration.setExcludeValidationRealm("mservice");
@@ -172,7 +173,7 @@ public class OidcAuthenticationHelperTest {
     }
 
     @Test
-    public void isTokenExpiredOrShouldBeRefreshed() throws Exception {
+    void isTokenExpiredOrShouldBeRefreshed() {
         OidcConfiguration oidcConfiguration = new OidcConfiguration() {
             @Override
             public int getTokenShouldBeRefreshed() {
@@ -191,7 +192,7 @@ public class OidcAuthenticationHelperTest {
     }
 
     @Test
-    public void safeCleanupSecurityContext() throws Exception {
+    void safeCleanupSecurityContext() {
         SecurityContextHolder.clearContext();
         assertThat(SecurityContextHolder.getContext().getAuthentication(), is(nullValue()));
         TokenDetails tokenDetails = new TokenDetails();
