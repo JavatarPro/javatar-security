@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Helper service for working with low level operations with cookies
- * Have two implementations for prod & dev mode
+ * Have two implementations for prod and dev mode
  *
  * @author Borys Zora
  * @version 2019-06-27

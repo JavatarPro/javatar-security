@@ -19,8 +19,8 @@ import java.util.Set;
 public interface GatewaySecurityService {
 
     /**
-     * User login to specific realm by user email & password.
-     * Cookies will be added to response with HTTPOnly & Secured flags
+     * User login to specific realm by user email and password.
+     * Cookies will be added to response with HTTPOnly and Secured flags
      *
      * @param authRequest {@link AuthRequestBO} - actual user's login request, with data provided by him,
      *                                         except realm could be used as default for api-gateway

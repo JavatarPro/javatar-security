@@ -16,7 +16,7 @@ import static pro.javatar.security.oidc.utils.StringUtils.isBlank;
 
 /**
  * jwt access token consist of 3 parts:
- *  - header (e.g. algorithm & token type)
+ *  - header (e.g. algorithm and token type)
  *  - payload (user data, expiration info)
  *  - signature
  * The aim of this class to retrieve payload related data from raw access token
