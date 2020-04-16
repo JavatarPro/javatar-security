@@ -43,7 +43,7 @@ public class TokenExpirationInfoBO {
     }
 
     /**
-     * @param part - token percentage expiration e.g. 0.3 -> 30% or 0.75 -> 75% of token time already passed,
+     * @param part - token percentage expiration e.g. 0.3 is 30% or 0.75 is 75% of token time already passed,
      *             closer to expiration
      * @return boolean does part already spent
      */
@@ -53,7 +53,7 @@ public class TokenExpirationInfoBO {
         return tokenDurationAllowedByIdentityProvider.toMillis() * 1.0 * part < actualTokenDuration.toMillis();
 }
 
-    // getters & setters
+    // getters and setters
 
     public Instant getIssuedAt() {
         return issuedAt;

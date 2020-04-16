@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * The aim of this class is to issue security tokens and add security cookie to a browser
- * that should be exchanged for access & refresh bearer tokens
+ * that should be exchanged for access and refresh bearer tokens
  * when user goes though api-gateway to secure endpoint
  *
  * @author Andrii Murashkin / Javatar LLC

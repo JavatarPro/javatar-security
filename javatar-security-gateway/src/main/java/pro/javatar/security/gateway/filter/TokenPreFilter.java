@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * This filter should extract access & refresh tokens from secret storage and populate http request with them.
+ * This filter should extract access and refresh tokens from secret storage and populate http request with them.
  *
  * @author Serhii Petrychenko / Javatar LLC
  * @author Borys Zora
