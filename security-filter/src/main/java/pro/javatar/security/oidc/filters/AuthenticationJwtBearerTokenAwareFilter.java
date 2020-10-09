@@ -55,8 +55,8 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
     private OidcAuthenticationHelper oidcHelper;
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        logger.info(AuthenticationJwtBearerTokenAwareFilter.class.getName() + " initialized");
+    public void init(FilterConfig filterConfig) {
+        logger.info("AuthenticationJwtBearerTokenAwareFilter initialized");
     }
 
     @Override
@@ -65,7 +65,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
         // TODO remove stub
         boolean stubFilterEnable = authorizationStubFilter.isFilterEnable();
         if (!config.securityFilter().isJwtBearerFilterEnable() || stubFilterEnable) {
-            logger.info("{} is disabled. Dev mode is {}.", getClass().getCanonicalName(),
+            logger.debug("{} is disabled. Dev mode is {}.", getClass().getCanonicalName(),
                     stubFilterEnable ? "on" : "off");
             filterChain.doFilter(servletRequest, servletResponse);
             return;
@@ -83,7 +83,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
         if (isOtherAuthenticationAllowed()) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated()) {
-                logger.info("authentication was obtained by other method");
+                logger.debug("authentication was obtained by other method");
                 filterChain.doFilter(servletRequest, servletResponse);
                 return;
             }

@@ -34,9 +34,8 @@ public class AuthorizationStubFilter implements Filter {
     }
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        logger.info(AuthorizationStubFilter.class.getName() + " initialized");
-        logger.debug(this.toString());
+    public void init(FilterConfig filterConfig) {
+        logger.info("AuthorizationStubFilter initialized: {}", this);
     }
 
     @Override

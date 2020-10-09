@@ -47,14 +47,14 @@ public class AuthenticationControllerAdviceFilter implements Filter {
     }
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {}
+    public void init(FilterConfig filterConfig) {}
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         HttpServletRequest servletRequest = (HttpServletRequest) request;
         String url = servletRequest.getRequestURL().toString();
-        logger.info("advice filter for url: {}", url);
+        logger.debug("advice filter for url: {}", url);
         try {
             populateResponseHeaders(response);
             if (!HttpMethod.OPTIONS.name().equals(servletRequest.getMethod())) {
