@@ -136,7 +136,7 @@ public class AuthenticationJwtBearerTokenAwareFilter implements Filter {
 
 
     void setupAuthorizationHeader(HttpServletResponse response, TokenDetails tokenDetails) {
-        logger.info("Setup authorization/refresh tokens");
+        logger.debug("Setup authorization/refresh tokens");
         response.addHeader(HttpHeaders.AUTHORIZATION,
                 OidcAuthenticationHelper.AUTH_HEADER_VALUE_PREFIX + tokenDetails.getAccessToken());
         String refreshToken = tokenDetails.getRefreshToken();

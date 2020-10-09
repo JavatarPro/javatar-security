@@ -148,7 +148,7 @@ public class OidcAuthenticationHelper {
 
     // TODO refactor
     public void authenticateCurrentThread(TokenDetails tokenDetails) {
-        logger.info("Start authenticate current thread");
+        logger.debug("Start authenticate current thread");
         AccessToken accessToken = parseAccessToken(tokenDetails);
         AccessToken.Access access =
                 accessToken.getResourceAccess().get(config.identityProvider().client());
@@ -157,7 +157,7 @@ public class OidcAuthenticationHelper {
                 new UsernamePasswordAuthenticationToken(accessToken.getPreferredUsername(), tokenDetails, authorities);
 
         SecurityContextUtils.setAuthentication(authenticationToken);
-        logger.info("Finish authenticate current thread");
+        logger.debug("Finish authenticate current thread");
     }
 
     // TODO remove to not depend on oAuthClient
