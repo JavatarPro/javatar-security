@@ -12,7 +12,6 @@ import pro.javatar.security.oidc.utils.UrlResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.stereotype.Component;
@@ -58,7 +57,7 @@ public class AuthenticationOAuth2RedirectAwareFilter implements Filter {
     }
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
+    public void init(FilterConfig filterConfig) {
         logger.info("AuthenticationOAuth2RedirectAwareFilter initialized");
     }
 
@@ -68,7 +67,7 @@ public class AuthenticationOAuth2RedirectAwareFilter implements Filter {
         // TODO remove stub
         boolean stubFilterEnable = authorizationStubFilter.isFilterEnable();
         if (!enableFilter || stubFilterEnable) {
-            logger.info("{} is disabled. Dev mode is {}.", getClass().getCanonicalName(), stubFilterEnable ? "on" : "off");
+            logger.debug("{} is disabled. Dev mode is {}.", getClass().getCanonicalName(), stubFilterEnable ? "on" : "off");
             filterChain.doFilter(servletRequest, servletResponse);
             return;
         }

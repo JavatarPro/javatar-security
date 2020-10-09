@@ -66,7 +66,7 @@ public class RealmServiceImpl implements RealmService {
 
     @Override
     public void validateRealm(TokenDetails tokenDetails) throws TokenSignedForOtherRealmAuthorizationException {
-        logger.info("Start validate realm token");
+        logger.debug("Start validate realm token");
         String tokenRealm = tokenDetails.getRealm();
         // TODO
 //        if (oidcConfiguration.getExcludeValidationRealm().equalsIgnoreCase(tokenRealm)) {
@@ -82,7 +82,7 @@ public class RealmServiceImpl implements RealmService {
             e.setDevMessage(devMessage);
             throw e;
         }
-        logger.info("Realm token validation completed successfully");
+        logger.debug("Realm token validation completed successfully");
     }
 
     @Override

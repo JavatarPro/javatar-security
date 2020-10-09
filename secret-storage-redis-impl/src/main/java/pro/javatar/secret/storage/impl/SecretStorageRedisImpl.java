@@ -40,7 +40,7 @@ public class SecretStorageRedisImpl implements SecretStorage {
 
     @Override
     public void put(String secretKey, SecretTokenDetails secretTokenDetails) throws PersistenceSecretStorageException {
-        logger.info("Storing secret details for secretKey `{}`", secretKey);
+        logger.debug("Storing secret details for secretKey `{}`", secretKey);
         try {
             String json = mapper.writeValueAsString(secretTokenDetails);
             String fullSecretKey = getFullSecretKey(secretKey);

@@ -64,7 +64,7 @@ public class AuthenticationRealmAwareFilter implements Filter {
     private final UrlResolver urlResolver = new UrlResolver();
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
+    public void init(FilterConfig filterConfig) {
         logger.info("init filter: {}", AuthenticationRealmAwareFilter.class);
     }
 
@@ -72,7 +72,7 @@ public class AuthenticationRealmAwareFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
             throws IOException, ServletException {
         if (!enableFilter) {
-            logger.info("{} is disabled", getClass().getCanonicalName());
+            logger.debug("{} is disabled", getClass().getCanonicalName());
             filterChain.doFilter(servletRequest, servletResponse);
             return;
         }
@@ -81,12 +81,12 @@ public class AuthenticationRealmAwareFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
 
         if (shouldSkip(new ServletServerHttpRequest(request))) {
-            logger.info("{} {} is skipped", request.getMethod(), request.getRequestURI());
+            logger.debug("{} {} is skipped", request.getMethod(), request.getRequestURI());
             filterChain.doFilter(servletRequest, servletResponse);
             return;
         }
 
-        logger.info("setup realm for current request");
+        logger.debug("setup realm for current request");
         setupRealmForCurrentRequestThread(request);
         validateRealmSetup();
         setupRealmInResponse(servletResponse);
@@ -94,7 +94,7 @@ public class AuthenticationRealmAwareFilter implements Filter {
         try {
             filterChain.doFilter(servletRequest, servletResponse);
         } finally {
-            logger.info("clean up realm from current request");
+            logger.debug("clean up realm from current request");
             oidcAuthenticationHelper.removeRealmFromCurrentRequest();
             cleanupSecurityContextForCurrentThread();
         }
@@ -155,7 +155,7 @@ public class AuthenticationRealmAwareFilter implements Filter {
         String realm = retrieveRealmFromUrl(url);
         if (StringUtils.isBlank(realm))
             return false;
-        logger.info("realm: {} was retrieved from url: {}", realm, url);
+        logger.debug("realm: {} was retrieved from url: {}", realm, url);
         oidcAuthenticationHelper.setRealmForCurrentRequest(realm);
         return true;
     }
