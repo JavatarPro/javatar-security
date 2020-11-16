@@ -60,6 +60,22 @@ public class AuthServiceImpl implements AuthService {
         return reIssueTokensUsingIdentityProvider(refreshToken);
     }
 
+    @Override
+    public TokenInfoBO issueTokensByAdmin(AuthRequestBO authRequest) throws IssueTokensException {
+        try {
+            return authBOConverter.toTokenInfoBO(oAuthClient.obtainTokenDetailsAsAdmin(authRequest));
+        } catch (InvalidUserCredentialsAuthenticationException e) {
+            logger.debug("Invalid user credentials.");
+            throw new InvalidUserCredentialsAuthenticationException();
+        } catch (RealmNotFoundAuthnticationException e) {
+            logger.error("Realm {} not found.", authRequest.getRealm());
+            throw new RealmNotFoundAuthnticationException();
+        } catch (Exception e) {
+            logger.error("issueTokens failed for authRequest: {}, trying handle exception", authRequest, e);
+            throw new IssueTokensException(e.getMessage());
+        }
+    }
+
     private TokenInfoBO issueTokensUsingIdentityProvider(AuthRequestBO authRequest) {
         TokenDetails tokenDetails = oAuthClient.obtainTokenDetailsByApplicationCredentials(
                 authRequest.getEmail(), authRequest.getPassword(), authRequest.getRealm());

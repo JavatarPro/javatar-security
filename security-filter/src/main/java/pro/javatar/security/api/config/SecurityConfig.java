@@ -26,6 +26,10 @@ public interface SecurityConfig {
 
     IdentityProvider identityProvider();
 
+    default IdentityProviderAdmin identityProviderAdmin() {
+        return () -> identityProvider().url();
+    }
+
     Boolean useReferAsRedirectUri();
 
     String publicKeysStorage();
@@ -72,6 +76,20 @@ public interface SecurityConfig {
         String secret();
 
         String realm();
+    }
+
+    interface IdentityProviderAdmin {
+
+        String url();
+
+        default String client() {
+            return "admin-cli";
+        }
+
+        default String realm() {
+            return "master";
+        }
+
     }
 
     interface Storage {

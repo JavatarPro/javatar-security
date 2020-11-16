@@ -22,4 +22,6 @@ public interface AuthService {
 
     TokenInfoBO reIssueTokens(String refreshToken) throws ObtainRefreshTokenException;
 
+    TokenInfoBO issueTokensByAdmin(AuthRequestBO authRequest) throws IssueTokensException;
+
 }

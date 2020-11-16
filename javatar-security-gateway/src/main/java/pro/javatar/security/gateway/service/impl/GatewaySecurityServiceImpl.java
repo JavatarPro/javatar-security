@@ -23,9 +23,7 @@ import pro.javatar.security.gateway.service.api.GatewaySecurityService;
 import pro.javatar.security.api.exception.IssueTokensException;
 import pro.javatar.security.api.model.AuthRequestBO;
 import pro.javatar.security.api.model.TokenInfoBO;
-import pro.javatar.security.oidc.exceptions.ObtainRefreshTokenException;
 import pro.javatar.security.oidc.services.OidcAuthenticationHelper;
-import pro.javatar.security.oidc.utils.StringUtils;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.http.Cookie;
@@ -36,6 +34,8 @@ import java.util.*;
 import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static pro.javatar.security.oidc.SecurityConstants.REALM_HEADER;
 import static pro.javatar.security.oidc.SecurityConstants.REFRESH_TOKEN_HEADER;
+import static pro.javatar.security.oidc.utils.StringUtils.isBlank;
+import static pro.javatar.security.oidc.utils.StringUtils.isNotBlank;
 
 /**
  * @author Borys Zora
@@ -47,6 +47,8 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
     public static final String TOKEN_ID = "tokenID";
 
     private static final Logger logger = LoggerFactory.getLogger(GatewaySecurityServiceImpl.class);
+
+    private static final int FIRST_SUBDOMAIN_ORDER = 3;
 
     private AuthService authService;
 
@@ -91,8 +93,8 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
                         HttpServletRequest request,
                         HttpServletResponse response) throws LoginException {
         try {
-            populateRealmInAuthRequestIfMissing(authRequest);
-            TokenInfoBO authToken = authService.issueTokens(authRequest);
+            populateRealmInAuthRequestIfMissing(authRequest, request.getHeader("HOST"));
+            TokenInfoBO authToken = authService.issueTokensByAdmin(authRequest);
 
             String realm = authRequest.getRealm();
             String ipAddress = request.getRemoteAddr();
@@ -201,7 +203,7 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
     private SecretTokenDetails getSecretTokenDetails(HttpServletRequest request) {
         String secretKey = cookieService.getCookie(TOKEN_ID, request.getCookies());
 
-        if (StringUtils.isBlank(secretKey)) {
+        if (isBlank(secretKey)) {
             logger.debug("authorizationKey is blank, skip retrieve from secret storage");
             return null;
         }
@@ -214,9 +216,19 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         }
     }
 
-    private void populateRealmInAuthRequestIfMissing(AuthRequestBO authRequest) {
-        if (authRequest.getRealm() == null) {
-            authRequest.setRealm(config.identityProvider().realm());
+    void populateRealmInAuthRequestIfMissing(AuthRequestBO authRequest, String host) {
+        String subdomain = retrieveFirstSubdomain(host);
+        if (isNotBlank(authRequest.getRealm())) {
+            return;
+        }
+        GatewayConfig.RealmDetection rd = gatewayConfig.realmDetection();
+        if(isBlank(subdomain)) {
+            authRequest.setRealm(rd.defaultRealm());
+        }
+        if(rd.isAlias(subdomain)) {
+            authRequest.setRealm(rd.getRealmBySubdomainAlias(subdomain));
+        } else {
+            authRequest.setRealm(subdomain);
         }
     }
 
@@ -235,6 +247,18 @@ public class GatewaySecurityServiceImpl implements GatewaySecurityService {
         logger.error(message + " Current ipAddress: {}, but token was issued to - {}",
                 ipAddress, secretToken.getIpAddress());
         throw new IpAddressValidationRestException(message);
+    }
+
+    String retrieveFirstSubdomain(String host) {
+        if(host.contains(":")){
+            host = host.substring(0, host.indexOf(":"));
+        }
+        String[] parts = host.split("\\.");
+        if(parts.length < FIRST_SUBDOMAIN_ORDER) {
+            return null;
+        }
+        int firstSubdomainPosition = parts.length - FIRST_SUBDOMAIN_ORDER;
+        return parts[firstSubdomainPosition];
     }
 
 }
