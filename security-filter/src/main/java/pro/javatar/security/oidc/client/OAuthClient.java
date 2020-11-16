@@ -19,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import pro.javatar.security.api.config.SecurityConfig;
+import pro.javatar.security.api.model.AuthRequestBO;
 import pro.javatar.security.jwt.TokenVerifier;
 import pro.javatar.security.jwt.adapter.AdapterRSATokenVerifier;
 import pro.javatar.security.jwt.bean.representation.AccessToken;
@@ -307,5 +308,28 @@ public class OAuthClient {
 
     public void setRealmService(RealmService realmService) {
         this.realmService = realmService;
+    }
+
+    public TokenDetails obtainTokenDetailsAsAdmin(AuthRequestBO authRequest) {
+        List<BasicNameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair(OAuth2Constants.GRANT_TYPE, OAuth2Constants.PASSWORD));
+        params.add(new BasicNameValuePair(OAuth2Constants.USERNAME, authRequest.getEmail()));
+        params.add(new BasicNameValuePair(OAuth2Constants.PASSWORD, authRequest.getPassword()));
+        params.add(new BasicNameValuePair(OAuth2Constants.CLIENT_ID, config.identityProviderAdmin().client()));
+        logger.debug("Trying to obtain token details for realm {} with authentication {}",
+                authRequest.getRealm(), maskedParams(params));
+
+        try {
+            return obtainTokenDetails(authRequest.getRealm(), params);
+        } catch (InvalidUserCredentialsAuthenticationException e) {
+            logger.error("Invalid serCredentialsAuthenticationException: {}", e.getMessage(), e);
+            throw new InvalidUserCredentialsAuthenticationException();
+        } catch (RealmNotFoundAuthnticationException e) {
+            logger.error("Realm {} not found: {}", authRequest.getRealm(), e.getMessage(), e);
+            throw new RealmNotFoundAuthnticationException();
+        } catch (Exception e) {
+            logger.error("could not obtain token by application default user's credentials: {}", e.getMessage(), e);
+            throw new ObtainTokenByUserCredentialAuthenticationException();
+        }
     }
 }

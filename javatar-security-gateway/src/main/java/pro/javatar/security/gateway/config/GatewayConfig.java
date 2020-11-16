@@ -18,11 +18,22 @@ public interface GatewayConfig {
 
     DevMode devMode();
 
+    RealmDetection realmDetection();
+
     interface DevMode {
 
         Boolean enabled();
 
         Boolean disableTokenIdSecuredCookies();
 
+    }
+
+    interface RealmDetection {
+
+        String defaultRealm();
+
+        boolean isAlias(String subdomain);
+
+        String getRealmBySubdomainAlias(String alias);
     }
 }

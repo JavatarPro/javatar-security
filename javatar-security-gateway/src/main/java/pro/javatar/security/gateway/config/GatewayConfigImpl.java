@@ -3,6 +3,8 @@ package pro.javatar.security.gateway.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Borys Zora
@@ -22,6 +24,8 @@ public class GatewayConfigImpl implements GatewayConfig {
     String uiPathPrefix;
 
     DevModeImpl devMode;
+
+    RealmDetectionImpl realmDetection;
 
     // interface impl
 
@@ -50,6 +54,11 @@ public class GatewayConfigImpl implements GatewayConfig {
         return devMode;
     }
 
+    @Override
+    public RealmDetection realmDetection() {
+        return realmDetection;
+    }
+
     // setters
 
     public void setLoginEnabled(Boolean loginEnabled) {
@@ -70,6 +79,11 @@ public class GatewayConfigImpl implements GatewayConfig {
 
     public void setDevMode(DevModeImpl devMode) {
         this.devMode = devMode;
+    }
+
+    public GatewayConfigImpl setRealmDetection(RealmDetectionImpl realmDetection) {
+        this.realmDetection = realmDetection;
+        return this;
     }
 
     // classes
@@ -107,6 +121,47 @@ public class GatewayConfigImpl implements GatewayConfig {
         }
     }
 
+    static class RealmDetectionImpl implements RealmDetection {
+
+        String defaultRealm;
+
+        Map<String, String> subdomainAliases = new HashMap<>();
+
+        @Override
+        public String defaultRealm() {
+            return defaultRealm;
+        }
+
+        @Override
+        public boolean isAlias(String subdomain) {
+            if(subdomain == null) return false;
+            return subdomainAliases.containsKey(subdomain);
+        }
+
+        @Override
+        public String getRealmBySubdomainAlias(String alias) {
+            return subdomainAliases.get(alias);
+        }
+
+        public RealmDetectionImpl setDefaultRealm(String defaultRealm) {
+            this.defaultRealm = defaultRealm;
+            return this;
+        }
+
+        public RealmDetectionImpl setSubdomainAliases(Map<String, String> subdomainAliases) {
+            this.subdomainAliases = subdomainAliases;
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return "RealmDetectionImpl{" +
+                    "defaultRealm='" + defaultRealm + '\'' +
+                    ", subdomainAliases=" + subdomainAliases +
+                    '}';
+        }
+    }
+
     @Override
     public String toString() {
         return "GatewayConfigImpl{" +
@@ -115,6 +170,7 @@ public class GatewayConfigImpl implements GatewayConfig {
                 ", tokenRefreshInterval=" + tokenRefreshInterval +
                 ", uiPathPrefix='" + uiPathPrefix + '\'' +
                 ", devMode=" + devMode +
+                ", realmDetection=" + realmDetection +
                 '}';
     }
 }
